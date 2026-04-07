@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lis.user.mapper.DeptMapper">
+
+    <resultMap id="DeptResultMap" type="com.lis.user.entity.DeptDO">
+        <id column="id" property="id"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="leader" property="leader"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="sort" property="sort"/>
+        <result column="status" property="status"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <select id="selectDeptList" resultMap="DeptResultMap">
+        SELECT * FROM sys_dept WHERE del_flag = 0
+        <if test="deptName != null and deptName != ''">
+            AND dept_name LIKE CONCAT('%', #{deptName}, '%')
+        </if>
+        <if test="deptCode != null and deptCode != ''">
+            AND dept_code LIKE CONCAT('%', #{deptCode}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="parentId != null">
+            AND parent_id = #{parentId}
+        </if>
+        ORDER BY parent_id, sort ASC
+    </select>
+
+    <select id="selectByDeptCode" resultMap="DeptResultMap">
+        SELECT * FROM sys_dept WHERE dept_code = #{deptCode} AND del_flag = 0
+    </select>
+
+    <select id="selectDeptByParentId" resultMap="DeptResultMap">
+        SELECT * FROM sys_dept WHERE parent_id = #{parentId} AND del_flag = 0 ORDER BY sort ASC
+    </select>
+
+    <select id="selectDeptIdsByRoleId" resultType="java.lang.Long">
+        SELECT dept_id FROM sys_role_dept WHERE role_id = #{roleId}
+    </select>
+
+    <select id="selectAllDepts" resultMap="DeptResultMap">
+        SELECT * FROM sys_dept WHERE del_flag = 0 ORDER BY parent_id, sort ASC
+    </select>
+
+    <select id="selectChildrenCountByParentId" resultType="int">
+        SELECT COUNT(*) FROM sys_dept WHERE parent_id = #{parentId} AND del_flag = 0
+    </select>
+
+</mapper>

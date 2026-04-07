@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lis.user.mapper.DictDataMapper">
+
+    <resultMap id="DictDataResultMap" type="com.lis.user.entity.DictDataDO">
+        <id column="id" property="id"/>
+        <result column="dict_sort" property="dictSort"/>
+        <result column="dict_label" property="dictLabel"/>
+        <result column="dict_value" property="dictValue"/>
+        <result column="dict_type" property="dictType"/>
+        <result column="css_class" property="cssClass"/>
+        <result column="list_class" property="listClass"/>
+        <result column="is_default" property="isDefault"/>
+        <result column="status" property="status"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <select id="selectDictDataList" resultMap="DictDataResultMap">
+        SELECT * FROM sys_dict_data WHERE 1=1
+        <if test="dictType != null and dictType != ''">
+            AND dict_type = #{dictType}
+        </if>
+        <if test="dictLabel != null and dictLabel != ''">
+            AND dict_label LIKE CONCAT('%', #{dictLabel}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY dict_sort ASC
+    </select>
+
+    <select id="selectByDictType" resultMap="DictDataResultMap">
+        SELECT * FROM sys_dict_data WHERE dict_type = #{dictType} AND status = 0 ORDER BY dict_sort ASC
+    </select>
+
+    <select id="selectDefaultByDictType" resultMap="DictDataResultMap">
+        SELECT * FROM sys_dict_data WHERE dict_type = #{dictType} AND is_default = 0 AND status = 0 LIMIT 1
+    </select>
+
+</mapper>
