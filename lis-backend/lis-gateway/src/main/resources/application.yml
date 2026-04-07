@@ -1,0 +1,117 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: lis-gateway
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yaml
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: lis-auth
+          uri: lb://lis-auth
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-user
+          uri: lb://lis-user
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-specimen
+          uri: lb://lis-specimen
+          predicates:
+            - Path=/specimen/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-report
+          uri: lb://lis-report
+          predicates:
+            - Path=/report/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-equipment
+          uri: lb://lis-equipment
+          predicates:
+            - Path=/equipment/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-hl7
+          uri: lb://lis-hl7
+          predicates:
+            - Path=/hl7/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-statistics
+          uri: lb://lis-statistics
+          predicates:
+            - Path=/statistics/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-ai
+          uri: lb://lis-ai
+          predicates:
+            - Path=/ai/**
+          filters:
+            - StripPrefix=0
+
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: 0
+    timeout: 10000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+
+jwt:
+  secret: ${JWT_SECRET:lis-backend-jwt-secret-key-2024-very-long-secret-key-for-security}
+  expiration: 86400000
+  header: Authorization
+  prefix: Bearer
+
+gateway:
+  white-list:
+    - /auth/login
+    - /auth/register
+    - /auth/captcha
+    - /auth/refresh
+    - /doc.html
+    - /webjars/**
+    - /swagger-resources/**
+    - /v2/api-docs
+    - /v3/api-docs/**
+    - /actuator/health
+
+logging:
+  level:
+    com.lis.gateway: debug
+    org.springframework.cloud.gateway: debug

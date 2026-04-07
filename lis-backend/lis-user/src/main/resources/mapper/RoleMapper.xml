@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lis.user.mapper.RoleMapper">
+
+    <resultMap id="RoleResultMap" type="com.lis.user.entity.RoleDO">
+        <id column="id" property="id"/>
+        <result column="role_name" property="roleName"/>
+        <result column="role_code" property="roleCode"/>
+        <result column="role_key" property="roleKey"/>
+        <result column="role_sort" property="roleSort"/>
+        <result column="data_scope" property="dataScope"/>
+        <result column="menu_check_strictly" property="menuCheckStrictly"/>
+        <result column="dept_check_strictly" property="deptCheckStrictly"/>
+        <result column="status" property="status"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <select id="selectByRoleCode" resultMap="RoleResultMap">
+        SELECT * FROM sys_role WHERE role_code = #{roleCode} AND del_flag = 0
+    </select>
+
+    <select id="selectRoleList" resultMap="RoleResultMap">
+        SELECT * FROM sys_role WHERE del_flag = 0
+        <if test="roleName != null and roleName != ''">
+            AND role_name LIKE CONCAT('%', #{roleName}, '%')
+        </if>
+        <if test="roleCode != null and roleCode != ''">
+            AND role_code LIKE CONCAT('%', #{roleCode}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY role_sort ASC
+    </select>
+
+    <select id="selectRolesByUserId" resultMap="RoleResultMap">
+        SELECT r.* FROM sys_role r
+        INNER JOIN sys_user_role ur ON r.id = ur.role_id
+        WHERE ur.user_id = #{userId} AND r.del_flag = 0
+        ORDER BY r.role_sort ASC
+    </select>
+
+    <select id="selectMenuIdsByRoleId" resultType="java.lang.Long">
+        SELECT menu_id FROM sys_role_menu WHERE role_id = #{roleId}
+    </select>
+
+    <select id="selectDeptIdsByRoleId" resultType="java.lang.Long">
+        SELECT dept_id FROM sys_role_dept WHERE role_id = #{roleId}
+    </select>
+
+</mapper>
