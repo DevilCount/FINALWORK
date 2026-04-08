@@ -14,11 +14,13 @@ import java.time.LocalDateTime;
 @TableName("interface_config")
 public class InterfaceConfigDO implements Serializable {
 
+    @TableField("del_flag")
+    @TableLogic
     private Integer delFlag;
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId
     private Long id;
 
     private String interfaceCode;

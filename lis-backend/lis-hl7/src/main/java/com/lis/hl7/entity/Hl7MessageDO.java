@@ -14,11 +14,13 @@ import java.time.LocalDateTime;
 @TableName("hl7_message")
 public class Hl7MessageDO implements Serializable {
 
+    @TableField("del_flag")
+    @TableLogic
     private Integer delFlag;
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId
     private Long id;
 
     private String messageId;
