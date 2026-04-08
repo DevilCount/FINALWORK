@@ -84,7 +84,7 @@ export function exportReportList(params: ReportQueryParams): Promise<Blob> {
   return get('/api/report/export', params, { responseType: 'blob' })
 }
 
-export function getReportStatistics(params: {
+export function getReportOverviewStatistics(params: {
   startTime: string
   endTime: string
   departmentId?: string

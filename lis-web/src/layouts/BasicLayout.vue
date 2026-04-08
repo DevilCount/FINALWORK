@@ -62,8 +62,8 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { useUserStore } from '@/store/user'
-import { useAppStore } from '@/store/app'
+import { useUserStore } from '@/stores/modules/user'
+import { useAppStore } from '@/stores/modules/app'
 import { logout as logoutApi } from '@/api/auth'
 
 const route = useRoute()
@@ -87,8 +87,7 @@ async function handleCommand(command: string) {
           type: 'warning',
         })
         await logoutApi()
-        userStore.logout()
-        router.push('/login')
+        await userStore.logoutAction()
         ElMessage.success('退出成功')
       } catch {
         // 用户取消

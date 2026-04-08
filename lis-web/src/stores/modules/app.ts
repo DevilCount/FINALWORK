@@ -4,6 +4,7 @@ type DeviceType = 'desktop' | 'mobile'
 type ThemeType = 'light' | 'dark'
 
 interface AppState {
+  sidebar: boolean
   sidebarCollapsed: boolean
   device: DeviceType
   theme: ThemeType
@@ -12,6 +13,7 @@ interface AppState {
 
 export const useAppStore = defineStore('app', {
   state: (): AppState => ({
+    sidebar: true,
     sidebarCollapsed: false,
     device: 'desktop',
     theme: 'light',
@@ -24,6 +26,10 @@ export const useAppStore = defineStore('app', {
   },
 
   actions: {
+    toggleSidebar() {
+      this.sidebar = !this.sidebar
+    },
+
     toggleSidebarAction() {
       this.sidebarCollapsed = !this.sidebarCollapsed
     },

@@ -1,3 +1,7 @@
 export * from './auth'
 export * from './specimen'
 export * from './report'
+export * from './equipment'
+export * from './statistics'
+export * from './ai'
+export * from './system'

@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/store/user'
+import { useUserStore } from '@/stores/modules/user'
 import router from '@/router'
 import type { Result } from '@/types'
 
@@ -52,7 +52,7 @@ service.interceptors.response.use(
 
     if (code === 401) {
       const userStore = useUserStore()
-      userStore.logout()
+      userStore.resetStateAction()
       router.push({ name: 'Login' })
       ElMessage.error('登录已过期，请重新登录')
       return Promise.reject(new Error(message || '未授权'))
@@ -88,13 +88,14 @@ service.interceptors.response.use(
                 refreshToken: refreshTokenValue,
               })
               const { accessToken, refreshToken: newRefreshToken } = res.data.data
-              userStore.setToken(accessToken, newRefreshToken)
+              userStore.token = accessToken
+              userStore.refreshToken = newRefreshToken
               onRefreshed(accessToken)
               config.headers.Authorization = `Bearer ${accessToken}`
               return service(config)
             }
           } catch {
-            userStore.logout()
+            userStore.resetStateAction()
             router.push({ name: 'Login' })
             ElMessage.error('登录已过期，请重新登录')
           } finally {

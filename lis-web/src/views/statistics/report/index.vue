@@ -423,7 +423,7 @@ const renderBarChart = () => {
       type: 'value',
       name: '数量'
     },
-    series: chartData.value.barData.series.map((s, index) => ({
+    series: chartData.value.barData.series.map((s) => ({
       name: s.name,
       type: 'bar',
       stack: 'total',
