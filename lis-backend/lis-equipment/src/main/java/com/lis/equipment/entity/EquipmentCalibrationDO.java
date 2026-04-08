@@ -2,6 +2,7 @@ package com.lis.equipment.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 public class EquipmentCalibrationDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
+    @TableLogic
     private Long id;
 
     private String calibrationNo;

@@ -3,6 +3,7 @@ package com.lis.specimen.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 public class SpecimenTestItemDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
+    @TableLogic
     private Long id;
 
     private Long specimenId;
@@ -63,8 +65,6 @@ public class SpecimenTestItemDO implements Serializable {
 
     private String auditUserName;
 
-    private String remark;
-
     private String createBy;
 
     private LocalDateTime createTime;
@@ -72,6 +72,10 @@ public class SpecimenTestItemDO implements Serializable {
     private String updateBy;
 
     private LocalDateTime updateTime;
+
+    private Integer delFlag;
+
+    private String remark;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

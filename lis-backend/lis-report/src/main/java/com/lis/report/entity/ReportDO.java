@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 public class ReportDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
+    @TableLogic
     private Long id;
 
     private String reportNo;

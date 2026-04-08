@@ -3,18 +3,19 @@ package com.lis.specimen.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Data
 @TableName("test_item")
 public class TestItemDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
+    @TableLogic
     private Long id;
 
     private String itemCode;
@@ -57,13 +58,15 @@ public class TestItemDO implements Serializable {
 
     private String createBy;
 
-    private LocalDateTime createTime;
-
     private String updateBy;
 
-    private LocalDateTime updateTime;
-
     private String remark;
+
+    private String createTime;
+
+    private String updateTime;
+
+    private Integer delFlag;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

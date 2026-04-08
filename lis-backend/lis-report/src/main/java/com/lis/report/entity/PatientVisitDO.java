@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 public class PatientVisitDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
+    @TableLogic
     private Long id;
 
     private String visitNo;

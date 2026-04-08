@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class AiDiagnosisRuleDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
+    @TableLogic
     private Long id;
 
     private String ruleCode;
