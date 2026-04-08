@@ -68,14 +68,14 @@
         <el-col :span="12">
           <el-form-item label="部门" prop="deptId">
             <el-tree-select
-              v-model="formData.deptId"
-              :data="deptTree"
-              :props="{ label: 'label', children: 'children', value: 'id' }"
-              placeholder="请选择部门"
-              check-strictly
-              clearable
-              default-expand-all
-            />
+          v-model="formData.deptId"
+          :data="deptTree"
+          :props="{ label: 'label', children: 'children' }"
+          placeholder="请选择部门"
+          check-strictly
+          clearable
+          default-expand-all
+        />
           </el-form-item>
         </el-col>
         <el-col :span="12">

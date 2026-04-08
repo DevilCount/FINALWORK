@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { login, logout, getUserInfo } from '@/api/auth'
+import { login, logout } from '@/api/auth'
 import { getToken, setToken, removeToken, getRefreshToken, setRefreshToken, removeRefreshToken, setUserInfo, removeUserInfo } from '@/utils/auth'
 import type { UserInfo, LoginForm } from '@/types/user'
 import router from '@/router'
@@ -34,18 +34,27 @@ export const useUserStore = defineStore('user', {
       const data = await login(loginForm)
       this.token = data.accessToken
       this.refreshToken = data.refreshToken
+      this.userInfo = {
+        id: data.userId,
+        username: data.username,
+        realName: data.realName,
+        status: 1
+      }
+      this.roles = data.roles
+      this.permissions = data.permissions
       setToken(data.accessToken)
       setRefreshToken(data.refreshToken)
+      setUserInfo(this.userInfo)
       return data
     },
 
     async getUserInfoAction() {
-      const data = await getUserInfo()
-      this.userInfo = data.user
-      this.roles = data.roles
-      this.permissions = data.permissions
-      setUserInfo(data.user)
-      return data
+      // 由于登录时已经获取了用户信息，这里直接返回当前状态
+      return {
+        user: this.userInfo,
+        roles: this.roles,
+        permissions: this.permissions
+      }
     },
 
     async logoutAction() {

@@ -25,6 +25,11 @@ export interface LoginResult {
   accessToken: string
   refreshToken: string
   expiresIn: number
+  userId: number
+  username: string
+  realName: string
+  roles: string[]
+  permissions: string[]
 }
 
 export interface CaptchaResult {

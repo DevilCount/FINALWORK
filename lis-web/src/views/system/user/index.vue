@@ -188,7 +188,7 @@ watch(deptFilterText, (val) => {
   deptTreeRef.value?.filter(val)
 })
 
-const filterDeptNode = (value: string, data: DeptTree) => {
+const filterDeptNode = (value: string, data: any) => {
   if (!value) return true
   return data.label.includes(value)
 }

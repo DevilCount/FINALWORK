@@ -16,14 +16,14 @@
         <el-col :span="12">
           <el-form-item label="上级菜单" prop="parentId">
             <el-tree-select
-              v-model="formData.parentId"
-              :data="menuTree"
-              :props="{ label: 'label', children: 'children', value: 'id' }"
-              placeholder="请选择上级菜单"
-              check-strictly
-              clearable
-              default-expand-all
-            />
+          v-model="formData.parentId"
+          :data="menuTree"
+          :props="{ label: 'label', children: 'children' }"
+          placeholder="请选择上级菜单"
+          check-strictly
+          clearable
+          default-expand-all
+        />
           </el-form-item>
         </el-col>
         <el-col :span="12">
