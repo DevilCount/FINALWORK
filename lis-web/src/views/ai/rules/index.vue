@@ -137,16 +137,16 @@
               </el-select>
             </el-col>
             <el-col :span="8">
-              <el-input v-if="condition.operator !== 'between'" v-model="condition.value" placeholder="输入值" />
-              <el-row v-else :gutter="5">
-                <el-col :span="12">
-                  <el-input v-model="(condition.value as [number, number])[0]" placeholder="最小值" />
+                  <el-input v-if="condition.operator !== 'between'" v-model="condition.value as string | number" placeholder="输入值" />
+                  <el-row v-else :gutter="5">
+                    <el-col :span="12">
+                      <el-input v-model="(condition.value as [number, number])[0]" placeholder="最小值" />
+                    </el-col>
+                    <el-col :span="12">
+                      <el-input v-model="(condition.value as [number, number])[1]" placeholder="最大值" />
+                    </el-col>
+                  </el-row>
                 </el-col>
-                <el-col :span="12">
-                  <el-input v-model="(condition.value as [number, number])[1]" placeholder="最大值" />
-                </el-col>
-              </el-row>
-            </el-col>
             <el-col :span="4">
               <el-select v-if="index < formData.conditions!.length - 1" v-model="condition.logic" placeholder="逻辑">
                 <el-option label="且" value="and" />
@@ -232,7 +232,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Search, Refresh, Delete } from '@element-plus/icons-vue'
-import type { AIRule, AIRuleQuery, RuleCondition, RuleAction } from '@/api/ai'
+import type { AIRule, AIRuleQuery } from '@/api/ai'
 import { getAIRules, getAIRuleDetail, createAIRule, updateAIRule, deleteAIRule, toggleAIRule, testAIRule, getAIRuleCategories } from '@/api/ai'
 
 const loading = ref(false)
