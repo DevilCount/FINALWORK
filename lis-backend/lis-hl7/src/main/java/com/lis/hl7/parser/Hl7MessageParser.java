@@ -190,7 +190,7 @@ public class Hl7MessageParser {
         }
 
         try {
-            patient.setGender(pid.getAdministrativeSex().getIdentifier().getValue());
+            patient.setGender(pid.getAdministrativeSex().getValue());
         } catch (Exception e) {
             log.debug("Gender not found");
         }
@@ -226,7 +226,7 @@ public class Hl7MessageParser {
         }
 
         try {
-            visit.setVisitClass(pv1.getPatientClass().getIdentifier().getValue());
+            visit.setVisitClass(pv1.getPatientClass().getValue());
         } catch (Exception e) {
             log.debug("Visit class not found");
         }

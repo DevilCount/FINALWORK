@@ -162,7 +162,7 @@ public class RedisUtils {
         return redisTemplate.opsForSet().size(key);
     }
 
-    public Long zAdd(String key, Object value, double score) {
+    public Boolean zAdd(String key, Object value, double score) {
         return redisTemplate.opsForZSet().add(key, value, score);
     }
 

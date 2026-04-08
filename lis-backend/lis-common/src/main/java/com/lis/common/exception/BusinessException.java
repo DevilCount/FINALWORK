@@ -1,6 +1,6 @@
 package com.lis.common.exception;
 
-import com.lis.common.enums.ResultCode;
+import com.lis.common.result.ResultCode;
 import lombok.Getter;
 
 @Getter

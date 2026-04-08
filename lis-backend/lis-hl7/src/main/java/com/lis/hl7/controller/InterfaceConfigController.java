@@ -26,7 +26,7 @@ public class InterfaceConfigController {
     @GetMapping("/page")
     public Result<PageResult<InterfaceConfigVO>> queryPage(InterfaceConfigQueryDTO queryDTO) {
         Page<InterfaceConfigVO> page = interfaceConfigService.queryPage(queryDTO);
-        return Result.success(PageResult.of(page.getRecords(), page.getTotal()));
+        return Result.success(PageResult.of(page.getTotal(), queryDTO.getPageNum(), queryDTO.getPageSize(), page.getRecords()));
     }
 
     @ApiOperation("获取接口配置详情")

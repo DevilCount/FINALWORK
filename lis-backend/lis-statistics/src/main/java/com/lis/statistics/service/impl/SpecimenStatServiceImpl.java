@@ -52,7 +52,7 @@ public class SpecimenStatServiceImpl implements SpecimenStatService {
 
         List<SpecimenStatVO> pageData = start < total ? voList.subList(start, end) : new ArrayList<>();
 
-        return new PageResult<>(pageData, (long) total, queryDTO.getPageNum(), queryDTO.getPageSize());
+        return new PageResult<>((long) total, queryDTO.getPageNum(), queryDTO.getPageSize(), pageData);
     }
 
     @Override

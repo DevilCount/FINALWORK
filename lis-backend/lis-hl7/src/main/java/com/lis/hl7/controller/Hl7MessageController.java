@@ -70,7 +70,7 @@ public class Hl7MessageController {
                 .collect(Collectors.toList());
         voPage.setRecords(voList);
 
-        return Result.success(PageResult.of(voList, voPage.getTotal()));
+        return Result.success(PageResult.of(voPage.getTotal(), queryDTO.getPageNum(), queryDTO.getPageSize(), voList));
     }
 
     @ApiOperation("获取HL7消息详情")

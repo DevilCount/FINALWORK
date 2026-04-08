@@ -7,10 +7,4 @@ import com.lis.hl7.service.InterfaceConnectionLogService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class InterfaceConnectionLogServiceImpl extends ServiceImpl<InterfaceConnectionLogMapper, InterfaceConnectionLogDO> implements InterfaceConnectionLogService {
-
-    @Override
-    public void save(InterfaceConnectionLogDO log) {
-        save(log);
-    }
-}
+public class InterfaceConnectionLogServiceImpl extends ServiceImpl<InterfaceConnectionLogMapper, InterfaceConnectionLogDO> implements InterfaceConnectionLogService {}

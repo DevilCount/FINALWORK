@@ -1,6 +1,7 @@
 package com.lis.common.exception;
 
-import com.lis.common.enums.ResultCode;
+import com.lis.common.result.ResultCode;
+import lombok.Getter;
 
 @Getter
 public class AuthException extends RuntimeException {
@@ -19,6 +20,11 @@ public class AuthException extends RuntimeException {
 
     public AuthException(ResultCode resultCode) {
         super(resultCode.getMessage());
+        this.code = resultCode.getCode();
+    }
+
+    public AuthException(ResultCode resultCode, String message) {
+        super(message);
         this.code = resultCode.getCode();
     }
 }

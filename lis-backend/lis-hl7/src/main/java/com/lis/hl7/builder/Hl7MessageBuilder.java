@@ -197,7 +197,7 @@ public class Hl7MessageBuilder {
         }
 
         if (observation.getObservationValue() != null) {
-            obx.getObservationValue(0).getData().setValue(observation.getObservationValue());
+            ((ca.uhn.hl7v2.model.v25.datatype.ST)obx.getObservationValue(0).getData()).setValue(observation.getObservationValue());
         }
 
         if (observation.getUnits() != null) {
@@ -308,7 +308,7 @@ public class Hl7MessageBuilder {
         } else {
             pv1.append("O");
         }
-        pv1("|");
+        pv1.append("|");
 
         if (visit.getDepartment() != null) {
             pv1.append(visit.getDepartment());
