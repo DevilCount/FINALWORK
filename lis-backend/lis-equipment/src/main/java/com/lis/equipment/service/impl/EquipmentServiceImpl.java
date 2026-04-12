@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lis.common.exception.BusinessException;
 import com.lis.common.result.PageResult;
+import com.lis.common.result.ResultCode;
 import com.lis.equipment.dto.EquipmentDTO;
 import com.lis.equipment.dto.EquipmentQueryDTO;
 import com.lis.equipment.entity.EquipmentDO;
@@ -58,7 +59,7 @@ public class EquipmentServiceImpl implements EquipmentService {
     public EquipmentVO getById(Long id) {
         EquipmentDO equipmentDO = equipmentMapper.selectById(id);
         if (equipmentDO == null) {
-            throw new BusinessException("设备不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "设备不存在");
         }
         return convertToVO(equipmentDO);
     }
@@ -69,7 +70,7 @@ public class EquipmentServiceImpl implements EquipmentService {
         wrapper.eq(EquipmentDO::getEquipmentCode, equipmentCode);
         EquipmentDO equipmentDO = equipmentMapper.selectOne(wrapper);
         if (equipmentDO == null) {
-            throw new BusinessException("设备不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "设备不存在");
         }
         return convertToVO(equipmentDO);
     }
@@ -80,7 +81,7 @@ public class EquipmentServiceImpl implements EquipmentService {
         LambdaQueryWrapper<EquipmentDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(EquipmentDO::getEquipmentCode, dto.getEquipmentCode());
         if (equipmentMapper.selectCount(wrapper) > 0) {
-            throw new BusinessException("设备编码已存在");
+            throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS, "设备编码已存在");
         }
 
         EquipmentDO equipmentDO = new EquipmentDO();
@@ -101,12 +102,12 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Transactional(rollbackFor = Exception.class)
     public void update(EquipmentDTO dto) {
         if (dto.getId() == null) {
-            throw new BusinessException("设备ID不能为空");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "设备ID不能为空");
         }
 
         EquipmentDO existEquipment = equipmentMapper.selectById(dto.getId());
         if (existEquipment == null) {
-            throw new BusinessException("设备不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "设备不存在");
         }
 
         if (!existEquipment.getEquipmentCode().equals(dto.getEquipmentCode())) {
@@ -114,7 +115,7 @@ public class EquipmentServiceImpl implements EquipmentService {
             wrapper.eq(EquipmentDO::getEquipmentCode, dto.getEquipmentCode())
                     .ne(EquipmentDO::getId, dto.getId());
             if (equipmentMapper.selectCount(wrapper) > 0) {
-                throw new BusinessException("设备编码已存在");
+                throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS, "设备编码已存在");
             }
         }
 
@@ -131,7 +132,7 @@ public class EquipmentServiceImpl implements EquipmentService {
     public void deleteById(Long id) {
         EquipmentDO equipmentDO = equipmentMapper.selectById(id);
         if (equipmentDO == null) {
-            throw new BusinessException("设备不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "设备不存在");
         }
 
         equipmentMapper.deleteById(id);
@@ -142,7 +143,7 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteBatch(Long[] ids) {
         if (ids == null || ids.length == 0) {
-            throw new BusinessException("请选择要删除的设备");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "请选择要删除的设备");
         }
 
         equipmentMapper.deleteBatchIds(Arrays.asList(ids));
@@ -154,12 +155,12 @@ public class EquipmentServiceImpl implements EquipmentService {
     public void updateStatus(Long id, String status) {
         EquipmentDO equipmentDO = equipmentMapper.selectById(id);
         if (equipmentDO == null) {
-            throw new BusinessException("设备不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "设备不存在");
         }
 
         EquipmentStatusEnum statusEnum = EquipmentStatusEnum.getByCode(status);
         if (statusEnum == null) {
-            throw new BusinessException("无效的设备状态");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "无效的设备状态");
         }
 
         EquipmentDO updateDO = new EquipmentDO();

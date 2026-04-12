@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/statistics/equipment")
+@RequestMapping("/equipment")
 @RequiredArgsConstructor
 @Api(tags = "设备统计")
 public class EquipmentStatController {

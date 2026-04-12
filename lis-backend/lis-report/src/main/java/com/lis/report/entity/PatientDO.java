@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 public class PatientDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
-    @TableLogic
     private Long id;
 
     private String patientNo;
@@ -70,4 +69,8 @@ public class PatientDO implements Serializable {
     private LocalDateTime updateTime;
 
     private String remark;
+
+    @TableField("del_flag")
+    @TableLogic
+    private Integer delFlag;
 }

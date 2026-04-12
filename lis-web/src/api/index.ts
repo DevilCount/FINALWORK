@@ -1,3 +1,6 @@
 export * from './auth'
 export * from './specimen'
 export * from './report'
+export * from './equipment'
+export * from './ai'
+export { getDashboardOverview, getDashboardOverviewByRange } from './statistics'

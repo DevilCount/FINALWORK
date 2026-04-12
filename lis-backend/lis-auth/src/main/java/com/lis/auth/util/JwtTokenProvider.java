@@ -1,10 +1,8 @@
 package com.lis.auth.util;
 
-import com.lis.common.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -19,10 +17,9 @@ import java.util.Map;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret:lis-backend-jwt-secret-key-must-be-at-least-256-bits-long}")
+    @Value("${jwt.secret:lis-backend-jwt-secret-key-for-hs512-algorithm-must-be-at-least-512-bits-long-aka-64-bytes}")
     private String secret;
 
     @Value("${jwt.access-token-expiration:7200000}")

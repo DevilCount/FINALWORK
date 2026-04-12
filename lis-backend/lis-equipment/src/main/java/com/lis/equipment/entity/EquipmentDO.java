@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 public class EquipmentDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
-    @TableLogic
     private Long id;
 
     private String equipmentCode;
@@ -95,4 +94,8 @@ public class EquipmentDO implements Serializable {
     private LocalDateTime updateTime;
 
     private String remark;
+
+    @TableField("del_flag")
+    @TableLogic
+    private Integer delFlag;
 }

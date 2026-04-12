@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lis.common.exception.BusinessException;
 import com.lis.common.result.PageResult;
+import com.lis.common.result.ResultCode;
 import com.lis.specimen.dto.*;
 import com.lis.specimen.entity.*;
 import com.lis.specimen.enums.SpecimenActionEnum;
@@ -23,7 +24,11 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,7 +42,27 @@ public class SpecimenServiceImpl implements SpecimenService {
     private final SpecimenTypeMapper specimenTypeMapper;
     private final TestItemMapper testItemMapper;
     private final SpecimenRejectMapper specimenRejectMapper;
+    private final TestItemCategoryMapper testItemCategoryMapper;
     private final BarcodeGeneratorService barcodeGeneratorService;
+
+    private static final Map<String, List<String>> ALLOWED_TRANSITIONS = new HashMap<>();
+
+    static {
+        ALLOWED_TRANSITIONS.put("pending", Arrays.asList("received", "rejected", "cancelled"));
+        ALLOWED_TRANSITIONS.put("received", Arrays.asList("stored", "testing", "rejected", "cancelled"));
+        ALLOWED_TRANSITIONS.put("stored", Arrays.asList("testing", "rejected", "cancelled"));
+        ALLOWED_TRANSITIONS.put("testing", Arrays.asList("completed", "cancelled"));
+        ALLOWED_TRANSITIONS.put("completed", Arrays.asList());
+        ALLOWED_TRANSITIONS.put("rejected", Arrays.asList());
+        ALLOWED_TRANSITIONS.put("cancelled", Arrays.asList());
+    }
+
+    private void validateStatusTransition(String fromStatus, String toStatus) {
+        List<String> allowedTargets = ALLOWED_TRANSITIONS.get(fromStatus);
+        if (allowedTargets == null || !allowedTargets.contains(toStatus)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "标本状态不允许从[" + SpecimenStatusEnum.getDescByCode(fromStatus) + "]变更为[" + SpecimenStatusEnum.getDescByCode(toStatus) + "]");
+        }
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -102,7 +127,7 @@ public class SpecimenServiceImpl implements SpecimenService {
         wrapper.eq(SpecimenDO::getBarcode, barcode);
         SpecimenDO specimen = specimenMapper.selectOne(wrapper);
         if (specimen == null) {
-            throw new BusinessException("标本不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "标本不存在");
         }
         return convertToDetailVO(specimen);
     }
@@ -113,7 +138,7 @@ public class SpecimenServiceImpl implements SpecimenService {
         wrapper.eq(SpecimenDO::getSpecimenNo, specimenNo);
         SpecimenDO specimen = specimenMapper.selectOne(wrapper);
         if (specimen == null) {
-            throw new BusinessException("标本不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "标本不存在");
         }
         return convertToDetailVO(specimen);
     }
@@ -122,7 +147,7 @@ public class SpecimenServiceImpl implements SpecimenService {
     public SpecimenDetailVO getById(Long id) {
         SpecimenDO specimen = specimenMapper.selectById(id);
         if (specimen == null) {
-            throw new BusinessException("标本不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "标本不存在");
         }
         return convertToDetailVO(specimen);
     }
@@ -189,7 +214,7 @@ public class SpecimenServiceImpl implements SpecimenService {
         SpecimenDO specimen = getSpecimenByBarcode(dto.getBarcode());
         
         if (!SpecimenStatusEnum.PENDING.getCode().equals(specimen.getStatus())) {
-            throw new BusinessException("标本状态不正确，无法签收");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "标本状态不正确，无法签收");
         }
         
         String fromStatus = specimen.getStatus();
@@ -211,10 +236,22 @@ public class SpecimenServiceImpl implements SpecimenService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void storage(SpecimenStorageDTO dto) {
-        SpecimenDO specimen = getSpecimenByBarcode(dto.getBarcode());
+        SpecimenDO specimen;
+        if (dto.getSpecimenId() != null) {
+            specimen = specimenMapper.selectById(dto.getSpecimenId());
+            if (specimen == null) {
+                throw new BusinessException(ResultCode.NOT_FOUND, "标本不存在");
+            }
+        } else if (StringUtils.hasText(dto.getBarcode())) {
+            specimen = getSpecimenByBarcode(dto.getBarcode());
+        } else {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "标本ID和条码不能同时为空");
+        }
         
         String fromStatus = specimen.getStatus();
-        String toStatus = SpecimenStatusEnum.RECEIVED.getCode();
+        String toStatus = SpecimenStatusEnum.STORED.getCode();
+        
+        validateStatusTransition(fromStatus, toStatus);
         
         specimen.setStatus(toStatus);
         specimen.setUpdateTime(LocalDateTime.now());
@@ -232,15 +269,17 @@ public class SpecimenServiceImpl implements SpecimenService {
     public void updateStatus(SpecimenStatusDTO dto) {
         SpecimenDO specimen = specimenMapper.selectById(dto.getSpecimenId());
         if (specimen == null) {
-            throw new BusinessException("标本不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "标本不存在");
         }
         
         SpecimenStatusEnum targetStatus = SpecimenStatusEnum.getByCode(dto.getTargetStatus());
         if (targetStatus == null) {
-            throw new BusinessException("无效的目标状态");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "无效的目标状态");
         }
         
         String fromStatus = specimen.getStatus();
+        validateStatusTransition(fromStatus, dto.getTargetStatus());
+        
         specimen.setStatus(dto.getTargetStatus());
         specimen.setUpdateTime(LocalDateTime.now());
         specimenMapper.updateById(specimen);
@@ -260,7 +299,13 @@ public class SpecimenServiceImpl implements SpecimenService {
         SpecimenDO specimen = getSpecimenByBarcode(dto.getBarcode());
         
         String fromStatus = specimen.getStatus();
-        specimen.setStatus(SpecimenStatusEnum.REJECTED.getCode());
+        String toStatus = SpecimenStatusEnum.REJECTED.getCode();
+        
+        if (!"pending".equals(fromStatus) && !"received".equals(fromStatus) && !"stored".equals(fromStatus)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "只有待接收/已接收/已入库状态的标本才能拒收");
+        }
+        
+        specimen.setStatus(toStatus);
         specimen.setRejectReason(dto.getRejectReason());
         specimen.setUpdateTime(LocalDateTime.now());
         specimenMapper.updateById(specimen);
@@ -277,7 +322,7 @@ public class SpecimenServiceImpl implements SpecimenService {
         specimenRejectMapper.insert(rejectDO);
         
         saveTrace(specimen.getId(), specimen.getSpecimenNo(), SpecimenActionEnum.REJECT.getCode(),
-                fromStatus, SpecimenStatusEnum.REJECTED.getCode(), null, null,
+                fromStatus, toStatus, null, null,
                 dto.getReceiveUserId(), dto.getReceiveUserName(), dto.getRejectReason());
         
         log.info("标本拒收成功: specimenNo={}, reason={}", specimen.getSpecimenNo(), dto.getRejectReason());
@@ -324,7 +369,7 @@ public class SpecimenServiceImpl implements SpecimenService {
     public void addition(SpecimenAdditionDTO dto) {
         SpecimenDO specimen = specimenMapper.selectById(dto.getSpecimenId());
         if (specimen == null) {
-            throw new BusinessException("标本不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "标本不存在");
         }
         
         if (!CollectionUtils.isEmpty(dto.getTestItemIds())) {
@@ -358,7 +403,7 @@ public class SpecimenServiceImpl implements SpecimenService {
     public void printBarcode(Long specimenId) {
         SpecimenDO specimen = specimenMapper.selectById(specimenId);
         if (specimen == null) {
-            throw new BusinessException("标本不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "标本不存在");
         }
         
         specimen.setIsPrint(1);
@@ -392,12 +437,38 @@ public class SpecimenServiceImpl implements SpecimenService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<String> listTestItemCategories() {
+        LambdaQueryWrapper<TestItemDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TestItemDO::getStatus, 0);
+        wrapper.isNotNull(TestItemDO::getCategoryId);
+        wrapper.select(TestItemDO::getCategoryId);
+        
+        List<TestItemDO> list = testItemMapper.selectList(wrapper);
+        if (list.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        List<Long> categoryIds = list.stream()
+                .map(TestItemDO::getCategoryId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        LambdaQueryWrapper<TestItemCategoryDO> categoryWrapper = new LambdaQueryWrapper<>();
+        categoryWrapper.in(TestItemCategoryDO::getId, categoryIds);
+        List<TestItemCategoryDO> categories = testItemCategoryMapper.selectList(categoryWrapper);
+        
+        return categories.stream()
+                .map(TestItemCategoryDO::getCategoryName)
+                .collect(Collectors.toList());
+    }
+
     private SpecimenDO getSpecimenByBarcode(String barcode) {
         LambdaQueryWrapper<SpecimenDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SpecimenDO::getBarcode, barcode);
         SpecimenDO specimen = specimenMapper.selectOne(wrapper);
         if (specimen == null) {
-            throw new BusinessException("标本不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "标本不存在");
         }
         return specimen;
     }
@@ -428,6 +499,8 @@ public class SpecimenServiceImpl implements SpecimenService {
             return SpecimenActionEnum.COMPLETE;
         } else if (SpecimenStatusEnum.CANCELLED.getCode().equals(status)) {
             return SpecimenActionEnum.CANCEL;
+        } else if (SpecimenStatusEnum.STORED.getCode().equals(status)) {
+            return SpecimenActionEnum.STORAGE;
         }
         return SpecimenActionEnum.RECEIVE;
     }

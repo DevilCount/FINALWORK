@@ -27,8 +27,8 @@
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="formData.status" placeholder="请选择状态">
-          <el-option label="正常" value="normal" />
-          <el-option label="禁用" value="disable" />
+          <el-option label="正常" :value="0" />
+          <el-option label="禁用" :value="2" />
         </el-select>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -83,7 +83,7 @@ const isEdit = computed(() => !!props.roleId)
 const formData = reactive<RoleForm>({
   name: '',
   code: '',
-  status: 'normal',
+  status: 0,
   sort: 0,
   remark: '',
   menuIds: [],
@@ -119,7 +119,7 @@ const loadRoleInfo = async () => {
 const resetForm = () => {
   formData.name = ''
   formData.code = ''
-  formData.status = 'normal'
+  formData.status = 0
   formData.sort = 0
   formData.remark = ''
   formData.menuIds = []

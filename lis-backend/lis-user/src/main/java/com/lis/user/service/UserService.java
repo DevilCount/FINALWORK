@@ -27,6 +27,8 @@ public interface UserService {
 
     void resetPassword(Long userId, String newPassword);
 
+    void resetPasswordWithHash(Long userId, String passwordHash);
+
     void updateStatus(Long userId, Integer status);
 
     void assignRoles(UserRoleAssignDTO assignDTO);
@@ -36,4 +38,6 @@ public interface UserService {
     List<String> getPermissionsByUserId(Long userId);
 
     Map<String, Object> getUserInfoByUsername(String username);
+
+    Map<String, Object> getUserInfoById(Long id);
 }

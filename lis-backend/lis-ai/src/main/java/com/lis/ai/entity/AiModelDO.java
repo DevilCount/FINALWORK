@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 public class AiModelDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
-    @TableLogic
     private Long id;
 
     private String modelCode;
@@ -68,4 +67,8 @@ public class AiModelDO implements Serializable {
     private LocalDateTime updateTime;
 
     private String remark;
+
+    @TableField("del_flag")
+    @TableLogic
+    private Integer delFlag;
 }

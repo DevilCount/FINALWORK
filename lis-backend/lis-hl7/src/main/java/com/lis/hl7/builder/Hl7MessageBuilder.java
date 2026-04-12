@@ -4,8 +4,12 @@ import ca.uhn.hl7v2.HL7Exception;
 import ca.uhn.hl7v2.model.v25.message.ACK;
 import ca.uhn.hl7v2.model.v25.message.ADT_A01;
 import ca.uhn.hl7v2.model.v25.message.ORU_R01;
+import ca.uhn.hl7v2.model.v25.message.ORM_O01;
+import ca.uhn.hl7v2.model.v25.group.ORM_O01_ORDER;
 import ca.uhn.hl7v2.model.v25.segment.*;
 import ca.uhn.hl7v2.parser.PipeParser;
+import com.lis.hl7.dto.HisLabOrderDTO;
+import com.lis.hl7.dto.HisLabOrderItemDTO;
 import com.lis.hl7.vo.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -118,6 +122,112 @@ public class Hl7MessageBuilder {
         }
 
         return parser.encode(oru);
+    }
+
+    public String buildOrmO01(HisLabOrderDTO labOrder) throws HL7Exception {
+        ORM_O01 orm = new ORM_O01();
+
+        MSH msh = orm.getMSH();
+        msh.getFieldSeparator().setValue("|");
+        msh.getEncodingCharacters().setValue("^~\\&");
+        msh.getSendingApplication().getNamespaceID().setValue("HIS");
+        msh.getSendingFacility().getNamespaceID().setValue("HIS_HOSPITAL");
+        msh.getDateTimeOfMessage().getTime().setValue(getCurrentTime());
+        msh.getMessageType().getMessageCode().setValue("ORM");
+        msh.getMessageType().getTriggerEvent().setValue("O01");
+        msh.getMessageControlID().setValue(generateMessageControlId());
+        msh.getProcessingID().getProcessingID().setValue("P");
+        msh.getVersionID().getVersionID().setValue(HL7_VERSION);
+
+        PID pid = orm.getPATIENT().getPID();
+        pid.getSetIDPID().setValue("1");
+        if (labOrder.getPatientId() != null) {
+            pid.getPatientID().getIDNumber().setValue(labOrder.getPatientId());
+            pid.getPatientIdentifierList(0).getIDNumber().setValue(labOrder.getPatientId());
+            pid.getPatientIdentifierList(0).getIdentifierTypeCode().setValue("PI");
+        }
+        if (labOrder.getPatientName() != null) {
+            pid.getPatientName(0).getFamilyName().getSurname().setValue(labOrder.getPatientName());
+        }
+        if (labOrder.getGender() != null) {
+            pid.getAdministrativeSex().setValue(labOrder.getGender());
+        }
+        if (labOrder.getBirthDate() != null) {
+            pid.getDateTimeOfBirth().getTime().setValue(labOrder.getBirthDate());
+        }
+        if (labOrder.getPhone() != null) {
+            pid.getPhoneNumberHome(0).getTelephoneNumber().setValue(labOrder.getPhone());
+        }
+        if (labOrder.getAddress() != null) {
+            pid.getPatientAddress(0).getStreetAddress().getStreetOrMailingAddress().setValue(labOrder.getAddress());
+        }
+        if (labOrder.getIdCardNo() != null) {
+            pid.getPatientIdentifierList(1).getIDNumber().setValue(labOrder.getIdCardNo());
+            pid.getPatientIdentifierList(1).getIdentifierTypeCode().setValue("ID");
+        }
+
+        PV1 pv1 = orm.getPATIENT().getPATIENT_VISIT().getPV1();
+        pv1.getSetIDPV1().setValue("1");
+        if (labOrder.getVisitClass() != null) {
+            pv1.getPatientClass().setValue(labOrder.getVisitClass());
+        }
+        if (labOrder.getDepartment() != null) {
+            pv1.getAssignedPatientLocation().getPointOfCare().setValue(labOrder.getDepartment());
+        }
+        if (labOrder.getWard() != null) {
+            pv1.getAssignedPatientLocation().getFacility().getNamespaceID().setValue(labOrder.getWard());
+        }
+        if (labOrder.getBedNo() != null) {
+            pv1.getAssignedPatientLocation().getBed().setValue(labOrder.getBedNo());
+        }
+        if (labOrder.getVisitNo() != null) {
+            pv1.getVisitNumber().getIDNumber().setValue(labOrder.getVisitNo());
+        }
+        if (labOrder.getAttendingDoctor() != null) {
+            pv1.getAttendingDoctor(0).getIDNumber().setValue(labOrder.getAttendingDoctor());
+        }
+
+        if (labOrder.getOrderItems() != null && !labOrder.getOrderItems().isEmpty()) {
+            for (int i = 0; i < labOrder.getOrderItems().size(); i++) {
+                HisLabOrderItemDTO item = labOrder.getOrderItems().get(i);
+                ORM_O01_ORDER order = orm.getORDER();
+
+                ORC orc = order.getORC();
+                orc.getOrderControl().setValue(item.getOrderControl() != null ? item.getOrderControl() : "NW");
+                if (item.getPlacerOrderNo() != null) {
+                    orc.getPlacerOrderNumber().getEntityIdentifier().setValue(item.getPlacerOrderNo());
+                }
+                if (item.getOrderingDoctor() != null) {
+                    orc.getOrderingProvider(0).getIDNumber().setValue(item.getOrderingDoctor());
+                }
+
+                OBR obr = order.getORDER_DETAIL().getOBR();
+                obr.getSetIDOBR().setValue(String.valueOf(i + 1));
+                if (item.getPlacerOrderNo() != null) {
+                    obr.getPlacerOrderNumber().getEntityIdentifier().setValue(item.getPlacerOrderNo());
+                }
+                if (item.getOrderItemCode() != null) {
+                    obr.getUniversalServiceIdentifier().getIdentifier().setValue(item.getOrderItemCode());
+                    if (item.getOrderItemName() != null) {
+                        obr.getUniversalServiceIdentifier().getText().setValue(item.getOrderItemName());
+                    }
+                }
+                if (item.getPriority() != null) {
+                    obr.getPriorityOBR().setValue(item.getPriority());
+                }
+                if (item.getSpecimenType() != null) {
+                    obr.getSpecimenSource().getSpecimenSourceNameOrCode().getIdentifier().setValue(item.getSpecimenType());
+                }
+                if (item.getCollectionTime() != null) {
+                    obr.getSpecimenReceivedDateTime().getTime().setValue(item.getCollectionTime());
+                }
+                if (item.getClinicalInfo() != null) {
+                    obr.getRelevantClinicalInformation().setValue(item.getClinicalInfo());
+                }
+            }
+        }
+
+        return parser.encode(orm);
     }
 
     private void buildPidSegment(PID pid, Hl7PatientVO patient) throws HL7Exception {

@@ -18,7 +18,7 @@
             <el-tree-select
               v-model="formData.parentId"
               :data="menuTree"
-              :props="{ label: 'label', children: 'children', value: 'id' }"
+              :props="{ label: 'label', children: 'children' }"
               placeholder="请选择上级菜单"
               check-strictly
               clearable
@@ -29,9 +29,9 @@
         <el-col :span="12">
           <el-form-item label="菜单类型" prop="type">
             <el-radio-group v-model="formData.type">
-              <el-radio value="directory">目录</el-radio>
-              <el-radio value="menu">菜单</el-radio>
-              <el-radio value="button">按钮</el-radio>
+              <el-radio value="M">目录</el-radio>
+              <el-radio value="C">菜单</el-radio>
+              <el-radio value="F">按钮</el-radio>
             </el-radio-group>
           </el-form-item>
         </el-col>
@@ -39,8 +39,8 @@
       
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="菜单名称" prop="name">
-            <el-input v-model="formData.name" placeholder="请输入菜单名称" />
+          <el-form-item label="菜单名称" prop="menuName">
+            <el-input v-model="formData.menuName" placeholder="请输入菜单名称" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -80,16 +80,16 @@
         <el-col :span="12">
           <el-form-item label="是否可见" prop="visible">
             <el-radio-group v-model="formData.visible">
-              <el-radio value="show">显示</el-radio>
-              <el-radio value="hidden">隐藏</el-radio>
+              <el-radio :value="0">显示</el-radio>
+              <el-radio :value="1">隐藏</el-radio>
             </el-radio-group>
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="状态" prop="status">
             <el-radio-group v-model="formData.status">
-              <el-radio value="normal">正常</el-radio>
-              <el-radio value="disable">禁用</el-radio>
+              <el-radio :value="0">正常</el-radio>
+              <el-radio :value="2">禁用</el-radio>
             </el-radio-group>
           </el-form-item>
         </el-col>
@@ -118,7 +118,7 @@ import {
   updateMenu,
   type MenuForm,
 } from '@/api/system/menu'
-import { getMenuTree, type MenuTree } from '@/api/system/menu'
+import { getMenuTreeNodes, type MenuTree } from '@/api/system/menu'
 
 const props = defineProps<{
   visible: boolean
@@ -144,20 +144,20 @@ const isEdit = computed(() => !!props.menuId)
 
 const formData = reactive<MenuForm>({
   parentId: 0,
-  name: '',
+  menuName: '',
   path: '',
   component: '',
   redirect: '',
   icon: '',
   sort: 0,
-  status: 'normal',
-  visible: 'show',
-  type: 'directory',
+  status: 0,
+  visible: 0,
+  type: 0,
   perms: '',
 })
 
 const formRules: FormRules = {
-  name: [
+  menuName: [
     { required: true, message: '请输入菜单名称', trigger: 'blur' },
   ],
   type: [
@@ -170,7 +170,7 @@ const formRules: FormRules = {
 
 const loadMenuTree = async () => {
   try {
-    const tree = await getMenuTree()
+    const tree = await getMenuTreeNodes()
     menuTree.value = [{ id: 0, label: '根目录', parentId: -1, children: tree }]
   } catch (error) {
     console.error('加载菜单树失败', error)
@@ -182,7 +182,7 @@ const loadMenuInfo = async () => {
   try {
     const menu = await getMenuById(props.menuId)
     formData.parentId = menu.parentId
-    formData.name = menu.name
+    formData.menuName = menu.menuName
     formData.path = menu.path
     formData.component = menu.component
     formData.redirect = menu.redirect
@@ -199,15 +199,15 @@ const loadMenuInfo = async () => {
 
 const resetForm = () => {
   formData.parentId = props.parentId || 0
-  formData.name = ''
+  formData.menuName = ''
   formData.path = ''
   formData.component = ''
   formData.redirect = ''
   formData.icon = ''
   formData.sort = 0
-  formData.status = 'normal'
-  formData.visible = 'show'
-  formData.type = 'directory'
+  formData.status = 0
+  formData.visible = 0
+  formData.type = 0
   formData.perms = ''
   formRef.value?.resetFields()
 }

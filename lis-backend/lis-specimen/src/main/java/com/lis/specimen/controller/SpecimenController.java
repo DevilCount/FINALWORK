@@ -132,4 +132,11 @@ public class SpecimenController {
         List<TestItemVO> list = specimenService.listTestItems();
         return Result.success(list);
     }
+
+    @ApiOperation("获取检验项目分类列表")
+    @GetMapping("/testItemCategories")
+    public Result<List<String>> listTestItemCategories() {
+        List<String> list = specimenService.listTestItemCategories();
+        return Result.success(list);
+    }
 }

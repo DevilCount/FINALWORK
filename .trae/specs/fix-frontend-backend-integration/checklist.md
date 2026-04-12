@@ -1,0 +1,13 @@
+- [x] ResultEntryController @RequestMapping 从 "/report/result" 改为 "/result"，网关路径 /report/result 可正常访问
+- [x] Vite 开发服务器直接访问深层路由（如 /specimen/register）不返回 404
+- [x] 刷新任意页面后路由不丢失，页面正确重新加载
+- [x] 动态路由在用户登录后正确加载，侧边栏菜单完整显示
+- [x] "返回首页"按钮点击后正确导航到 /dashboard/index
+- [x] 侧边栏菜单点击后正确切换到对应页面
+- [x] 浏览器前进后退按钮正常工作
+- [x] 所有前端 API 调用路径与后端 Controller 实际路径匹配
+- [x] 结果录入 API (POST /report/result) 返回 200 而非 404
+- [x] 标本详情 API (GET /specimen/getById/{id}) 返回正确数据
+- [x] 分页查询参数统一使用 pageNum 和 pageSize
+- [x] 全流程端到端测试通过（15/15 API 测试通过）
+- [x] 9/9 后端服务正常运行

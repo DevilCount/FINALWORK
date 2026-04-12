@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Api(tags = "检验申请管理")
 @RestController
-@RequestMapping("/report/apply")
+@RequestMapping("/apply")
 @RequiredArgsConstructor
 public class ReportApplyController {
 
@@ -26,6 +26,20 @@ public class ReportApplyController {
     public Result<Long> createReportApply(@Validated @RequestBody ReportApplyDTO dto) {
         Long reportId = reportApplyService.createReportApply(dto);
         return Result.success("创建成功", reportId);
+    }
+
+    @ApiOperation("更新检验申请")
+    @PutMapping("/{reportId}")
+    public Result<Void> updateReportApply(@PathVariable Long reportId, @Validated @RequestBody ReportApplyDTO dto) {
+        reportApplyService.updateReportApply(reportId, dto);
+        return Result.success("更新成功", null);
+    }
+
+    @ApiOperation("删除检验申请")
+    @DeleteMapping("/{reportId}")
+    public Result<Void> deleteReportApply(@PathVariable Long reportId) {
+        reportApplyService.deleteReportApply(reportId);
+        return Result.success("删除成功", null);
     }
 
     @ApiOperation("取消报告")

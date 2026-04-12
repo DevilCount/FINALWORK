@@ -17,7 +17,7 @@ import java.util.Map;
 @Component
 public class JwtUtils {
 
-    @Value("${jwt.secret:lis-backend-jwt-secret-key-must-be-at-least-256-bits-long}")
+    @Value("${jwt.secret:lis-backend-jwt-secret-key-for-hs512-algorithm-must-be-at-least-512-bits-long-aka-64-bytes}")
     private String secret;
 
     @Value("${jwt.expiration:86400000}")
@@ -50,7 +50,7 @@ public class JwtUtils {
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
     }
 
@@ -64,7 +64,7 @@ public class JwtUtils {
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
     }
 

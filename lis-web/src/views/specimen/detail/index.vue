@@ -20,7 +20,7 @@
       <template v-if="specimenDetail">
         <el-descriptions title="基本信息" :column="3" border>
           <el-descriptions-item label="标本编号">
-            <el-tag type="primary">{{ specimenDetail.specimenCode }}</el-tag>
+            <el-tag type="primary">{{ specimenDetail.specimenNo }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="标本类型">{{ specimenDetail.specimenTypeName }}</el-descriptions-item>
           <el-descriptions-item label="状态">
@@ -35,12 +35,12 @@
           <el-descriptions-item label="性别">
             {{ specimenDetail.patientGender === 'male' ? '男' : '女' }}
           </el-descriptions-item>
-          <el-descriptions-item label="年龄">{{ specimenDetail.patientAge }}岁</el-descriptions-item>
+          <el-descriptions-item label="年龄">{{ specimenDetail.patientAge }}</el-descriptions-item>
           <el-descriptions-item label="联系电话">{{ specimenDetail.patientPhone || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="身份证号">{{ specimenDetail.patientIdCard || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="科室">{{ specimenDetail.departmentName }}</el-descriptions-item>
+          <el-descriptions-item label="身份证号">{{ specimenDetail.patientIdNo || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="科室">{{ specimenDetail.deptName }}</el-descriptions-item>
           <el-descriptions-item label="床号">{{ specimenDetail.bedNo || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="诊断" :span="2">{{ specimenDetail.diagnosis || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="诊断" :span="2">{{ specimenDetail.clinicalDiagnosis || '-' }}</el-descriptions-item>
         </el-descriptions>
 
         <el-descriptions title="采集信息" :column="3" border class="mt-20">
@@ -68,22 +68,23 @@
         </el-table>
 
         <div class="section-title">流转记录</div>
-        <el-timeline v-if="specimenDetail.flowRecords?.length > 0">
+        <el-timeline v-if="specimenDetail.traces?.length > 0">
           <el-timeline-item
-            v-for="record in specimenDetail.flowRecords"
+            v-for="record in specimenDetail.traces"
             :key="record.id"
-            :timestamp="record.flowTime"
+            :timestamp="record.operateTime"
             placement="top"
           >
             <el-card>
               <div class="flow-record">
                 <div class="flow-type">
-                  <el-tag>{{ record.flowTypeName }}</el-tag>
+                  <el-tag>{{ record.actionName }}</el-tag>
                 </div>
                 <div class="flow-info">
                   <p><strong>操作人：</strong>{{ record.operatorName }}</p>
-                  <p v-if="record.fromLocation"><strong>来源：</strong>{{ record.fromLocation }}</p>
-                  <p v-if="record.toLocation"><strong>去向：</strong>{{ record.toLocation }}</p>
+                  <p v-if="record.fromStatus && record.toStatus">
+                    <strong>状态变更：</strong>{{ record.fromStatusName }} -> {{ record.toStatusName }}
+                  </p>
                   <p v-if="record.remark"><strong>备注：</strong>{{ record.remark }}</p>
                 </div>
               </div>
@@ -93,21 +94,21 @@
         <el-empty v-else description="暂无流转记录" />
 
         <div class="action-bar">
-          <el-button v-if="specimenDetail.status === 'pending_collect'" type="success" @click="handleCollect">
-            <el-icon><Check /></el-icon>
-            采集标本
-          </el-button>
-          <el-button v-if="specimenDetail.status === 'collected'" type="warning" @click="handleReceive">
+          <el-button v-if="specimenDetail.status === 'REGISTERED'" type="success" @click="handleReceive">
             <el-icon><Download /></el-icon>
             接收标本
           </el-button>
-          <el-button v-if="['pending_collect', 'collected'].includes(specimenDetail.status)" type="danger" @click="handleReject">
+          <el-button v-if="['REGISTERED', 'RECEIVED'].includes(specimenDetail.status)" type="danger" @click="handleReject">
             <el-icon><Close /></el-icon>
             拒收标本
           </el-button>
-          <el-button v-if="specimenDetail.status === 'received'" type="primary" @click="handleEntryResult">
+          <el-button v-if="specimenDetail.status === 'RECEIVED'" type="primary" @click="handleEntryResult">
             <el-icon><Edit /></el-icon>
             录入结果
+          </el-button>
+          <el-button v-if="specimenDetail.status === 'RECEIVED'" type="warning" @click="handleStorage">
+            <el-icon><Box /></el-icon>
+            入库
           </el-button>
         </div>
       </template>
@@ -131,9 +132,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { View, Back, Check, Download, Close, Edit } from '@element-plus/icons-vue'
+import { View, Back, Download, Close, Edit, Box } from '@element-plus/icons-vue'
 import type { SpecimenDetail, SpecimenStatus } from '@/types/specimen'
-import { getSpecimenDetail, collectSpecimen, receiveSpecimen, rejectSpecimen } from '@/api/specimen'
+import { getSpecimenDetail, receiveSpecimen, rejectSpecimen, storageSpecimen } from '@/api/specimen'
 
 const route = useRoute()
 const router = useRouter()
@@ -143,17 +144,19 @@ const specimenDetail = ref<SpecimenDetail | null>(null)
 
 const rejectDialogVisible = ref(false)
 const rejectForm = reactive({
+  specimenNo: '',
   reason: '',
 })
 
 const getStatusTagType = (status: SpecimenStatus): 'success' | 'primary' | 'warning' | 'info' | 'danger' | undefined => {
   const typeMap: Record<SpecimenStatus, 'success' | 'primary' | 'warning' | 'info' | 'danger' | undefined> = {
-    pending_collect: 'info',
-    collected: 'warning',
-    received: 'primary',
-    testing: undefined,
-    completed: 'success',
-    rejected: 'danger',
+    REGISTERED: 'info',
+    RECEIVED: 'primary',
+    REJECTED: 'danger',
+    STORAGE: 'warning',
+    TESTING: undefined,
+    COMPLETED: 'success',
+    CANCELLED: 'info',
   }
   return typeMap[status]
 }
@@ -192,23 +195,10 @@ const handleBack = () => {
   router.back()
 }
 
-const handleCollect = async () => {
-  try {
-    await ElMessageBox.confirm('确认采集该标本？', '提示', { type: 'warning' })
-    await collectSpecimen(specimenDetail.value!.id)
-    ElMessage.success('采集成功')
-    fetchDetail()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('采集失败:', error)
-    }
-  }
-}
-
 const handleReceive = async () => {
   try {
     await ElMessageBox.confirm('确认接收该标本？', '提示', { type: 'warning' })
-    await receiveSpecimen(specimenDetail.value!.id)
+    await receiveSpecimen(specimenDetail.value!.specimenNo)
     ElMessage.success('接收成功')
     fetchDetail()
   } catch (error) {
@@ -220,6 +210,7 @@ const handleReceive = async () => {
 
 const handleReject = () => {
   rejectForm.reason = ''
+  rejectForm.specimenNo = specimenDetail.value!.specimenNo
   rejectDialogVisible.value = true
 }
 
@@ -229,12 +220,33 @@ const confirmReject = async () => {
     return
   }
   try {
-    await rejectSpecimen(specimenDetail.value!.id, rejectForm.reason)
+    await rejectSpecimen(rejectForm.specimenNo, rejectForm.reason)
     ElMessage.success('拒收成功')
     rejectDialogVisible.value = false
     fetchDetail()
   } catch (error) {
     console.error('拒收失败:', error)
+  }
+}
+
+const handleStorage = async () => {
+  try {
+    const { value: storageLocation } = await ElMessageBox.prompt('请输入存储位置', '标本入库', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      inputPattern: /\S+/,
+      inputErrorMessage: '存储位置不能为空',
+    })
+    await storageSpecimen({
+      specimenId: Number(specimenDetail.value!.id),
+      storageLocation,
+    })
+    ElMessage.success('入库成功')
+    fetchDetail()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('入库失败:', error)
+    }
   }
 }
 

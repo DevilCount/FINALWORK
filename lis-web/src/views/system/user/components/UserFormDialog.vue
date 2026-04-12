@@ -43,9 +43,9 @@
         <el-col :span="12">
           <el-form-item label="性别" prop="gender">
             <el-select v-model="formData.gender" placeholder="请选择性别">
-              <el-option label="男" value="male" />
-              <el-option label="女" value="female" />
-              <el-option label="未知" value="unknown" />
+              <el-option label="男" :value="1" />
+              <el-option label="女" :value="2" />
+              <el-option label="未知" :value="0" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -70,7 +70,7 @@
             <el-tree-select
               v-model="formData.deptId"
               :data="deptTree"
-              :props="{ label: 'label', children: 'children', value: 'id' }"
+              :props="{ label: 'label', children: 'children' }"
               placeholder="请选择部门"
               check-strictly
               clearable
@@ -81,8 +81,8 @@
         <el-col :span="12">
           <el-form-item label="状态" prop="status">
             <el-select v-model="formData.status" placeholder="请选择状态">
-              <el-option label="正常" value="normal" />
-              <el-option label="禁用" value="disable" />
+              <el-option label="正常" :value="0" />
+              <el-option label="禁用" :value="2" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -123,7 +123,7 @@ import {
   updateUser,
   type UserForm,
 } from '@/api/system/user'
-import { getDeptTree, type DeptTree } from '@/api/system/dept'
+import { getDeptTreeNodes, type DeptTree } from '@/api/system/dept'
 import { getAllRoles, type Role } from '@/api/system/role'
 
 const props = defineProps<{
@@ -154,8 +154,8 @@ const formData = reactive<UserForm>({
   realName: '',
   email: '',
   phone: '',
-  gender: 'unknown',
-  status: 'normal',
+  gender: 0,
+  status: 0,
   deptId: null,
   roleIds: [],
   password: '',
@@ -204,7 +204,7 @@ const formRules: FormRules = {
 
 const loadDeptTree = async () => {
   try {
-    deptTree.value = await getDeptTree()
+    deptTree.value = await getDeptTreeNodes()
   } catch (error) {
     console.error('加载部门树失败', error)
   }
@@ -241,8 +241,8 @@ const resetForm = () => {
   formData.realName = ''
   formData.email = ''
   formData.phone = ''
-  formData.gender = 'unknown'
-  formData.status = 'normal'
+  formData.gender = 0
+  formData.status = 0
   formData.deptId = props.deptId || null
   formData.roleIds = []
   formData.password = ''

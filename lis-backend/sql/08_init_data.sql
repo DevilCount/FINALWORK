@@ -11,6 +11,7 @@ USE `lis_user`;
 -- ---------------------------------------------
 -- 初始化部门数据
 -- ---------------------------------------------
+DELETE FROM `sys_dept`;
 INSERT INTO `sys_dept` (`id`, `parent_id`, `dept_name`, `dept_code`, `leader`, `phone`, `email`, `sort`, `status`, `create_by`, `remark`) VALUES
 (1, 0, '检验中心', 'LAB001', '管理员', '010-12345678', 'lab@hospital.com', 0, 0, 'admin', '检验中心'),
 (2, 1, '生化室', 'LAB002', '张三', '010-12345679', 'sh@hospital.com', 1, 0, 'admin', '生化检验室'),
@@ -23,6 +24,7 @@ INSERT INTO `sys_dept` (`id`, `parent_id`, `dept_name`, `dept_code`, `leader`, `
 -- ---------------------------------------------
 -- 初始化用户数据（密码为: admin123 使用BCrypt加密）
 -- ---------------------------------------------
+DELETE FROM `sys_user`;
 INSERT INTO `sys_user` (`id`, `dept_id`, `user_name`, `nick_name`, `user_type`, `email`, `phone`, `gender`, `password`, `status`, `create_by`, `remark`) VALUES
 (1, 1, 'admin', '系统管理员', '00', 'admin@hospital.com', '13800138000', '0', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 0, 'admin', '系统管理员'),
 (2, 2, 'zhangsan', '张三', '03', 'zhangsan@hospital.com', '13800138001', '0', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 0, 'admin', '生化室主任'),
@@ -33,6 +35,7 @@ INSERT INTO `sys_user` (`id`, `dept_id`, `user_name`, `nick_name`, `user_type`, 
 -- ---------------------------------------------
 -- 初始化角色数据
 -- ---------------------------------------------
+DELETE FROM `sys_role`;
 INSERT INTO `sys_role` (`id`, `role_name`, `role_code`, `role_key`, `role_sort`, `data_scope`, `status`, `create_by`, `remark`) VALUES
 (1, '超级管理员', 'SUPER_ADMIN', 'admin', 1, 1, 0, 'admin', '超级管理员角色'),
 (2, '检验科主任', 'LAB_DIRECTOR', 'lab_director', 2, 1, 0, 'admin', '检验科主任角色'),
@@ -44,6 +47,7 @@ INSERT INTO `sys_role` (`id`, `role_name`, `role_code`, `role_key`, `role_sort`,
 -- ---------------------------------------------
 -- 初始化用户角色关联
 -- ---------------------------------------------
+DELETE FROM `sys_user_role`;
 INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES
 (1, 1),
 (2, 2),
@@ -57,6 +61,7 @@ INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES
 -- ---------------------------------------------
 -- 初始化菜单数据
 -- ---------------------------------------------
+DELETE FROM `sys_menu`;
 INSERT INTO `sys_menu` (`id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `remark`) VALUES
 (1, '系统管理', 0, 1, 'system', NULL, NULL, '', 1, 0, 'M', 0, 0, '', 'system', 'admin', '系统管理目录'),
 (2, '用户管理', 1, 1, 'user', 'system/user/index', NULL, '', 1, 0, 'C', 0, 0, 'system:user:list', 'user', 'admin', '用户管理菜单'),
@@ -99,6 +104,7 @@ INSERT INTO `sys_menu` (`id`, `menu_name`, `parent_id`, `order_num`, `path`, `co
 -- ---------------------------------------------
 -- 初始化角色菜单关联
 -- ---------------------------------------------
+DELETE FROM `sys_role_menu`;
 INSERT INTO `sys_role_menu` (`role_id`, `menu_id`) VALUES
 (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10),
 (1, 11), (1, 12), (1, 13), (1, 14), (1, 15), (1, 16), (1, 17), (1, 18), (1, 19), (1, 20),
@@ -108,6 +114,7 @@ INSERT INTO `sys_role_menu` (`role_id`, `menu_id`) VALUES
 -- ---------------------------------------------
 -- 初始化字典类型数据
 -- ---------------------------------------------
+DELETE FROM `sys_dict_type`;
 INSERT INTO `sys_dict_type` (`id`, `dict_name`, `dict_type`, `status`, `create_by`, `remark`) VALUES
 (1, '用户性别', 'sys_user_sex', 0, 'admin', '用户性别列表'),
 (2, '菜单状态', 'sys_show_hide', 0, 'admin', '菜单状态列表'),
@@ -141,93 +148,94 @@ INSERT INTO `sys_dict_type` (`id`, `dict_name`, `dict_type`, `status`, `create_b
 -- ---------------------------------------------
 -- 初始化字典数据
 -- ---------------------------------------------
+DELETE FROM `sys_dict_data`;
 INSERT INTO `sys_dict_data` (`id`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `remark`) VALUES
-(1, 1, '男', '0', 'sys_user_sex', '', '', 'Y', 0, 'admin', '性别男'),
-(2, 2, '女', '1', 'sys_user_sex', '', '', 'N', 0, 'admin', '性别女'),
-(3, 3, '未知', '2', 'sys_user_sex', '', '', 'N', 0, 'admin', '性别未知'),
-(4, 1, '显示', '0', 'sys_show_hide', '', 'primary', 'Y', 0, 'admin', '显示菜单'),
-(5, 2, '隐藏', '1', 'sys_show_hide', '', 'danger', 'N', 0, 'admin', '隐藏菜单'),
-(6, 1, '正常', '0', 'sys_normal_disable', '', 'primary', 'Y', 0, 'admin', '正常状态'),
-(7, 2, '停用', '1', 'sys_normal_disable', '', 'danger', 'N', 0, 'admin', '停用状态'),
-(8, 1, '是', 'Y', 'sys_yes_no', '', 'primary', 'Y', 0, 'admin', '系统默认是'),
-(9, 2, '否', 'N', 'sys_yes_no', '', 'danger', 'N', 0, 'admin', '系统默认否'),
-(10, 1, '待接收', 'pending', 'specimen_status', '', 'info', 'Y', 0, 'admin', '标本待接收'),
-(11, 2, '已接收', 'received', 'specimen_status', '', 'primary', 'N', 0, 'admin', '标本已接收'),
-(12, 3, '检验中', 'testing', 'specimen_status', '', 'warning', 'N', 0, 'admin', '标本检验中'),
-(13, 4, '已完成', 'completed', 'specimen_status', '', 'success', 'N', 0, 'admin', '标本已完成'),
-(14, 5, '已拒收', 'rejected', 'specimen_status', '', 'danger', 'N', 0, 'admin', '标本已拒收'),
-(15, 1, '血液', 'blood', 'specimen_type', '', 'danger', 'Y', 0, 'admin', '血液标本'),
-(16, 2, '尿液', 'urine', 'specimen_type', '', 'warning', 'N', 0, 'admin', '尿液标本'),
-(17, 3, '粪便', 'stool', 'specimen_type', '', 'info', 'N', 0, 'admin', '粪便标本'),
-(18, 4, '痰液', 'sputum', 'specimen_type', '', 'primary', 'N', 0, 'admin', '痰液标本'),
-(19, 5, '脑脊液', 'csf', 'specimen_type', '', 'success', 'N', 0, 'admin', '脑脊液标本'),
-(20, 6, '胸腹水', 'pleural', 'specimen_type', '', 'warning', 'N', 0, 'admin', '胸腹水标本'),
-(21, 1, '草稿', 'draft', 'report_status', '', 'info', 'Y', 0, 'admin', '报告草稿'),
-(22, 2, '已审核', 'audited', 'report_status', '', 'primary', 'N', 0, 'admin', '报告已审核'),
-(23, 3, '已报告', 'reported', 'report_status', '', 'success', 'N', 0, 'admin', '报告已发布'),
-(24, 4, '已打印', 'printed', 'report_status', '', 'warning', 'N', 0, 'admin', '报告已打印'),
-(25, 5, '已取消', 'cancelled', 'report_status', '', 'danger', 'N', 0, 'admin', '报告已取消'),
-(26, 1, '待处理', '0', 'panic_status', '', 'danger', 'Y', 0, 'admin', '危急值待处理'),
-(27, 2, '已通知', '1', 'panic_status', '', 'warning', 'N', 0, 'admin', '危急值已通知'),
-(28, 3, '已处理', '2', 'panic_status', '', 'primary', 'N', 0, 'admin', '危急值已处理'),
-(29, 4, '已确认', '3', 'panic_status', '', 'success', 'N', 0, 'admin', '危急值已确认'),
-(30, 1, '正常', 'normal', 'equipment_status', '', 'success', 'Y', 0, 'admin', '设备正常'),
-(31, 2, '维护中', 'maintenance', 'equipment_status', '', 'warning', 'N', 0, 'admin', '设备维护中'),
-(32, 3, '维修中', 'repair', 'equipment_status', '', 'danger', 'N', 0, 'admin', '设备维修中'),
-(33, 4, '报废', 'scrap', 'equipment_status', '', 'info', 'N', 0, 'admin', '设备已报废'),
-(34, 5, '校准中', 'calibration', 'equipment_status', '', 'primary', 'N', 0, 'admin', '设备校准中'),
-(35, 1, '生化检验', 'biochemistry', 'test_item_category', '', 'primary', 'Y', 0, 'admin', '生化检验项目'),
-(36, 2, '免疫检验', 'immunity', 'test_item_category', '', 'success', 'N', 0, 'admin', '免疫检验项目'),
-(37, 3, '临检', 'clinical', 'test_item_category', '', 'warning', 'N', 0, 'admin', '临检项目'),
-(38, 4, '微生物', 'microbiology', 'test_item_category', '', 'info', 'N', 0, 'admin', '微生物项目'),
-(39, 5, '分子生物', 'molecular', 'test_item_category', '', 'danger', 'N', 0, 'admin', '分子生物项目'),
-(40, 1, '正常', 'N', 'result_flag', '', 'success', 'Y', 0, 'admin', '结果正常'),
-(41, 2, '偏高', 'H', 'result_flag', '', 'warning', 'N', 0, 'admin', '结果偏高'),
-(42, 3, '偏低', 'L', 'result_flag', '', 'info', 'N', 0, 'admin', '结果偏低'),
-(43, 4, '极高', 'HH', 'result_flag', '', 'danger', 'N', 0, 'admin', '结果极高'),
-(44, 5, '极低', 'LL', 'result_flag', '', 'danger', 'N', 0, 'admin', '结果极低'),
-(45, 1, '系统用户', '00', 'user_type', '', 'primary', 'Y', 0, 'admin', '系统用户'),
-(46, 2, '医生', '01', 'user_type', '', 'success', 'N', 0, 'admin', '医生用户'),
-(47, 3, '护士', '02', 'user_type', '', 'warning', 'N', 0, 'admin', '护士用户'),
-(48, 4, '检验师', '03', 'user_type', '', 'info', 'N', 0, 'admin', '检验师用户'),
-(49, 1, '门诊', 'outpatient', 'visit_type', '', 'primary', 'Y', 0, 'admin', '门诊就诊'),
-(50, 2, '住院', 'inpatient', 'visit_type', '', 'success', 'N', 0, 'admin', '住院就诊'),
-(51, 3, '急诊', 'emergency', 'visit_type', '', 'danger', 'N', 0, 'admin', '急诊就诊'),
-(52, 4, '体检', 'physical', 'visit_type', '', 'info', 'N', 0, 'admin', '体检'),
-(53, 1, '身份证', '01', 'id_type', '', 'primary', 'Y', 0, 'admin', '身份证'),
-(54, 2, '护照', '02', 'id_type', '', 'success', 'N', 0, 'admin', '护照'),
-(55, 3, '军官证', '03', 'id_type', '', 'warning', 'N', 0, 'admin', '军官证'),
-(56, 4, '其他', '04', 'id_type', '', 'info', 'N', 0, 'admin', '其他证件'),
-(57, 1, 'HL7', 'hl7', 'interface_type', '', 'primary', 'Y', 0, 'admin', 'HL7接口'),
-(58, 2, 'ASTM', 'astm', 'interface_type', '', 'success', 'N', 0, 'admin', 'ASTM接口'),
-(59, 3, 'XML', 'xml', 'interface_type', '', 'warning', 'N', 0, 'admin', 'XML接口'),
-(60, 4, 'JSON', 'json', 'interface_type', '', 'info', 'N', 0, 'admin', 'JSON接口'),
-(61, 5, 'WebSocket', 'websocket', 'interface_type', '', 'danger', 'N', 0, 'admin', 'WebSocket接口'),
-(62, 1, '入站', 'inbound', 'message_direction', '', 'primary', 'Y', 0, 'admin', '入站消息'),
-(63, 2, '出站', 'outbound', 'message_direction', '', 'success', 'N', 0, 'admin', '出站消息'),
-(64, 3, '双向', 'bidirectional', 'message_direction', '', 'warning', 'N', 0, 'admin', '双向消息'),
-(65, 1, '水平1', 'level1', 'qc_level', '', 'primary', 'Y', 0, 'admin', '质控水平1'),
-(66, 2, '水平2', 'level2', 'qc_level', '', 'success', 'N', 0, 'admin', '质控水平2'),
-(67, 3, '水平3', 'level3', 'qc_level', '', 'warning', 'N', 0, 'admin', '质控水平3'),
-(68, 1, '通过', 'pass', 'qc_result', '', 'success', 'Y', 0, 'admin', '质控通过'),
-(69, 2, '失败', 'fail', 'qc_result', '', 'danger', 'N', 0, 'admin', '质控失败'),
-(70, 3, '警告', 'warning', 'qc_result', '', 'warning', 'N', 0, 'admin', '质控警告'),
-(71, 1, '轻微', 'minor', 'fault_level', '', 'info', 'Y', 0, 'admin', '轻微故障'),
-(72, 2, '中等', 'moderate', 'fault_level', '', 'warning', 'N', 0, 'admin', '中等故障'),
-(73, 3, '严重', 'major', 'fault_level', '', 'danger', 'N', 0, 'admin', '严重故障'),
-(74, 4, '危急', 'critical', 'fault_level', '', 'danger', 'N', 0, 'admin', '危急故障'),
-(75, 1, '日常维护', 'routine', 'maintenance_type', '', 'primary', 'Y', 0, 'admin', '日常维护'),
-(76, 2, '周期维护', 'periodic', 'maintenance_type', '', 'success', 'N', 0, 'admin', '周期维护'),
-(77, 3, '预防性维护', 'preventive', 'maintenance_type', '', 'warning', 'N', 0, 'admin', '预防性维护'),
-(78, 1, '合格', 'qualified', 'calibration_result', '', 'success', 'Y', 0, 'admin', '校准合格'),
-(79, 2, '不合格', 'unqualified', 'calibration_result', '', 'danger', 'N', 0, 'admin', '校准不合格'),
-(80, 1, '低', 'low', 'risk_level', '', 'success', 'Y', 0, 'admin', '低风险'),
-(81, 2, '中', 'medium', 'risk_level', '', 'warning', 'N', 0, 'admin', '中风险'),
-(82, 3, '高', 'high', 'risk_level', '', 'danger', 'N', 0, 'admin', '高风险'),
-(83, 4, '危急', 'critical', 'risk_level', '', 'danger', 'N', 0, 'admin', '危急风险'),
-(84, 1, '待审核', '0', 'diagnosis_status', '', 'info', 'Y', 0, 'admin', '待审核'),
-(85, 2, '已确认', '1', 'diagnosis_status', '', 'success', 'N', 0, 'admin', '已确认'),
-(86, 3, '已拒绝', '2', 'diagnosis_status', '', 'danger', 'N', 0, 'admin', '已拒绝');
+(1, 1, '男', '0', 'sys_user_sex', '', '', 1, 0, 'admin', '性别男'),
+(2, 2, '女', '1', 'sys_user_sex', '', '', 0, 0, 'admin', '性别女'),
+(3, 3, '未知', '2', 'sys_user_sex', '', '', 0, 0, 'admin', '性别未知'),
+(4, 1, '显示', '0', 'sys_show_hide', '', 'primary', 1, 0, 'admin', '显示菜单'),
+(5, 2, '隐藏', '1', 'sys_show_hide', '', 'danger', 0, 0, 'admin', '隐藏菜单'),
+(6, 1, '正常', '0', 'sys_normal_disable', '', 'primary', 1, 0, 'admin', '正常状态'),
+(7, 2, '停用', '1', 'sys_normal_disable', '', 'danger', 0, 0, 'admin', '停用状态'),
+(8, 1, '是', 'Y', 'sys_yes_no', '', 'primary', 1, 0, 'admin', '系统默认是'),
+(9, 2, '否', 'N', 'sys_yes_no', '', 'danger', 0, 0, 'admin', '系统默认否'),
+(10, 1, '待接收', 'pending', 'specimen_status', '', 'info', 1, 0, 'admin', '标本待接收'),
+(11, 2, '已接收', 'received', 'specimen_status', '', 'primary', 0, 0, 'admin', '标本已接收'),
+(12, 3, '检验中', 'testing', 'specimen_status', '', 'warning', 0, 0, 'admin', '标本检验中'),
+(13, 4, '已完成', 'completed', 'specimen_status', '', 'success', 0, 0, 'admin', '标本已完成'),
+(14, 5, '已拒收', 'rejected', 'specimen_status', '', 'danger', 0, 0, 'admin', '标本已拒收'),
+(15, 1, '血液', 'blood', 'specimen_type', '', 'danger', 1, 0, 'admin', '血液标本'),
+(16, 2, '尿液', 'urine', 'specimen_type', '', 'warning', 0, 0, 'admin', '尿液标本'),
+(17, 3, '粪便', 'stool', 'specimen_type', '', 'info', 0, 0, 'admin', '粪便标本'),
+(18, 4, '痰液', 'sputum', 'specimen_type', '', 'primary', 0, 0, 'admin', '痰液标本'),
+(19, 5, '脑脊液', 'csf', 'specimen_type', '', 'success', 0, 0, 'admin', '脑脊液标本'),
+(20, 6, '胸腹水', 'pleural', 'specimen_type', '', 'warning', 0, 0, 'admin', '胸腹水标本'),
+(21, 1, '草稿', 'draft', 'report_status', '', 'info', 1, 0, 'admin', '报告草稿'),
+(22, 2, '已审核', 'audited', 'report_status', '', 'primary', 0, 0, 'admin', '报告已审核'),
+(23, 3, '已报告', 'reported', 'report_status', '', 'success', 0, 0, 'admin', '报告已发布'),
+(24, 4, '已打印', 'printed', 'report_status', '', 'warning', 0, 0, 'admin', '报告已打印'),
+(25, 5, '已取消', 'cancelled', 'report_status', '', 'danger', 0, 0, 'admin', '报告已取消'),
+(26, 1, '待处理', '0', 'panic_status', '', 'danger', 1, 0, 'admin', '危急值待处理'),
+(27, 2, '已通知', '1', 'panic_status', '', 'warning', 0, 0, 'admin', '危急值已通知'),
+(28, 3, '已处理', '2', 'panic_status', '', 'primary', 0, 0, 'admin', '危急值已处理'),
+(29, 4, '已确认', '3', 'panic_status', '', 'success', 0, 0, 'admin', '危急值已确认'),
+(30, 1, '正常', 'normal', 'equipment_status', '', 'success', 1, 0, 'admin', '设备正常'),
+(31, 2, '维护中', 'maintenance', 'equipment_status', '', 'warning', 0, 0, 'admin', '设备维护中'),
+(32, 3, '维修中', 'repair', 'equipment_status', '', 'danger', 0, 0, 'admin', '设备维修中'),
+(33, 4, '报废', 'scrap', 'equipment_status', '', 'info', 0, 0, 'admin', '设备已报废'),
+(34, 5, '校准中', 'calibration', 'equipment_status', '', 'primary', 0, 0, 'admin', '设备校准中'),
+(35, 1, '生化检验', 'biochemistry', 'test_item_category', '', 'primary', 1, 0, 'admin', '生化检验项目'),
+(36, 2, '免疫检验', 'immunity', 'test_item_category', '', 'success', 0, 0, 'admin', '免疫检验项目'),
+(37, 3, '临检', 'clinical', 'test_item_category', '', 'warning', 0, 0, 'admin', '临检项目'),
+(38, 4, '微生物', 'microbiology', 'test_item_category', '', 'info', 0, 0, 'admin', '微生物项目'),
+(39, 5, '分子生物', 'molecular', 'test_item_category', '', 'danger', 0, 0, 'admin', '分子生物项目'),
+(40, 1, '正常', 'N', 'result_flag', '', 'success', 1, 0, 'admin', '结果正常'),
+(41, 2, '偏高', 'H', 'result_flag', '', 'warning', 0, 0, 'admin', '结果偏高'),
+(42, 3, '偏低', 'L', 'result_flag', '', 'info', 0, 0, 'admin', '结果偏低'),
+(43, 4, '极高', 'HH', 'result_flag', '', 'danger', 0, 0, 'admin', '结果极高'),
+(44, 5, '极低', 'LL', 'result_flag', '', 'danger', 0, 0, 'admin', '结果极低'),
+(45, 1, '系统用户', '00', 'user_type', '', 'primary', 1, 0, 'admin', '系统用户'),
+(46, 2, '医生', '01', 'user_type', '', 'success', 0, 0, 'admin', '医生用户'),
+(47, 3, '护士', '02', 'user_type', '', 'warning', 0, 0, 'admin', '护士用户'),
+(48, 4, '检验师', '03', 'user_type', '', 'info', 0, 0, 'admin', '检验师用户'),
+(49, 1, '门诊', 'outpatient', 'visit_type', '', 'primary', 1, 0, 'admin', '门诊就诊'),
+(50, 2, '住院', 'inpatient', 'visit_type', '', 'success', 0, 0, 'admin', '住院就诊'),
+(51, 3, '急诊', 'emergency', 'visit_type', '', 'danger', 0, 0, 'admin', '急诊就诊'),
+(52, 4, '体检', 'physical', 'visit_type', '', 'info', 0, 0, 'admin', '体检'),
+(53, 1, '身份证', '01', 'id_type', '', 'primary', 1, 0, 'admin', '身份证'),
+(54, 2, '护照', '02', 'id_type', '', 'success', 0, 0, 'admin', '护照'),
+(55, 3, '军官证', '03', 'id_type', '', 'warning', 0, 0, 'admin', '军官证'),
+(56, 4, '其他', '04', 'id_type', '', 'info', 0, 0, 'admin', '其他证件'),
+(57, 1, 'HL7', 'hl7', 'interface_type', '', 'primary', 1, 0, 'admin', 'HL7接口'),
+(58, 2, 'ASTM', 'astm', 'interface_type', '', 'success', 0, 0, 'admin', 'ASTM接口'),
+(59, 3, 'XML', 'xml', 'interface_type', '', 'warning', 0, 0, 'admin', 'XML接口'),
+(60, 4, 'JSON', 'json', 'interface_type', '', 'info', 0, 0, 'admin', 'JSON接口'),
+(61, 5, 'WebSocket', 'websocket', 'interface_type', '', 'danger', 0, 0, 'admin', 'WebSocket接口'),
+(62, 1, '入站', 'inbound', 'message_direction', '', 'primary', 1, 0, 'admin', '入站消息'),
+(63, 2, '出站', 'outbound', 'message_direction', '', 'success', 0, 0, 'admin', '出站消息'),
+(64, 3, '双向', 'bidirectional', 'message_direction', '', 'warning', 0, 0, 'admin', '双向消息'),
+(65, 1, '水平1', 'level1', 'qc_level', '', 'primary', 1, 0, 'admin', '质控水平1'),
+(66, 2, '水平2', 'level2', 'qc_level', '', 'success', 0, 0, 'admin', '质控水平2'),
+(67, 3, '水平3', 'level3', 'qc_level', '', 'warning', 0, 0, 'admin', '质控水平3'),
+(68, 1, '通过', 'pass', 'qc_result', '', 'success', 1, 0, 'admin', '质控通过'),
+(69, 2, '失败', 'fail', 'qc_result', '', 'danger', 0, 0, 'admin', '质控失败'),
+(70, 3, '警告', 'warning', 'qc_result', '', 'warning', 0, 0, 'admin', '质控警告'),
+(71, 1, '轻微', 'minor', 'fault_level', '', 'info', 1, 0, 'admin', '轻微故障'),
+(72, 2, '中等', 'moderate', 'fault_level', '', 'warning', 0, 0, 'admin', '中等故障'),
+(73, 3, '严重', 'major', 'fault_level', '', 'danger', 0, 0, 'admin', '严重故障'),
+(74, 4, '危急', 'critical', 'fault_level', '', 'danger', 0, 0, 'admin', '危急故障'),
+(75, 1, '日常维护', 'routine', 'maintenance_type', '', 'primary', 1, 0, 'admin', '日常维护'),
+(76, 2, '周期维护', 'periodic', 'maintenance_type', '', 'success', 0, 0, 'admin', '周期维护'),
+(77, 3, '预防性维护', 'preventive', 'maintenance_type', '', 'warning', 0, 0, 'admin', '预防性维护'),
+(78, 1, '合格', 'qualified', 'calibration_result', '', 'success', 1, 0, 'admin', '校准合格'),
+(79, 2, '不合格', 'unqualified', 'calibration_result', '', 'danger', 0, 0, 'admin', '校准不合格'),
+(80, 1, '低', 'low', 'risk_level', '', 'success', 1, 0, 'admin', '低风险'),
+(81, 2, '中', 'medium', 'risk_level', '', 'warning', 0, 0, 'admin', '中风险'),
+(82, 3, '高', 'high', 'risk_level', '', 'danger', 0, 0, 'admin', '高风险'),
+(83, 4, '危急', 'critical', 'risk_level', '', 'danger', 0, 0, 'admin', '危急风险'),
+(84, 1, '待审核', '0', 'diagnosis_status', '', 'info', 1, 0, 'admin', '待审核'),
+(85, 2, '已确认', '1', 'diagnosis_status', '', 'success', 0, 0, 'admin', '已确认'),
+(86, 3, '已拒绝', '2', 'diagnosis_status', '', 'danger', 0, 0, 'admin', '已拒绝');
 
 -- =============================================
 -- lis_specimen 数据库初始化数据
@@ -237,6 +245,7 @@ USE `lis_specimen`;
 -- ---------------------------------------------
 -- 初始化标本类型数据
 -- ---------------------------------------------
+DELETE FROM `specimen_type`;
 INSERT INTO `specimen_type` (`id`, `type_code`, `type_name`, `type_desc`, `color_code`, `container_type`, `storage_condition`, `validity_period`, `status`, `sort`, `create_by`) VALUES
 (1, 'BLOOD', '血液', '全血标本', 'red', '真空采血管', '室温', 24, 0, 1, 'admin'),
 (2, 'SERUM', '血清', '血清标本', 'yellow', '促凝管', '室温', 8, 0, 2, 'admin'),
@@ -250,6 +259,7 @@ INSERT INTO `specimen_type` (`id`, `type_code`, `type_name`, `type_desc`, `color
 -- ---------------------------------------------
 -- 初始化检验项目分类数据
 -- ---------------------------------------------
+DELETE FROM `test_item_category`;
 INSERT INTO `test_item_category` (`id`, `parent_id`, `category_code`, `category_name`, `category_desc`, `status`, `sort`, `create_by`) VALUES
 (1, 0, 'BIOCHEMISTRY', '生化检验', '生化检验项目分类', 0, 1, 'admin'),
 (2, 0, 'IMMUNITY', '免疫检验', '免疫检验项目分类', 0, 2, 'admin'),
@@ -270,6 +280,7 @@ INSERT INTO `test_item_category` (`id`, `parent_id`, `category_code`, `category_
 -- ---------------------------------------------
 -- 初始化检验项目数据
 -- ---------------------------------------------
+DELETE FROM `test_item`;
 INSERT INTO `test_item` (`id`, `item_code`, `item_name`, `item_name_en`, `item_short`, `category_id`, `specimen_type_id`, `method`, `unit`, `reference_low`, `reference_high`, `panic_low`, `panic_high`, `price`, `tat`, `is_print`, `is_stat`, `status`, `sort`, `create_by`) VALUES
 (1, 'ALT', '丙氨酸氨基转移酶', 'Alanine Aminotransferase', 'ALT', 6, 2, '酶法', 'U/L', 0, 40, NULL, 400, 10.00, 60, 1, 1, 0, 1, 'admin'),
 (2, 'AST', '天门冬氨酸氨基转移酶', 'Aspartate Aminotransferase', 'AST', 6, 2, '酶法', 'U/L', 0, 40, NULL, 400, 10.00, 60, 1, 1, 0, 2, 'admin'),
@@ -320,6 +331,7 @@ USE `lis_equipment`;
 -- ---------------------------------------------
 -- 初始化设备类型数据
 -- ---------------------------------------------
+DELETE FROM `equipment_type`;
 INSERT INTO `equipment_type` (`id`, `type_code`, `type_name`, `type_desc`, `parent_id`, `status`, `sort`, `create_by`) VALUES
 (1, 'BIOCHEMISTRY', '生化分析仪', '生化检验设备', 0, 0, 1, 'admin'),
 (2, 'IMMUNOLOGY', '免疫分析仪', '免疫检验设备', 0, 0, 2, 'admin'),
@@ -331,6 +343,7 @@ INSERT INTO `equipment_type` (`id`, `type_code`, `type_name`, `type_desc`, `pare
 -- ---------------------------------------------
 -- 初始化设备数据
 -- ---------------------------------------------
+DELETE FROM `equipment`;
 INSERT INTO `equipment` (`id`, `equipment_code`, `equipment_name`, `equipment_name_en`, `equipment_type_id`, `equipment_type_name`, `brand`, `model`, `serial_no`, `manufacturer`, `supplier`, `purchase_date`, `install_date`, `warranty_expire_date`, `use_life`, `original_value`, `location`, `status`, `is_online`, `ip_address`, `port`, `communication_protocol`, `create_by`) VALUES
 (1, 'EQ001', '全自动生化分析仪1号', 'Automatic Biochemistry Analyzer', 1, '生化分析仪', 'Roche', 'Cobas 8000', 'SN20230001', 'Roche Diagnostics', '罗氏诊断', '2023-01-01', '2023-02-01', '2026-02-01', 10, 2000000.00, '生化室', 'normal', 1, '192.168.1.101', 5000, 'HL7', 'admin'),
 (2, 'EQ002', '全自动生化分析仪2号', 'Automatic Biochemistry Analyzer', 1, '生化分析仪', 'Beckman', 'AU5800', 'SN20230002', 'Beckman Coulter', '贝克曼库尔特', '2023-01-01', '2023-02-01', '2026-02-01', 10, 1800000.00, '生化室', 'normal', 1, '192.168.1.102', 5000, 'HL7', 'admin'),

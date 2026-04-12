@@ -127,6 +127,22 @@ public class PatientServiceImpl implements PatientService {
         return PageResult.of(result.getTotal(), dto.getPageNum(), dto.getPageSize(), voList);
     }
 
+    @Override
+    public List<PatientVO> listPatients(PatientQueryDTO dto) {
+        LambdaQueryWrapper<PatientDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(StrUtil.isNotBlank(dto.getPatientNo()), PatientDO::getPatientNo, dto.getPatientNo());
+        wrapper.like(StrUtil.isNotBlank(dto.getPatientName()), PatientDO::getPatientName, dto.getPatientName());
+        wrapper.eq(StrUtil.isNotBlank(dto.getIdNo()), PatientDO::getIdNo, dto.getIdNo());
+        wrapper.eq(StrUtil.isNotBlank(dto.getPhone()), PatientDO::getPhone, dto.getPhone());
+        wrapper.eq(dto.getStatus() != null, PatientDO::getStatus, dto.getStatus());
+        wrapper.orderByDesc(PatientDO::getCreateTime);
+
+        List<PatientDO> list = patientMapper.selectList(wrapper);
+        return list.stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
+    }
+
     private String generatePatientNo() {
         return "P" + IdUtil.getSnowflakeNextIdStr();
     }

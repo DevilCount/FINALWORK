@@ -8,6 +8,7 @@ import com.lis.hl7.entity.Hl7MessageSegmentDO;
 import com.lis.hl7.entity.InterfaceConnectionLogDO;
 import com.lis.hl7.enums.MessageDirectionEnum;
 import com.lis.hl7.enums.ProcessStatusEnum;
+import com.lis.hl7.his.HisIntegrationService;
 import com.lis.hl7.parser.Hl7MessageParser;
 import com.lis.hl7.service.Hl7MessageService;
 import com.lis.hl7.service.InterfaceConnectionLogService;
@@ -28,6 +29,7 @@ public class DefaultMllpMessageHandler implements MllpMessageHandler {
     private final Hl7MessageBuilder messageBuilder;
     private final Hl7MessageService hl7MessageService;
     private final InterfaceConnectionLogService connectionLogService;
+    private final HisIntegrationService hisIntegrationService;
 
     @Override
     public String handleMessage(String message, String clientIp) throws Exception {
@@ -73,6 +75,22 @@ public class DefaultMllpMessageHandler implements MllpMessageHandler {
                 messageDO.setParsedMessage(JSON.toJSONString(segments));
             } catch (Exception e) {
                 log.warn("Failed to parse segments", e);
+            }
+
+            if ("ORM".equals(messageType)) {
+                try {
+                    hisIntegrationService.processInboundMessage(message, "MLLP_INBOUND");
+                    messageDO.setProcessStatus(ProcessStatusEnum.SUCCESS.getCode());
+                    messageDO.setProcessTime(LocalDateTime.now());
+                    messageDO.setProcessDuration(System.currentTimeMillis() - startTime);
+                    String ack = messageBuilder.buildAckSuccess(messageControlId);
+                    messageDO.setAckMessage(ack);
+                    messageDO.setAckStatus("AA");
+                    hl7MessageService.saveMessage(messageDO);
+                    return ack;
+                } catch (Exception e) {
+                    log.error("Failed to process inbound ORM message", e);
+                }
             }
 
             String ack = messageBuilder.buildAckSuccess(messageControlId);

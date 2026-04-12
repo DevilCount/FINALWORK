@@ -2,6 +2,8 @@ package com.lis.user.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.lis.common.exception.BusinessException;
+import com.lis.common.result.PageResult;
+import com.lis.common.result.ResultCode;
 import com.lis.user.dto.*;
 import com.lis.user.entity.DeptDO;
 import com.lis.user.mapper.DeptMapper;
@@ -41,7 +43,7 @@ public class DeptServiceImpl implements DeptService {
     public DeptVO getDeptById(Long id) {
         DeptDO deptDO = deptMapper.selectById(id);
         if (deptDO == null) {
-            throw new BusinessException("部门不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "部门不存在");
         }
         return convertToVO(deptDO);
     }
@@ -52,7 +54,7 @@ public class DeptServiceImpl implements DeptService {
         if (createDTO.getDeptCode() != null && !createDTO.getDeptCode().isEmpty()) {
             DeptDO existDept = deptMapper.selectByDeptCode(createDTO.getDeptCode());
             if (existDept != null) {
-                throw new BusinessException("部门编码已存在");
+                throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS, "部门编码已存在");
             }
         }
 
@@ -74,11 +76,11 @@ public class DeptServiceImpl implements DeptService {
     public void updateDept(DeptUpdateDTO updateDTO) {
         DeptDO existDept = deptMapper.selectById(updateDTO.getId());
         if (existDept == null) {
-            throw new BusinessException("部门不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "部门不存在");
         }
 
         if (updateDTO.getParentId() != null && updateDTO.getParentId().equals(updateDTO.getId())) {
-            throw new BusinessException("上级部门不能是自己");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "上级部门不能是自己");
         }
 
         DeptDO deptDO = new DeptDO();
@@ -95,12 +97,12 @@ public class DeptServiceImpl implements DeptService {
     public void deleteDept(Long id) {
         DeptDO deptDO = deptMapper.selectById(id);
         if (deptDO == null) {
-            throw new BusinessException("部门不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "部门不存在");
         }
 
         int childCount = deptMapper.selectChildrenCountByParentId(id);
         if (childCount > 0) {
-            throw new BusinessException("存在子部门，不能删除");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "存在子部门，不能删除");
         }
 
         deptMapper.deleteById(id);

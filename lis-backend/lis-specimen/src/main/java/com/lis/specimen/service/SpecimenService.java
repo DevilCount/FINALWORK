@@ -39,4 +39,6 @@ public interface SpecimenService {
     List<SpecimenTypeVO> listSpecimenTypes();
 
     List<TestItemVO> listTestItems();
+
+    List<String> listTestItemCategories();
 }

@@ -16,18 +16,19 @@
         <el-tree-select
           v-model="formData.parentId"
           :data="deptTree"
-          :props="{ label: 'label', children: 'children', value: 'id' }"
+          :props="{ label: 'label', children: 'children' }"
+          value-key="id"
           placeholder="请选择上级部门"
           check-strictly
           clearable
           default-expand-all
         />
       </el-form-item>
-      <el-form-item label="部门名称" prop="name">
-        <el-input v-model="formData.name" placeholder="请输入部门名称" />
+      <el-form-item label="部门名称" prop="deptName">
+        <el-input v-model="formData.deptName" placeholder="请输入部门名称" />
       </el-form-item>
-      <el-form-item label="部门编码" prop="code">
-        <el-input v-model="formData.code" placeholder="请输入部门编码" />
+      <el-form-item label="部门编码" prop="deptCode">
+        <el-input v-model="formData.deptCode" placeholder="请输入部门编码" />
       </el-form-item>
       <el-row :gutter="20">
         <el-col :span="12">
@@ -53,8 +54,8 @@
         <el-col :span="12">
           <el-form-item label="状态" prop="status">
             <el-radio-group v-model="formData.status">
-              <el-radio value="normal">正常</el-radio>
-              <el-radio value="disable">禁用</el-radio>
+              <el-radio :value="0">正常</el-radio>
+              <el-radio :value="1">禁用</el-radio>
             </el-radio-group>
           </el-form-item>
         </el-col>
@@ -79,7 +80,7 @@ import {
   updateDept,
   type DeptForm,
 } from '@/api/system/dept'
-import { getDeptTree, type DeptTree } from '@/api/system/dept'
+import { getDeptTreeNodes, type DeptTree } from '@/api/system/dept'
 
 const props = defineProps<{
   visible: boolean
@@ -105,20 +106,20 @@ const isEdit = computed(() => !!props.deptId)
 
 const formData = reactive<DeptForm>({
   parentId: 0,
-  name: '',
-  code: '',
+  deptName: '',
+  deptCode: '',
   leader: '',
   phone: '',
   email: '',
-  status: 'normal',
+  status: 0,
   sort: 0,
 })
 
 const formRules: FormRules = {
-  name: [
+  deptName: [
     { required: true, message: '请输入部门名称', trigger: 'blur' },
   ],
-  code: [
+  deptCode: [
     { required: true, message: '请输入部门编码', trigger: 'blur' },
   ],
   phone: [
@@ -139,7 +140,7 @@ const formRules: FormRules = {
 
 const loadDeptTree = async () => {
   try {
-    const tree = await getDeptTree()
+    const tree = await getDeptTreeNodes()
     deptTree.value = [{ id: 0, label: '根部门', parentId: -1, children: tree }]
   } catch (error) {
     console.error('加载部门树失败', error)
@@ -151,8 +152,8 @@ const loadDeptInfo = async () => {
   try {
     const dept = await getDeptById(props.deptId)
     formData.parentId = dept.parentId
-    formData.name = dept.name
-    formData.code = dept.code
+    formData.deptName = dept.deptName
+    formData.deptCode = dept.deptCode
     formData.leader = dept.leader
     formData.phone = dept.phone
     formData.email = dept.email
@@ -165,12 +166,12 @@ const loadDeptInfo = async () => {
 
 const resetForm = () => {
   formData.parentId = props.parentId || 0
-  formData.name = ''
-  formData.code = ''
+  formData.deptName = ''
+  formData.deptCode = ''
   formData.leader = ''
   formData.phone = ''
   formData.email = ''
-  formData.status = 'normal'
+  formData.status = 0
   formData.sort = 0
   formRef.value?.resetFields()
 }

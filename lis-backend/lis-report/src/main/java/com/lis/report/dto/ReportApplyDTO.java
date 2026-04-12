@@ -4,21 +4,18 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @ApiModel(description = "检验申请创建请求参数")
 public class ReportApplyDTO implements Serializable {
 
-    @NotNull(message = "标本ID不能为空")
-    @ApiModelProperty(value = "标本ID", required = true)
+    @ApiModelProperty(value = "标本ID")
     private Long specimenId;
 
-    @NotBlank(message = "标本编号不能为空")
-    @ApiModelProperty(value = "标本编号", required = true)
+    @ApiModelProperty(value = "标本编号")
     private String specimenNo;
 
     @ApiModelProperty(value = "报告类型（routine常规 stat急诊 review复查）")
@@ -68,4 +65,7 @@ public class ReportApplyDTO implements Serializable {
 
     @ApiModelProperty(value = "备注")
     private String remark;
+
+    @ApiModelProperty(value = "检验项目列表")
+    private List<ReportApplyItemDTO> testItems;
 }

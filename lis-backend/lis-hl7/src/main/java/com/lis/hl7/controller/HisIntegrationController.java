@@ -1,6 +1,7 @@
 package com.lis.hl7.controller;
 
 import com.lis.common.result.Result;
+import com.lis.hl7.dto.HisLabOrderDTO;
 import com.lis.hl7.entity.Hl7MessageDO;
 import com.lis.hl7.his.HisIntegrationService;
 import com.lis.hl7.vo.*;
@@ -36,6 +37,17 @@ public class HisIntegrationController {
             @RequestBody LabResultRequest request) {
         Hl7MessageDO result = hisIntegrationService.sendLabResult(
                 interfaceCode, request.getPatient(), request.getVisit(), request.getObservations());
+        return Result.success(convertToVO(result));
+    }
+
+    @ApiOperation("发送HIS检验申请")
+    @PostMapping("/lab-order")
+    public Result<Hl7MessageVO> sendLabOrder(@RequestBody HisLabOrderDTO labOrder) {
+        String interfaceCode = labOrder.getInterfaceCode();
+        if (interfaceCode == null || interfaceCode.isEmpty()) {
+            return Result.fail(400, "接口编码不能为空");
+        }
+        Hl7MessageDO result = hisIntegrationService.sendLabOrder(interfaceCode, labOrder);
         return Result.success(convertToVO(result));
     }
 

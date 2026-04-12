@@ -1,18 +1,18 @@
 export interface Specimen {
   id: string
-  specimenCode: string
-  specimenType: string
+  specimenNo: string
+  specimenTypeId: number
   specimenTypeName: string
   patientId: string
   patientName: string
   patientGender: string
-  patientAge: number
+  patientAge: string
   patientPhone: string
-  patientIdCard: string
-  departmentId: string
-  departmentName: string
+  patientIdNo: string
+  deptId: number
+  deptName: string
   bedNo: string
-  diagnosis: string
+  clinicalDiagnosis: string
   collectTime: string | null
   collectUserId: string | null
   collectUserName: string | null
@@ -28,12 +28,13 @@ export interface Specimen {
 }
 
 export type SpecimenStatus = 
-  | 'pending_collect'
-  | 'collected'
-  | 'received'
-  | 'testing'
-  | 'completed'
-  | 'rejected'
+  | 'REGISTERED'
+  | 'RECEIVED'
+  | 'REJECTED'
+  | 'STORAGE'
+  | 'TESTING'
+  | 'COMPLETED'
+  | 'CANCELLED'
 
 export interface SpecimenTestItem {
   id: string
@@ -51,41 +52,51 @@ export interface SpecimenTestItem {
 export interface SpecimenQueryParams {
   pageNum: number
   pageSize: number
-  specimenCode?: string
+  specimenNo?: string
   patientName?: string
-  patientIdCard?: string
+  patientIdNo?: string
   status?: SpecimenStatus | ''
-  specimenType?: string
-  departmentId?: string
+  specimenTypeId?: number
+  deptId?: number
   collectTimeStart?: string
   collectTimeEnd?: string
 }
 
 export interface SpecimenRegisterForm {
-  patientId?: string
+  patientId?: number
   patientName: string
   patientGender: string
-  patientAge: number
+  patientAge: string
   patientPhone: string
-  patientIdCard: string
-  departmentId: string
+  patientIdNo: string
+  deptId: number
+  deptName?: string
+  wardId?: number
+  wardName?: string
   bedNo: string
-  diagnosis: string
-  specimenType: string
-  testItemIds: string[]
+  doctorId?: number
+  doctorName?: string
+  specimenTypeId: number
+  specimenTypeName?: string
+  collectTime?: string
+  collectUserId?: number
+  collectUserName?: string
+  isStat?: number
+  clinicalDiagnosis: string
+  testItemIds: number[]
   remark: string
 }
 
-export interface SpecimenTraceRecord {
+export interface SpecimenTraceVO {
   id: string
   specimenId: string
-  specimenCode: string
-  operationType: string
-  operationTypeName: string
+  specimenNo: string
+  action: string
+  actionName: string
   operationDesc: string
   operatorId: string
   operatorName: string
-  operationTime: string
+  operateTime: string
   fromStatus: string
   fromStatusName: string
   toStatus: string
@@ -94,24 +105,29 @@ export interface SpecimenTraceRecord {
 }
 
 export interface SpecimenTraceQueryParams {
-  specimenCode?: string
+  specimenNo?: string
   patientName?: string
-  operationType?: string
-  operationTimeStart?: string
-  operationTimeEnd?: string
+  action?: string
+  operateTimeStart?: string
+  operateTimeEnd?: string
 }
 
 export interface TestItem {
-  id: string
+  id: number
   itemCode: string
   itemName: string
-  itemCategory: string
-  itemCategoryName: string
-  sampleType: string
-  price: number
-  turnaroundTime: number
-  referenceRange: string
+  itemNameEn: string
+  itemShort: string
+  categoryId: number
+  specimenTypeId: number
+  method: string
   unit: string
+  referenceLow: number
+  referenceHigh: number
+  referenceText: string
+  price: number
+  tat: number
+  isStat: number
   status: number
   remark: string
 }
@@ -126,25 +142,17 @@ export interface TestItemQueryParams {
 }
 
 export interface SpecimenType {
-  code: string
-  name: string
-  description: string
+  id: number
+  typeCode: string
+  typeName: string
+  typeDesc: string
+  colorCode: string
+  containerType: string
+  storageCondition: string
+  validityPeriod: number
   status: number
 }
 
 export interface SpecimenDetail extends Specimen {
-  flowRecords: SpecimenFlowRecord[]
-}
-
-export interface SpecimenFlowRecord {
-  id: string
-  specimenId: string
-  flowType: string
-  flowTypeName: string
-  flowTime: string
-  operatorId: string
-  operatorName: string
-  fromLocation: string
-  toLocation: string
-  remark: string
+  traces: SpecimenTraceVO[]
 }

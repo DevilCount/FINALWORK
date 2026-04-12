@@ -31,13 +31,30 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
+    fs: {
+      cachedChecks: true,
+    },
+  },
+  optimizeDeps: {
+    include: [
+      'vue',
+      'vue-router',
+      'pinia',
+      'axios',
+      'element-plus/es/locale/lang/zh-cn',
+      '@element-plus/icons-vue',
+      'nprogress',
+      'echarts',
+    ],
   },
   build: {
     outDir: 'dist',
     sourcemap: false,
     chunkSizeWarningLimit: 1500,
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -46,6 +63,9 @@ export default defineConfig({
           }
           if (id.includes('node_modules/vue') || id.includes('node_modules/pinia') || id.includes('node_modules/vue-router')) {
             return 'vue-vendor'
+          }
+          if (id.includes('echarts')) {
+            return 'echarts'
           }
         },
       },

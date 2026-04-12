@@ -11,7 +11,7 @@
       <el-form :model="queryParams" inline class="search-form">
         <el-form-item label="部门名称">
           <el-input
-            v-model="queryParams.name"
+            v-model="queryParams.deptName"
             placeholder="请输入部门名称"
             clearable
             @keyup.enter="handleQuery"
@@ -19,8 +19,8 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
-            <el-option label="正常" value="normal" />
-            <el-option label="禁用" value="disable" />
+            <el-option label="正常" :value="0" />
+            <el-option label="禁用" :value="2" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -37,15 +37,15 @@
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         default-expand-all
       >
-        <el-table-column prop="name" label="部门名称" min-width="160" />
-        <el-table-column prop="code" label="部门编码" min-width="120" />
+        <el-table-column prop="deptName" label="部门名称" min-width="160" />
+        <el-table-column prop="deptCode" label="部门编码" min-width="120" />
         <el-table-column prop="leader" label="负责人" width="100" />
         <el-table-column prop="phone" label="联系电话" width="120" />
         <el-table-column prop="email" label="邮箱" min-width="160" />
         <el-table-column prop="sort" label="排序" width="80" align="center" />
         <el-table-column label="状态" width="80" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.status === 'normal'" type="success">正常</el-tag>
+            <el-tag v-if="row.status === 0" type="success">正常</el-tag>
             <el-tag v-else type="danger">禁用</el-tag>
           </template>
         </el-table-column>
@@ -87,8 +87,8 @@ const currentDeptId = ref<number | undefined>(undefined)
 const currentParentId = ref<number>(0)
 
 const queryParams = reactive<DeptQuery>({
-  name: '',
-  status: '',
+  deptName: '',
+  status: undefined,
 })
 
 const loadDeptList = async () => {
@@ -107,8 +107,8 @@ const handleQuery = () => {
 }
 
 const handleReset = () => {
-  queryParams.name = ''
-  queryParams.status = ''
+  queryParams.deptName = ''
+  queryParams.status = undefined
   handleQuery()
 }
 
@@ -136,7 +136,7 @@ const handleDelete = async (row: Dept) => {
     return
   }
   try {
-    await ElMessageBox.confirm(`确定要删除部门"${row.name}"吗？`, '提示', {
+    await ElMessageBox.confirm(`确定要删除部门"${row.deptName}"吗？`, '提示', {
       type: 'warning',
     })
     await deleteDept(row.id)

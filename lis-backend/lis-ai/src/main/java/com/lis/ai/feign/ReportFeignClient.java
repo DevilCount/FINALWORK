@@ -10,9 +10,6 @@ import java.util.Map;
 @FeignClient(name = "lis-report", path = "/report")
 public interface ReportFeignClient {
 
-    @GetMapping("/{id}")
-    Result<Map<String, Object>> getReportById(@PathVariable("id") Long id);
-
-    @GetMapping("/no/{reportNo}")
-    Result<Map<String, Object>> getReportByNo(@PathVariable("reportNo") String reportNo);
+    @GetMapping("/apply/{reportId}")
+    Result<Map<String, Object>> getReportById(@PathVariable("reportId") Long id);
 }

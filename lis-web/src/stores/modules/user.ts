@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { login, logout, getUserInfo } from '@/api/auth'
 import { getToken, setToken, removeToken, getRefreshToken, setRefreshToken, removeRefreshToken, setUserInfo, removeUserInfo } from '@/utils/auth'
-import type { UserInfo, LoginForm } from '@/types/user'
+import type { UserInfo } from '@/types/user'
 import router from '@/router'
+import { usePermissionStore } from '@/stores/modules/permission'
 
 interface UserState {
   token: string
@@ -30,7 +31,7 @@ export const useUserStore = defineStore('user', {
   },
 
   actions: {
-    async loginAction(loginForm: LoginForm) {
+    async loginAction(loginForm: { username: string; password: string; code?: string; uuid?: string }) {
       const data = await login(loginForm)
       this.token = data.accessToken
       this.refreshToken = data.refreshToken
@@ -66,6 +67,18 @@ export const useUserStore = defineStore('user', {
       removeToken()
       removeRefreshToken()
       removeUserInfo()
+      // 重置权限路由状态，确保重新登录时能正确加载动态路由
+      const permissionStore = usePermissionStore()
+      permissionStore.resetRoutesAction()
+    },
+
+    setTokenAction(accessToken: string, newRefreshToken?: string) {
+      this.token = accessToken
+      if (newRefreshToken) {
+        this.refreshToken = newRefreshToken
+        setRefreshToken(newRefreshToken)
+      }
+      setToken(accessToken)
     },
 
     hasPermission(permission: string): boolean {
@@ -87,5 +100,4 @@ export const useUserStore = defineStore('user', {
     },
   },
 
-  persist: true,
 })

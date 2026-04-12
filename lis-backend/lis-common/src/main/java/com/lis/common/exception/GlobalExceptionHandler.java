@@ -1,6 +1,7 @@
 package com.lis.common.exception;
 
 import com.lis.common.result.Result;
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
@@ -59,6 +60,13 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
         log.warn("约束校验失败: {}", message);
         return Result.fail(400, message);
+    }
+
+    @ExceptionHandler(FeignException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public Result<Void> handleFeignException(FeignException e) {
+        log.error("Feign调用异常: status={}, message={}", e.status(), e.getMessage());
+        return Result.fail(503, "服务暂时不可用，请稍后重试");
     }
 
     @ExceptionHandler(Exception.class)

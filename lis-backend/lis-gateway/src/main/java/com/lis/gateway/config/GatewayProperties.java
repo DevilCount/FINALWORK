@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Data
-@Component
+@Component("lisGatewayProperties")
 @ConfigurationProperties(prefix = "gateway")
 public class GatewayProperties {
 

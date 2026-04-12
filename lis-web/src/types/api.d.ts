@@ -10,7 +10,7 @@ export interface PageResult<T = any> {
   total: number
   pageSize: number
   pageNum: number
-  totalPages: number
+  pages: number
 }
 
 export interface PageParams {

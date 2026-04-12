@@ -8,20 +8,19 @@
       </template>
 
       <el-form :model="queryParams" inline class="search-form">
-        <el-form-item label="关键词">
+        <el-form-item label="患者姓名">
           <el-input
-            v-model="queryParams.keyword"
-            placeholder="报告编号/患者姓名"
+            v-model="queryParams.patientName"
+            placeholder="患者姓名"
             clearable
             @keyup.enter="handleQuery"
           />
         </el-form-item>
-        <el-form-item label="分析状态">
-          <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
-            <el-option label="待分析" value="pending" />
-            <el-option label="分析中" value="analyzing" />
-            <el-option label="已完成" value="completed" />
-            <el-option label="失败" value="failed" />
+        <el-form-item label="审核状态">
+          <el-select v-model="queryParams.reviewStatus" placeholder="请选择状态" clearable>
+            <el-option label="待审核" :value="0" />
+            <el-option label="已确认" :value="1" />
+            <el-option label="已拒绝" :value="2" />
           </el-select>
         </el-form-item>
         <el-form-item label="风险等级">
@@ -58,11 +57,11 @@
       <el-table v-loading="loading" :data="recordList" border stripe>
         <el-table-column prop="reportNo" label="报告编号" width="140" />
         <el-table-column prop="patientName" label="患者姓名" width="100" />
-        <el-table-column prop="patientId" label="患者ID" width="120" />
-        <el-table-column label="分析状态" width="100">
+        <el-table-column prop="reportId" label="报告ID" width="120" />
+        <el-table-column label="审核状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">
-              {{ getStatusLabel(row.status) }}
+            <el-tag :type="getReviewStatusType(row.reviewStatus)">
+              {{ getReviewStatusLabel(row.reviewStatus) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -75,25 +74,22 @@
           </template>
         </el-table-column>
         <el-table-column label="置信度" width="100">
-          <template #default="{ row }">
-            <span v-if="row.result?.confidence">
-              {{ (row.result.confidence * 100).toFixed(1) }}%
-            </span>
-            <span v-else>-</span>
+          <template #default>
+            <span>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="160" />
-        <el-table-column prop="completedAt" label="完成时间" width="160" />
+        <el-table-column prop="createTime" label="创建时间" width="160" />
+        <el-table-column prop="reviewTime" label="完成时间" width="160" />
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleView(row)">查看</el-button>
-            <el-button v-if="row.status === 'analyzing'" type="warning" link @click="handleCancel(row)">取消</el-button>
+            <el-button v-if="row.reviewStatus === 0" type="warning" link @click="handleCancel(row)">取消</el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <el-pagination
-        v-model:current-page="queryParams.page"
+        v-model:current-page="queryParams.pageNum"
         v-model:page-size="queryParams.pageSize"
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
@@ -108,10 +104,10 @@
         <el-descriptions :column="2" border>
           <el-descriptions-item label="报告编号">{{ currentRecord.reportNo }}</el-descriptions-item>
           <el-descriptions-item label="患者姓名">{{ currentRecord.patientName }}</el-descriptions-item>
-          <el-descriptions-item label="患者ID">{{ currentRecord.patientId }}</el-descriptions-item>
-          <el-descriptions-item label="分析状态">
-            <el-tag :type="getStatusType(currentRecord.status)">
-              {{ getStatusLabel(currentRecord.status) }}
+          <el-descriptions-item label="报告ID">{{ currentRecord.reportId }}</el-descriptions-item>
+          <el-descriptions-item label="审核状态">
+            <el-tag :type="getReviewStatusType(currentRecord.reviewStatus)">
+              {{ getReviewStatusLabel(currentRecord.reviewStatus) }}
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="风险等级">
@@ -121,45 +117,51 @@
             <span v-else>-</span>
           </el-descriptions-item>
           <el-descriptions-item label="置信度">
-            {{ currentRecord.result?.confidence ? `${(currentRecord.result.confidence * 100).toFixed(1)}%` : '-' }}
+            -
           </el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ currentRecord.createdAt }}</el-descriptions-item>
-          <el-descriptions-item label="完成时间">{{ currentRecord.completedAt || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ currentRecord.createTime }}</el-descriptions-item>
+          <el-descriptions-item label="完成时间">{{ currentRecord.reviewTime || '-' }}</el-descriptions-item>
         </el-descriptions>
 
         <template v-if="currentRecord.result">
           <el-divider content-position="left">诊断摘要</el-divider>
-          <div class="detail-section">{{ currentRecord.result.summary }}</div>
+          <div class="detail-section">{{ currentRecord.summary }}</div>
 
-          <el-divider content-position="left">异常指标</el-divider>
-          <el-table :data="currentRecord.result.abnormalities" border stripe size="small">
-            <el-table-column prop="indicator" label="指标" width="120" />
-            <el-table-column label="检测值" width="100">
-              <template #default="{ row }">
-                {{ row.value }} {{ row.unit }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="referenceRange" label="参考范围" width="100" />
-            <el-table-column label="严重程度" width="80">
-              <template #default="{ row }">
-                <el-tag :type="getSeverityType(row.severity)" size="small">
-                  {{ getSeverityLabel(row.severity) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
+          <template v-if="(currentRecord.result as any).abnormalities">
+            <el-divider content-position="left">异常指标</el-divider>
+            <el-table :data="(currentRecord.result as any).abnormalities" border stripe size="small">
+              <el-table-column prop="indicator" label="指标" width="120" />
+              <el-table-column label="检测值" width="100">
+                <template #default="{ row }">
+                  {{ row.value }} {{ row.unit }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="referenceRange" label="参考范围" width="100" />
+              <el-table-column label="严重程度" width="80">
+                <template #default="{ row }">
+                  <el-tag :type="getSeverityType(row.severity)" size="small">
+                    {{ getSeverityLabel(row.severity) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+          </template>
 
-          <el-divider content-position="left">诊断建议</el-divider>
-          <ul class="detail-list">
-            <li v-for="(item, index) in currentRecord.result.recommendations" :key="index">{{ item }}</li>
-          </ul>
+          <template v-if="(currentRecord.result as any).recommendations">
+            <el-divider content-position="left">诊断建议</el-divider>
+            <ul class="detail-list">
+              <li v-for="(item, index) in (currentRecord.result as any).recommendations" :key="index">{{ item }}</li>
+            </ul>
+          </template>
 
-          <el-divider content-position="left">风险因素</el-divider>
-          <div>
-            <el-tag v-for="(factor, index) in currentRecord.result.riskFactors" :key="index" type="warning" style="margin-right: 8px">
-              {{ factor }}
-            </el-tag>
-          </div>
+          <template v-if="(currentRecord.result as any).riskFactors">
+            <el-divider content-position="left">风险因素</el-divider>
+            <div>
+              <el-tag v-for="(factor, index) in (currentRecord.result as any).riskFactors" :key="index" type="warning" style="margin-right: 8px">
+                {{ factor }}
+              </el-tag>
+            </div>
+          </template>
         </template>
       </template>
     </el-dialog>
@@ -179,36 +181,34 @@ const total = ref(0)
 const dateRange = ref<string[]>([])
 
 const queryParams = reactive<AIAnalysisQuery>({
-  page: 1,
+  pageNum: 1,
   pageSize: 10,
-  keyword: '',
-  status: '',
+  patientName: '',
+  reviewStatus: undefined,
   riskLevel: '',
-  startDate: '',
-  endDate: ''
+  startTime: '',
+  endTime: ''
 })
 
 const detailDialogVisible = ref(false)
 const currentRecord = ref<AIAnalysis | null>(null)
 
-const getStatusType = (status: string): 'success' | 'info' | 'warning' | 'danger' | 'primary' => {
-  const map: Record<string, 'success' | 'info' | 'warning' | 'danger' | 'primary'> = {
-    pending: 'info',
-    analyzing: 'warning',
-    completed: 'success',
-    failed: 'danger'
+const getReviewStatusType = (status: number): 'success' | 'info' | 'warning' | 'danger' | 'primary' => {
+  const map: Record<number, 'success' | 'info' | 'warning' | 'danger' | 'primary'> = {
+    0: 'info',
+    1: 'success',
+    2: 'danger'
   }
   return map[status] || 'info'
 }
 
-const getStatusLabel = (status: string) => {
-  const map: Record<string, string> = {
-    pending: '待分析',
-    analyzing: '分析中',
-    completed: '已完成',
-    failed: '失败'
+const getReviewStatusLabel = (status: number) => {
+  const map: Record<number, string> = {
+    0: '待审核',
+    1: '已确认',
+    2: '已拒绝'
   }
-  return map[status] || status
+  return map[status] || '未知'
 }
 
 const getRiskLevelType = (level: string): 'success' | 'warning' | 'danger' | 'info' | 'primary' => {
@@ -251,25 +251,25 @@ const getSeverityLabel = (severity: string) => {
 
 const handleDateChange = (val: string[] | null) => {
   if (val) {
-    queryParams.startDate = val[0]
-    queryParams.endDate = val[1]
+    queryParams.startTime = val[0]
+    queryParams.endTime = val[1]
   } else {
-    queryParams.startDate = ''
-    queryParams.endDate = ''
+    queryParams.startTime = ''
+    queryParams.endTime = ''
   }
 }
 
 const handleQuery = () => {
-  queryParams.page = 1
+  queryParams.pageNum = 1
   fetchRecordList()
 }
 
 const handleReset = () => {
-  queryParams.keyword = ''
-  queryParams.status = ''
+  queryParams.patientName = ''
+  queryParams.reviewStatus = undefined
   queryParams.riskLevel = ''
-  queryParams.startDate = ''
-  queryParams.endDate = ''
+  queryParams.startTime = ''
+  queryParams.endTime = ''
   dateRange.value = []
   handleQuery()
 }
@@ -278,7 +278,7 @@ const fetchRecordList = async () => {
   loading.value = true
   try {
     const res = await getAIAnalysisList(queryParams)
-    recordList.value = res.list
+    recordList.value = res.records
     total.value = res.total
   } catch {
     ElMessage.error('获取诊断记录失败')

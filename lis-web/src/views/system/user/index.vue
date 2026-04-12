@@ -92,8 +92,8 @@
             <el-table-column prop="email" label="邮箱" min-width="160" />
             <el-table-column label="性别" width="80" align="center">
               <template #default="{ row }">
-                <span v-if="row.gender === 'male'">男</span>
-                <span v-else-if="row.gender === 'female'">女</span>
+                <span v-if="row.gender === 1">男</span>
+                <span v-else-if="row.gender === 2">女</span>
                 <span v-else>未知</span>
               </template>
             </el-table-column>
@@ -101,8 +101,8 @@
               <template #default="{ row }">
                 <el-switch
                   v-model="row.status"
-                  active-value="normal"
-                  inactive-value="disable"
+                  :active-value="0"
+                  :inactive-value="2"
                   @change="handleStatusChange(row)"
                 />
               </template>
@@ -161,7 +161,7 @@ import {
   type User,
   type UserQuery,
 } from '@/api/system/user'
-import { getDeptTree, type DeptTree } from '@/api/system/dept'
+import { getDeptTreeNodes, type DeptTree } from '@/api/system/dept'
 import UserFormDialog from './components/UserFormDialog.vue'
 
 const deptTreeRef = ref<InstanceType<typeof ElTree>>()
@@ -188,14 +188,14 @@ watch(deptFilterText, (val) => {
   deptTreeRef.value?.filter(val)
 })
 
-const filterDeptNode = (value: string, data: DeptTree) => {
+const filterDeptNode = (value: string, data: any) => {
   if (!value) return true
   return data.label.includes(value)
 }
 
 const loadDeptTree = async () => {
   try {
-    deptTree.value = await getDeptTree()
+    deptTree.value = await getDeptTreeNodes()
   } catch (error) {
     console.error('加载部门树失败', error)
   }
@@ -281,12 +281,12 @@ const handleSelectionChange = (selection: User[]) => {
 }
 
 const handleStatusChange = async (row: User) => {
-  const text = row.status === 'normal' ? '启用' : '禁用'
+  const text = row.status === 0 ? '启用' : '禁用'
   try {
     await updateUserStatus(row.id, row.status)
     ElMessage.success(`${text}成功`)
   } catch (error) {
-    row.status = row.status === 'normal' ? 'disable' : 'normal'
+    row.status = row.status === 0 ? 2 : 0
     console.error('更新用户状态失败', error)
   }
 }

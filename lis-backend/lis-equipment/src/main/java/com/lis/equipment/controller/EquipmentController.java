@@ -15,15 +15,22 @@ import org.springframework.web.bind.annotation.*;
 
 @Api(tags = "设备台账管理")
 @RestController
-@RequestMapping("/equipment")
+@RequestMapping("")
 @RequiredArgsConstructor
 public class EquipmentController {
 
     private final EquipmentService equipmentService;
 
-    @ApiOperation("分页查询设备列表")
+    @ApiOperation("分页查询设备列表(GET)")
     @GetMapping("/page")
     public Result<PageResult<EquipmentVO>> pageList(EquipmentQueryDTO queryDTO) {
+        PageResult<EquipmentVO> result = equipmentService.pageList(queryDTO);
+        return Result.success(result);
+    }
+
+    @ApiOperation("分页查询设备列表(POST)")
+    @PostMapping("/page")
+    public Result<PageResult<EquipmentVO>> pageListPost(@RequestBody EquipmentQueryDTO queryDTO) {
         PageResult<EquipmentVO> result = equipmentService.pageList(queryDTO);
         return Result.success(result);
     }

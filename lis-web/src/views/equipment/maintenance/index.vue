@@ -14,11 +14,11 @@
       <el-form :model="queryParams" inline class="search-form">
         <el-form-item label="设备">
           <el-select v-model="queryParams.equipmentId" placeholder="请选择设备" clearable filterable>
-            <el-option v-for="item in equipmentOptions" :key="item.id" :label="item.name" :value="item.id" />
+            <el-option v-for="item in equipmentOptions" :key="item.id" :label="item.equipmentName" :value="item.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="维护类型">
-          <el-select v-model="queryParams.type" placeholder="请选择类型" clearable>
+          <el-select v-model="queryParams.maintenanceType" placeholder="请选择类型" clearable>
             <el-option label="校准" value="calibration" />
             <el-option label="维护" value="maintenance" />
             <el-option label="维修" value="repair" />
@@ -51,8 +51,8 @@
         <el-table-column prop="equipmentName" label="设备名称" min-width="150" />
         <el-table-column label="维护类型" width="100">
           <template #default="{ row }">
-            <el-tag :type="getMaintenanceType(row.type)">
-              {{ getMaintenanceLabel(row.type) }}
+            <el-tag :type="getMaintenanceType(row.maintenanceType)">
+              {{ getMaintenanceLabel(row.maintenanceType) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -60,8 +60,8 @@
         <el-table-column prop="technician" label="技术人员" width="100" />
         <el-table-column label="维护结果" width="100">
           <template #default="{ row }">
-            <el-tag :type="getResultType(row.result)">
-              {{ getResultLabel(row.result) }}
+            <el-tag :type="getResultType(row.maintenanceResult)">
+              {{ getResultLabel(row.maintenanceResult) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -82,7 +82,7 @@
       </el-table>
 
       <el-pagination
-        v-model:current-page="queryParams.page"
+        v-model:current-page="queryParams.pageNum"
         v-model:page-size="queryParams.pageSize"
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
@@ -96,18 +96,18 @@
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="设备" prop="equipmentId">
           <el-select v-model="formData.equipmentId" placeholder="请选择设备" filterable :disabled="!!formData.id">
-            <el-option v-for="item in equipmentOptions" :key="item.id" :label="item.name" :value="item.id" />
+            <el-option v-for="item in equipmentOptions" :key="item.id" :label="item.equipmentName" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="维护类型" prop="type">
-          <el-select v-model="formData.type" placeholder="请选择类型">
+        <el-form-item label="维护类型" prop="maintenanceType">
+          <el-select v-model="formData.maintenanceType" placeholder="请选择类型">
             <el-option label="校准" value="calibration" />
             <el-option label="维护" value="maintenance" />
             <el-option label="维修" value="repair" />
           </el-select>
         </el-form-item>
-        <el-form-item label="维护内容" prop="content">
-          <el-input v-model="formData.content" type="textarea" :rows="3" placeholder="请输入维护内容" />
+        <el-form-item label="维护内容" prop="maintenanceContent">
+          <el-input v-model="formData.maintenanceContent" type="textarea" :rows="3" placeholder="请输入维护内容" />
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
@@ -128,8 +128,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="维护结果" prop="result">
-              <el-select v-model="formData.result" placeholder="请选择结果">
+            <el-form-item label="维护结果" prop="maintenanceResult">
+              <el-select v-model="formData.maintenanceResult" placeholder="请选择结果">
                 <el-option label="成功" value="success" />
                 <el-option label="部分成功" value="partial" />
                 <el-option label="失败" value="failed" />
@@ -144,22 +144,8 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="附件" prop="attachments">
-          <el-upload
-            v-model:file-list="fileList"
-            action="/api/upload"
-            :limit="5"
-            :on-success="handleUploadSuccess"
-            :on-remove="handleUploadRemove"
-          >
-            <el-button type="primary">上传附件</el-button>
-            <template #tip>
-              <div class="el-upload__tip">最多上传5个附件</div>
-            </template>
-          </el-upload>
-        </el-form-item>
-        <el-form-item label="备注" prop="notes">
-          <el-input v-model="formData.notes" type="textarea" :rows="2" placeholder="请输入备注" />
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="formData.remark" type="textarea" :rows="2" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -171,20 +157,15 @@
     <el-dialog v-model="viewDialogVisible" title="维护记录详情" width="700px">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="设备名称">{{ currentRecord?.equipmentName }}</el-descriptions-item>
-        <el-descriptions-item label="维护类型">{{ getMaintenanceLabel(currentRecord?.type) }}</el-descriptions-item>
+        <el-descriptions-item label="维护类型">{{ getMaintenanceLabel(currentRecord?.maintenanceType) }}</el-descriptions-item>
         <el-descriptions-item label="技术人员">{{ currentRecord?.technician }}</el-descriptions-item>
-        <el-descriptions-item label="维护结果">{{ getResultLabel(currentRecord?.result) }}</el-descriptions-item>
+        <el-descriptions-item label="维护结果">{{ getResultLabel(currentRecord?.maintenanceResult) }}</el-descriptions-item>
         <el-descriptions-item label="开始时间">{{ currentRecord?.startTime }}</el-descriptions-item>
         <el-descriptions-item label="结束时间">{{ currentRecord?.endTime }}</el-descriptions-item>
         <el-descriptions-item label="费用">{{ currentRecord?.cost ? `¥${currentRecord.cost}` : '-' }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ currentRecord?.createdAt }}</el-descriptions-item>
-        <el-descriptions-item label="维护内容" :span="2">{{ currentRecord?.content }}</el-descriptions-item>
-        <el-descriptions-item label="备注" :span="2">{{ currentRecord?.notes || '-' }}</el-descriptions-item>
-        <el-descriptions-item v-if="currentRecord?.attachments?.length" label="附件" :span="2">
-          <el-link v-for="(url, index) in currentRecord.attachments" :key="index" :href="url" target="_blank" type="primary">
-            附件{{ index + 1 }}
-          </el-link>
-        </el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ currentRecord?.createTime }}</el-descriptions-item>
+        <el-descriptions-item label="维护内容" :span="2">{{ currentRecord?.maintenanceContent }}</el-descriptions-item>
+        <el-descriptions-item label="备注" :span="2">{{ currentRecord?.remark || '-' }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
   </div>
@@ -192,7 +173,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type UploadUserFile } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import type { MaintenanceRecord, MaintenanceQuery, Equipment } from '@/api/equipment'
 import { getMaintenanceRecords, getMaintenanceDetail, createMaintenanceRecord, updateMaintenanceRecord, deleteMaintenanceRecord, getEquipmentList } from '@/api/equipment'
@@ -206,38 +187,34 @@ const equipmentOptions = ref<Equipment[]>([])
 const dateRange = ref<string[]>([])
 
 const queryParams = reactive<MaintenanceQuery>({
-  page: 1,
+  pageNum: 1,
   pageSize: 10,
-  equipmentId: '',
-  type: '',
-  startDate: '',
-  endDate: ''
+  equipmentId: undefined,
+  maintenanceType: ''
 })
 
 const dialogVisible = ref(false)
 const dialogTitle = computed(() => (formData.id ? '编辑维护记录' : '新增维护记录'))
 const formRef = ref<FormInstance>()
-const fileList = ref<UploadUserFile[]>([])
 const formData = reactive<Partial<MaintenanceRecord>>({
-  equipmentId: '',
-  type: 'maintenance',
-  content: '',
+  equipmentId: undefined,
+  maintenanceType: 'maintenance',
+  maintenanceContent: '',
   technician: '',
   startTime: '',
   endTime: '',
-  result: 'success',
+  maintenanceResult: 'success',
   cost: 0,
-  notes: '',
-  attachments: []
+  remark: '',
 })
 
 const formRules: FormRules = {
   equipmentId: [{ required: true, message: '请选择设备', trigger: 'change' }],
-  type: [{ required: true, message: '请选择维护类型', trigger: 'change' }],
-  content: [{ required: true, message: '请输入维护内容', trigger: 'blur' }],
+  maintenanceType: [{ required: true, message: '请选择维护类型', trigger: 'change' }],
+  maintenanceContent: [{ required: true, message: '请输入维护内容', trigger: 'blur' }],
   technician: [{ required: true, message: '请输入技术人员', trigger: 'blur' }],
   startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
-  result: [{ required: true, message: '请选择维护结果', trigger: 'change' }]
+  maintenanceResult: [{ required: true, message: '请选择维护结果', trigger: 'change' }]
 }
 
 const viewDialogVisible = ref(false)
@@ -281,8 +258,8 @@ const getResultLabel = (result?: string) => {
 
 const fetchEquipmentOptions = async () => {
   try {
-    const res = await getEquipmentList({ page: 1, pageSize: 1000 })
-    equipmentOptions.value = res.list
+    const res = await getEquipmentList({ pageNum: 1, pageSize: 1000 })
+    equipmentOptions.value = res.records
   } catch {
     console.error('获取设备列表失败')
   }
@@ -292,7 +269,7 @@ const fetchRecordList = async () => {
   loading.value = true
   try {
     const res = await getMaintenanceRecords(queryParams)
-    recordList.value = res.list
+    recordList.value = res.records
     total.value = res.total
   } catch {
     ElMessage.error('获取维护记录失败')
@@ -301,26 +278,18 @@ const fetchRecordList = async () => {
   }
 }
 
-const handleDateChange = (val: string[] | null) => {
-  if (val) {
-    queryParams.startDate = val[0]
-    queryParams.endDate = val[1]
-  } else {
-    queryParams.startDate = ''
-    queryParams.endDate = ''
-  }
+const handleDateChange = (_val: string[] | null) => {
+  // 后端 EquipmentMaintenanceQueryDTO 暂不支持日期范围筛选
 }
 
 const handleQuery = () => {
-  queryParams.page = 1
+  queryParams.pageNum = 1
   fetchRecordList()
 }
 
 const handleReset = () => {
-  queryParams.equipmentId = ''
-  queryParams.type = ''
-  queryParams.startDate = ''
-  queryParams.endDate = ''
+  queryParams.equipmentId = undefined
+  queryParams.maintenanceType = ''
   dateRange.value = []
   handleQuery()
 }
@@ -328,18 +297,16 @@ const handleReset = () => {
 const resetForm = () => {
   Object.assign(formData, {
     id: undefined,
-    equipmentId: '',
-    type: 'maintenance',
-    content: '',
+    equipmentId: undefined,
+    maintenanceType: 'maintenance',
+    maintenanceContent: '',
     technician: '',
     startTime: '',
     endTime: '',
-    result: 'success',
+    maintenanceResult: 'success',
     cost: 0,
-    notes: '',
-    attachments: []
+    remark: '',
   })
-  fileList.value = []
 }
 
 const handleAdd = () => {
@@ -351,12 +318,6 @@ const handleEdit = async (row: MaintenanceRecord) => {
   try {
     const detail = await getMaintenanceDetail(row.id)
     Object.assign(formData, detail)
-    if (detail.attachments?.length) {
-      fileList.value = detail.attachments.map((url, index) => ({
-        name: `附件${index + 1}`,
-        url
-      }))
-    }
     dialogVisible.value = true
   } catch {
     ElMessage.error('获取记录详情失败')
@@ -384,20 +345,6 @@ const handleDelete = async (row: MaintenanceRecord) => {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
     }
-  }
-}
-
-const handleUploadSuccess = (response: { url: string }) => {
-  if (!formData.attachments) {
-    formData.attachments = []
-  }
-  formData.attachments.push(response.url)
-}
-
-const handleUploadRemove = (file: UploadUserFile) => {
-  const index = formData.attachments?.findIndex(url => url === file.url) ?? -1
-  if (index > -1 && formData.attachments) {
-    formData.attachments.splice(index, 1)
   }
 }
 

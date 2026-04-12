@@ -15,7 +15,7 @@ import java.util.List;
 
 @Api(tags = "报告发布管理")
 @RestController
-@RequestMapping("/report/publish")
+@RequestMapping("/publish")
 @RequiredArgsConstructor
 public class ReportPublishController {
 

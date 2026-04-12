@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 public class SpecimenDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
-    @TableLogic
     private Long id;
 
     private String specimenNo;
@@ -84,6 +83,8 @@ public class SpecimenDO implements Serializable {
 
     private LocalDateTime updateTime;
 
+    @TableField("del_flag")
+    @TableLogic
     private Integer delFlag;
 
     @TableField(exist = false)

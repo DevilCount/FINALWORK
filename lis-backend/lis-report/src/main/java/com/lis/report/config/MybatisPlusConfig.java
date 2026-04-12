@@ -7,10 +7,12 @@ import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerIntercept
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.mybatis.spring.annotation.MapperScan;
 
 import java.time.LocalDateTime;
 
 @Configuration
+@MapperScan("com.lis.report.mapper")
 public class MybatisPlusConfig implements MetaObjectHandler {
 
     @Bean

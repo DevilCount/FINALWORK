@@ -13,7 +13,7 @@
           <el-form :model="typeQueryParams" inline class="search-form">
             <el-form-item>
               <el-input
-                v-model="typeQueryParams.name"
+                v-model="typeQueryParams.dictName"
                 placeholder="字典名称"
                 clearable
                 @keyup.enter="handleTypeQuery"
@@ -32,11 +32,11 @@
             highlight-current-row
             @current-change="handleTypeSelect"
           >
-            <el-table-column prop="name" label="字典名称" min-width="120" />
+            <el-table-column prop="dictName" label="字典名称" min-width="120" />
             <el-table-column prop="code" label="字典编码" min-width="120" />
             <el-table-column label="状态" width="80" align="center">
               <template #default="{ row }">
-                <el-tag v-if="row.status === 'normal'" type="success">正常</el-tag>
+                <el-tag v-if="row.status === 0" type="success">正常</el-tag>
                 <el-tag v-else type="danger">禁用</el-tag>
               </template>
             </el-table-column>
@@ -55,7 +55,7 @@
               :page-sizes="[10, 20, 50]"
               :total="typeTotal"
               layout="total, prev, pager, next"
-              small
+              size="small"
               @size-change="handleTypeQuery"
               @current-change="handleTypeQuery"
             />
@@ -67,7 +67,7 @@
         <el-card>
           <template #header>
             <div class="card-header">
-              <span>字典数据{{ currentType ? ` - ${currentType.name}` : '' }}</span>
+              <span>字典数据{{ currentType ? ` - ${currentType.dictName}` : '' }}</span>
               <el-button
                 type="primary"
                 icon="Plus"
@@ -85,7 +85,7 @@
             <el-form :model="dataQueryParams" inline class="search-form">
               <el-form-item>
                 <el-input
-                  v-model="dataQueryParams.label"
+                  v-model="dataQueryParams.dataLabel"
                   placeholder="字典标签"
                   clearable
                   @keyup.enter="handleDataQuery"
@@ -102,12 +102,12 @@
               border
               stripe
             >
-              <el-table-column prop="label" label="字典标签" min-width="120" />
+              <el-table-column prop="dataLabel" label="字典标签" min-width="120" />
               <el-table-column prop="value" label="字典值" min-width="100" />
               <el-table-column prop="sort" label="排序" width="80" align="center" />
               <el-table-column label="状态" width="80" align="center">
                 <template #default="{ row }">
-                  <el-tag v-if="row.status === 'normal'" type="success">正常</el-tag>
+                  <el-tag v-if="row.status === 0" type="success">正常</el-tag>
                   <el-tag v-else type="danger">禁用</el-tag>
                 </template>
               </el-table-column>
@@ -127,7 +127,7 @@
                 :page-sizes="[10, 20, 50]"
                 :total="dataTotal"
                 layout="total, prev, pager, next"
-                small
+                size="small"
                 @size-change="handleDataQuery"
                 @current-change="handleDataQuery"
               />
@@ -186,14 +186,14 @@ const currentDataId = ref<number | undefined>(undefined)
 const typeQueryParams = reactive<DictTypeQuery>({
   pageNum: 1,
   pageSize: 10,
-  name: '',
+  dictName: '',
 })
 
 const dataQueryParams = reactive<DictDataQuery>({
   pageNum: 1,
   pageSize: 10,
-  typeId: undefined,
-  label: '',
+  dictType: undefined,
+  dataLabel: '',
 })
 
 const loadTypeList = async () => {
@@ -212,7 +212,7 @@ const loadTypeList = async () => {
 const loadDataList = async () => {
   if (!currentType.value) return
   dataLoading.value = true
-  dataQueryParams.typeId = currentType.value.id
+  dataQueryParams.dictType = currentType.value.dictType
   try {
     const result = await getDictDataList(dataQueryParams)
     dataList.value = result.records
@@ -235,7 +235,7 @@ const handleDataQuery = () => {
 const handleTypeSelect = (row: DictType | null) => {
   currentType.value = row
   if (row) {
-    dataQueryParams.typeId = row.id
+    dataQueryParams.dictType = row.dictType
     dataQueryParams.pageNum = 1
     loadDataList()
   } else {
@@ -256,7 +256,7 @@ const handleEditType = (row: DictType) => {
 
 const handleDeleteType = async (row: DictType) => {
   try {
-    await ElMessageBox.confirm(`确定要删除字典类型"${row.name}"吗？`, '提示', {
+    await ElMessageBox.confirm(`确定要删除字典类型"${row.dictName}"吗？`, '提示', {
       type: 'warning',
     })
     await deleteDictType(row.id)
@@ -285,7 +285,7 @@ const handleEditData = (row: DictData) => {
 
 const handleDeleteData = async (row: DictData) => {
   try {
-    await ElMessageBox.confirm(`确定要删除字典数据"${row.label}"吗？`, '提示', {
+    await ElMessageBox.confirm(`确定要删除字典数据"${row.dataLabel}"吗？`, '提示', {
       type: 'warning',
     })
     await deleteDictData(row.id)

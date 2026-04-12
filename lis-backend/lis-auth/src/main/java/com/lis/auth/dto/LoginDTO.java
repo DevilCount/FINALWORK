@@ -21,4 +21,10 @@ public class LoginDTO implements Serializable {
     @Size(min = 6, max = 100, message = "密码长度必须在6-100个字符之间")
     @ApiModelProperty(value = "密码", required = true, example = "123456")
     private String password;
+
+    @ApiModelProperty(value = "验证码")
+    private String code;
+
+    @ApiModelProperty(value = "验证码UUID")
+    private String uuid;
 }

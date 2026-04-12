@@ -25,4 +25,6 @@ public interface RoleService {
     List<Long> getMenuIdsByRoleId(Long roleId);
 
     List<RoleVO> getAllRoles();
+
+    void updateRoleStatus(Long id, Integer status);
 }

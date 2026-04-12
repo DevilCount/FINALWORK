@@ -9,19 +9,19 @@
 
       <el-form :model="queryParams" inline class="search-form">
         <el-form-item label="标本编号">
-          <el-input v-model="queryParams.specimenCode" placeholder="请输入标本编号" clearable @keyup.enter="handleSearch" />
+          <el-input v-model="queryParams.specimenNo" placeholder="请输入标本编号" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item label="患者姓名">
           <el-input v-model="queryParams.patientName" placeholder="请输入患者姓名" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item label="操作类型">
-          <el-select v-model="queryParams.operationType" placeholder="请选择操作类型" clearable style="width: 150px">
-            <el-option v-for="item in operationTypes" :key="item.value" :label="item.label" :value="item.value" />
+          <el-select v-model="queryParams.action" placeholder="请选择操作类型" clearable style="width: 150px">
+            <el-option v-for="item in actionTypes" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="操作时间">
           <el-date-picker
-            v-model="operationTimeRange"
+            v-model="operateTimeRange"
             type="daterange"
             range-separator="至"
             start-placeholder="开始日期"
@@ -46,10 +46,10 @@
         <div class="specimen-info" v-if="specimenInfo">
           <el-descriptions :column="4" border size="small">
             <el-descriptions-item label="标本编号">
-              <el-tag type="primary">{{ specimenInfo.specimenCode }}</el-tag>
+              <el-tag type="primary">{{ specimenInfo.specimenNo }}</el-tag>
             </el-descriptions-item>
             <el-descriptions-item label="患者姓名">{{ specimenInfo.patientName }}</el-descriptions-item>
-            <el-descriptions-item label="科室">{{ specimenInfo.departmentName }}</el-descriptions-item>
+            <el-descriptions-item label="科室">{{ specimenInfo.deptName }}</el-descriptions-item>
             <el-descriptions-item label="当前状态">
               <el-tag :type="getStatusTagType(specimenInfo.status)">{{ specimenInfo.statusName }}</el-tag>
             </el-descriptions-item>
@@ -61,16 +61,16 @@
             <el-timeline-item
               v-for="record in traceRecords"
               :key="record.id"
-              :timestamp="record.operationTime"
+              :timestamp="record.operateTime"
               placement="top"
-              :type="getTimelineType(record.operationType)"
+              :type="getTimelineType(record.action)"
               :hollow="false"
               size="large"
             >
               <el-card class="timeline-card">
                 <div class="record-header">
-                  <el-tag :type="getOperationTagType(record.operationType)" size="large">
-                    {{ record.operationTypeName }}
+                  <el-tag :type="getActionTagType(record.action)" size="large">
+                    {{ record.actionName }}
                   </el-tag>
                   <span class="operator">操作人: {{ record.operatorName }}</span>
                 </div>
@@ -102,92 +102,112 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, ArrowRight, InfoFilled } from '@element-plus/icons-vue'
-import type { SpecimenTraceRecord, SpecimenTraceQueryParams, Specimen, SpecimenStatus } from '@/types/specimen'
-import { getSpecimenTraceRecords, getSpecimenTraceBySpecimenId, getSpecimenDetail } from '@/api/specimen'
+import type { SpecimenTraceVO, SpecimenTraceQueryParams, Specimen, SpecimenStatus } from '@/types/specimen'
+import { getSpecimenTraceRecords, getSpecimenTraceBySpecimenId, getSpecimenDetail, getSpecimenBySpecimenNo } from '@/api/specimen'
 
 const route = useRoute()
 
-const operationTimeRange = ref<[string, string] | null>(null)
+const operateTimeRange = ref<[string, string] | null>(null)
 
 const queryParams = reactive<SpecimenTraceQueryParams>({
-  specimenCode: '',
+  specimenNo: '',
   patientName: '',
-  operationType: '',
-  operationTimeStart: '',
-  operationTimeEnd: '',
+  action: '',
+  operateTimeStart: '',
+  operateTimeEnd: '',
 })
 
-const operationTypes = [
+const actionTypes = [
   { label: '登记', value: 'register' },
   { label: '采集', value: 'collect' },
   { label: '接收', value: 'receive' },
   { label: '拒收', value: 'reject' },
+  { label: '入库', value: 'storage' },
   { label: '送检', value: 'submit' },
   { label: '检验', value: 'test' },
   { label: '完成', value: 'complete' },
+  { label: '取消', value: 'cancel' },
 ]
 
-const traceRecords = ref<SpecimenTraceRecord[]>([])
+const traceRecords = ref<SpecimenTraceVO[]>([])
 const specimenInfo = ref<Specimen | null>(null)
 
 const getStatusTagType = (status: SpecimenStatus): 'success' | 'primary' | 'warning' | 'info' | 'danger' | undefined => {
   const typeMap: Record<SpecimenStatus, 'success' | 'primary' | 'warning' | 'info' | 'danger' | undefined> = {
-    pending_collect: 'info',
-    collected: 'warning',
-    received: 'primary',
-    testing: undefined,
-    completed: 'success',
-    rejected: 'danger',
+    REGISTERED: 'info',
+    RECEIVED: 'primary',
+    REJECTED: 'danger',
+    STORAGE: 'warning',
+    TESTING: undefined,
+    COMPLETED: 'success',
+    CANCELLED: 'info',
   }
   return typeMap[status]
 }
 
-const getTimelineType = (operationType: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' => {
+const getTimelineType = (action: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' => {
   const typeMap: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'info'> = {
     register: 'primary',
     collect: 'success',
     receive: 'primary',
     reject: 'danger',
+    storage: 'warning',
     submit: 'warning',
     test: 'info',
     complete: 'success',
+    cancel: 'info',
   }
-  return typeMap[operationType] || 'info'
+  return typeMap[action] || 'info'
 }
 
-const getOperationTagType = (operationType: string): 'success' | 'primary' | 'warning' | 'info' | 'danger' | undefined => {
+const getActionTagType = (action: string): 'success' | 'primary' | 'warning' | 'info' | 'danger' | undefined => {
   const typeMap: Record<string, 'success' | 'primary' | 'warning' | 'info' | 'danger' | undefined> = {
     register: undefined,
     collect: 'success',
     receive: 'primary',
     reject: 'danger',
+    storage: 'warning',
     submit: 'warning',
     test: 'info',
     complete: 'success',
+    cancel: 'info',
   }
-  return typeMap[operationType]
+  return typeMap[action]
 }
 
 const fetchTraceRecords = async () => {
-  if (!queryParams.specimenCode && !queryParams.patientName) {
+  if (!queryParams.specimenNo && !queryParams.patientName) {
     ElMessage.warning('请输入标本编号或患者姓名进行查询')
     return
   }
 
   try {
-    if (operationTimeRange.value) {
-      queryParams.operationTimeStart = operationTimeRange.value[0]
-      queryParams.operationTimeEnd = operationTimeRange.value[1]
+    if (operateTimeRange.value) {
+      queryParams.operateTimeStart = operateTimeRange.value[0]
+      queryParams.operateTimeEnd = operateTimeRange.value[1]
     } else {
-      queryParams.operationTimeStart = ''
-      queryParams.operationTimeEnd = ''
+      queryParams.operateTimeStart = ''
+      queryParams.operateTimeEnd = ''
     }
-    traceRecords.value = await getSpecimenTraceRecords(queryParams)
-    
-    if (traceRecords.value.length > 0) {
-      const specimenId = traceRecords.value[0].specimenId
-      specimenInfo.value = await getSpecimenDetail(specimenId)
+
+    // 先通过 specimenNo 查询标本获取 specimenId，再调用追溯接口
+    if (queryParams.specimenNo) {
+      try {
+        const specimen = await getSpecimenBySpecimenNo(queryParams.specimenNo)
+        specimenInfo.value = specimen
+        traceRecords.value = await getSpecimenTraceBySpecimenId(specimen.id)
+      } catch {
+        // 标本不存在，尝试直接用 specimenNo 查追溯
+        traceRecords.value = await getSpecimenTraceRecords(queryParams.specimenNo)
+        if (traceRecords.value.length > 0) {
+          const specimenId = traceRecords.value[0].specimenId
+          specimenInfo.value = await getSpecimenDetail(specimenId)
+        } else {
+          specimenInfo.value = null
+        }
+      }
     } else {
+      traceRecords.value = []
       specimenInfo.value = null
     }
   } catch (error) {
@@ -200,7 +220,7 @@ const fetchTraceBySpecimenId = async (specimenId: string) => {
     traceRecords.value = await getSpecimenTraceBySpecimenId(specimenId)
     specimenInfo.value = await getSpecimenDetail(specimenId)
     if (specimenInfo.value) {
-      queryParams.specimenCode = specimenInfo.value.specimenCode
+      queryParams.specimenNo = specimenInfo.value.specimenNo
     }
   } catch (error) {
     console.error('获取追溯记录失败:', error)
@@ -212,12 +232,12 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  queryParams.specimenCode = ''
+  queryParams.specimenNo = ''
   queryParams.patientName = ''
-  queryParams.operationType = ''
-  operationTimeRange.value = null
-  queryParams.operationTimeStart = ''
-  queryParams.operationTimeEnd = ''
+  queryParams.action = ''
+  operateTimeRange.value = null
+  queryParams.operateTimeStart = ''
+  queryParams.operateTimeEnd = ''
   traceRecords.value = []
   specimenInfo.value = null
 }

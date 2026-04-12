@@ -12,7 +12,7 @@ import java.util.List;
 
 @Api(tags = "设备状态监控")
 @RestController
-@RequestMapping("/equipment/status")
+@RequestMapping("/status")
 @RequiredArgsConstructor
 public class EquipmentStatusController {
 

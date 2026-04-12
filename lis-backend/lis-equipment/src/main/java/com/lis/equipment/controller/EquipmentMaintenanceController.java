@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Api(tags = "设备维护记录管理")
 @RestController
-@RequestMapping("/equipment/maintenance")
+@RequestMapping("/maintenance")
 @RequiredArgsConstructor
 public class EquipmentMaintenanceController {
 

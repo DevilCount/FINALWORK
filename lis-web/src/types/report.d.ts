@@ -1,40 +1,56 @@
 export interface Report {
   id: string
-  reportCode: string
+  reportNo: string
   specimenId: string
-  specimenCode: string
+  specimenNo: string
   patientId: string
   patientName: string
   patientGender: string
-  patientAge: number
-  departmentId: string
-  departmentName: string
+  patientAge: string
+  deptId: number
+  deptName: string
   bedNo: string
-  diagnosis: string
-  reportStatus: ReportStatus
-  reportStatusName: string
+  clinicalDiagnosis: string
+  status: ReportStatus
   reportType: string
   reportTypeName: string
-  submitTime: string | null
-  submitUserId: string | null
-  submitUserName: string | null
+  testTime: string | null
+  testUserId: string | null
+  testUserName: string | null
   auditTime: string | null
   auditUserId: string | null
   auditUserName: string | null
   auditRemark: string
+  firstAuditTime: string | null
+  firstAuditUserId: string | null
+  firstAuditUserName: string | null
+  firstAuditRemark: string
+  finalAuditTime: string | null
+  finalAuditUserId: string | null
+  finalAuditUserName: string | null
+  finalAuditRemark: string
   printCount: number
   lastPrintTime: string | null
   createTime: string
   updateTime: string
+  isAbnormal: boolean
+  isPanic: boolean
+}
+
+export interface ReportDetail extends Report {
   results: ReportResult[]
 }
 
-export type ReportStatus = 
-  | 'draft'
-  | 'submitted'
-  | 'audited'
-  | 'rejected'
-  | 'printed'
+export type ReportStatus =
+  | 'PENDING'
+  | 'TESTING'
+  | 'SUBMITTED'
+  | 'FIRST_AUDITED'
+  | 'FINAL_AUDITED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'PUBLISHED'
+  | 'CANCELLED'
 
 export interface ReportResult {
   id: string
@@ -57,38 +73,46 @@ export interface ReportResult {
   testTime: string
 }
 
-export type ResultFlag = 
-  | 'normal'
-  | 'high'
-  | 'low'
-  | 'critical_high'
-  | 'critical_low'
+export type ResultFlag =
+  | 'N'
+  | 'H'
+  | 'L'
+  | 'HH'
+  | 'LL'
 
 export interface ReportQueryParams {
   pageNum: number
   pageSize: number
-  reportCode?: string
-  specimenCode?: string
+  reportNo?: string
+  specimenNo?: string
   patientName?: string
-  patientIdCard?: string
-  reportStatus?: ReportStatus | ''
+  patientIdNo?: string
+  status?: ReportStatus | ''
   reportType?: string
-  departmentId?: string
-  submitTimeStart?: string
-  submitTimeEnd?: string
+  deptId?: number
+  testTimeStart?: string
+  testTimeEnd?: string
 }
 
 export interface ResultEntryForm {
-  specimenId: string
-  results: ResultEntryItem[]
-}
-
-export interface ResultEntryItem {
-  testItemId: string
+  reportId: number
+  reportItemId?: number
+  specimenTestItemId?: number
+  itemCode: string
+  itemName: string
+  itemNameEn?: string
   resultValue: string
+  resultText?: string
   resultFlag: ResultFlag
-  isAbnormal: boolean
-  isCritical: boolean
+  unit?: string
+  referenceLow?: number
+  referenceHigh?: number
+  referenceText?: string
+  panicLow?: number
+  panicHigh?: number
+  method?: string
+  equipmentName?: string
+  sort?: number
   remark: string
 }
 
@@ -96,65 +120,62 @@ export interface AuditForm {
   reportId: string
   auditResult: 'pass' | 'reject'
   auditRemark: string
+  auditLevel?: 'first' | 'final'
 }
 
 export interface CriticalValue {
   id: string
   specimenId: string
-  specimenCode: string
+  specimenNo: string
   reportId: string
-  reportCode: string
+  reportNo: string
   patientId: string
   patientName: string
   patientGender: string
-  patientAge: number
-  departmentId: string
-  departmentName: string
+  patientAge: string
+  deptId: number
+  deptName: string
   bedNo: string
   testItemId: string
-  testItemName: string
-  testItemCode: string
+  itemName: string
+  itemCode: string
   resultValue: string
-  resultUnit: string
-  referenceRange: string
-  criticalLevel: CriticalLevel
-  criticalLevelName: string
-  handleStatus: CriticalHandleStatus
+  unit: string
+  panicLow: number
+  panicHigh: number
+  panicType: PanicType
+  panicTypeName: string
+  handleStatus: number
   handleStatusName: string
   reportTime: string
   handleTime: string | null
-  handlerId: string | null
-  handlerName: string | null
-  handleRemark: string
-  notifyDoctorName: string
+  handleUserId: string | null
+  handleUserName: string | null
+  handleResult: string
+  receiveUserName: string
   notifyTime: string | null
   createTime: string
 }
 
-export type CriticalLevel = 'high' | 'low'
-
-export type CriticalHandleStatus = 
-  | 'pending'
-  | 'notified'
-  | 'handled'
+export type PanicType = 'high' | 'low'
 
 export interface CriticalValueQueryParams {
   pageNum: number
   pageSize: number
-  specimenCode?: string
+  specimenNo?: string
   patientName?: string
-  criticalLevel?: CriticalLevel | ''
-  handleStatus?: CriticalHandleStatus | ''
-  departmentId?: string
+  panicType?: PanicType | ''
+  handleStatus?: number | ''
+  deptId?: number
   reportTimeStart?: string
   reportTimeEnd?: string
 }
 
 export interface CriticalValueHandleForm {
   id: string
-  notifyDoctorName: string
+  receiveUserName: string
   notifyTime: string
-  handleRemark: string
+  handleResult: string
 }
 
 export interface CriticalValueRecord {

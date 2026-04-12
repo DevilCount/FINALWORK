@@ -3,15 +3,15 @@ import { get, post, put, del } from '@/utils/request'
 export interface Menu {
   id: number
   parentId: number
-  name: string
+  menuName: string
   path: string
   component: string
   redirect: string
   icon: string
   sort: number
-  status: 'normal' | 'disable'
-  visible: 'show' | 'hidden'
-  type: 'directory' | 'menu' | 'button'
+  status: number
+  visible: number
+  type: number
   perms: string
   createTime: string
   updateTime: string
@@ -21,22 +21,22 @@ export interface Menu {
 export interface MenuForm {
   id?: number
   parentId: number
-  name: string
+  menuName: string
   path: string
   component: string
   redirect: string
   icon: string
   sort: number
-  status: 'normal' | 'disable'
-  visible: 'show' | 'hidden'
-  type: 'directory' | 'menu' | 'button'
+  status: number
+  visible: number
+  type: number
   perms: string
 }
 
 export interface MenuQuery {
-  name?: string
-  status?: string
-  type?: string
+  menuName?: string
+  status?: number
+  type?: number
 }
 
 export interface MenuTree {
@@ -47,37 +47,43 @@ export interface MenuTree {
 }
 
 export function getMenuList(params?: MenuQuery): Promise<Menu[]> {
-  return get('/system/menu/list', params)
+  return get('/user/menu/list', params)
 }
 
-export function getMenuTree(): Promise<MenuTree[]> {
-  return get('/system/menu/tree')
+export function getMenuTree(): Promise<Menu[]> {
+  return get('/user/menu/tree')
+}
+
+export function getMenuTreeNodes(): Promise<MenuTree[]> {
+  return get('/user/menu/tree-nodes')
 }
 
 export function getMenuById(id: number): Promise<Menu> {
-  return get(`/system/menu/${id}`)
+  return get(`/user/menu/${id}`)
 }
 
-export function createMenu(data: MenuForm): Promise<void> {
-  return post('/system/menu', data)
+export function createMenu(data: MenuForm): Promise<number> {
+  const mapped = { ...data, menuType: data.type, orderNum: data.sort }
+  return post('/user/menu', mapped)
 }
 
 export function updateMenu(data: MenuForm): Promise<void> {
-  return put('/system/menu', data)
+  const mapped = { ...data, menuType: data.type, orderNum: data.sort }
+  return put('/user/menu', mapped)
 }
 
 export function deleteMenu(id: number): Promise<void> {
-  return del(`/system/menu/${id}`)
+  return del(`/user/menu/${id}`)
 }
 
-export function updateMenuStatus(id: number, status: 'normal' | 'disable'): Promise<void> {
-  return put(`/system/menu/${id}/status`, { status })
+export function getUserMenus(userId: number): Promise<Menu[]> {
+  return get(`/user/menu/user/${userId}`)
 }
 
-export function getUserMenus(): Promise<Menu[]> {
-  return get('/system/menu/user')
+export function getRoleMenus(roleId: number): Promise<Menu[]> {
+  return get(`/user/menu/role/${roleId}`)
 }
 
-export function getMenuButtons(menuId: number): Promise<Menu[]> {
-  return get(`/system/menu/${menuId}/buttons`)
+export function getUserPermissions(userId: number): Promise<string[]> {
+  return get(`/user/menu/user/${userId}/permissions`)
 }

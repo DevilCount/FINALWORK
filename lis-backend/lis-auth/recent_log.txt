@@ -1,0 +1,1 @@
+﻿2026-04-09 18:19:20.440 DEBUG 35908 --- [nio-8081-exec-9] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request

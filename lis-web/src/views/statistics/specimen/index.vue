@@ -14,12 +14,12 @@
           />
         </el-form-item>
         <el-form-item label="科室">
-          <el-select v-model="queryParams.department" placeholder="请选择科室" clearable>
+          <el-select v-model="queryParams.deptId" placeholder="请选择科室" clearable>
             <el-option v-for="dept in departments" :key="dept.value" :label="dept.label" :value="dept.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="标本类型">
-          <el-select v-model="queryParams.specimenType" placeholder="请选择类型" clearable>
+          <el-select v-model="queryParams.specimenTypeId" placeholder="请选择类型" clearable>
             <el-option v-for="type in specimenTypes" :key="type.value" :label="type.label" :value="type.value" />
           </el-select>
         </el-form-item>
@@ -61,8 +61,8 @@
               <el-icon><CircleCheck /></el-icon>
             </div>
             <div class="summary-info">
-              <div class="summary-value">{{ summaryData.qualifiedCount }}</div>
-              <div class="summary-label">合格标本</div>
+              <div class="summary-value">{{ summaryData.receivedCount }}</div>
+              <div class="summary-label">已接收</div>
             </div>
           </div>
         </el-card>
@@ -74,8 +74,8 @@
               <el-icon><CircleClose /></el-icon>
             </div>
             <div class="summary-info">
-              <div class="summary-value">{{ summaryData.unqualifiedCount }}</div>
-              <div class="summary-label">不合格标本</div>
+              <div class="summary-value">{{ summaryData.rejectedCount }}</div>
+              <div class="summary-label">已拒收</div>
             </div>
           </div>
         </el-card>
@@ -87,8 +87,8 @@
               <el-icon><TrendCharts /></el-icon>
             </div>
             <div class="summary-info">
-              <div class="summary-value">{{ summaryData.qualificationRate }}%</div>
-              <div class="summary-label">合格率</div>
+              <div class="summary-value">{{ summaryData.completionRate }}%</div>
+              <div class="summary-label">完成率</div>
             </div>
           </div>
         </el-card>
@@ -125,18 +125,15 @@
         </div>
       </template>
       <el-table v-loading="loading" :data="statisticsData" border stripe max-height="400">
-        <el-table-column prop="specimenType" label="标本类型" width="150" />
+        <el-table-column prop="statDate" label="日期" width="150" />
         <el-table-column prop="totalCount" label="总数" width="100" />
-        <el-table-column prop="qualifiedCount" label="合格数" width="100" />
-        <el-table-column prop="unqualifiedCount" label="不合格数" width="100" />
-        <el-table-column label="合格率" width="150">
+        <el-table-column prop="receivedCount" label="接收数" width="100" />
+        <el-table-column prop="completedCount" label="完成数" width="100" />
+        <el-table-column prop="rejectedCount" label="拒收数" width="100" />
+        <el-table-column prop="statCount" label="急诊数" width="100" />
+        <el-table-column label="完成率" width="150">
           <template #default="{ row }">
-            <el-progress :percentage="row.qualificationRate" :color="getProgressColor(row.qualificationRate)" />
-          </template>
-        </el-table-column>
-        <el-table-column label="不合格原因分析" min-width="200">
-          <template #default>
-            <el-button type="primary" link>查看详情</el-button>
+            <el-progress :percentage="row.totalCount ? Math.round((row.completedCount / row.totalCount) * 100) : 0" :color="getProgressColor(row.totalCount ? Math.round((row.completedCount / row.totalCount) * 100) : 0)" />
           </template>
         </el-table-column>
       </el-table>
@@ -171,17 +168,18 @@ const formatDate = (date: Date) => {
 const queryParams = reactive<SpecimenQuery>({
   startDate: getDefaultDateRange()[0],
   endDate: getDefaultDateRange()[1],
-  department: '',
-  specimenType: ''
+  deptId: undefined,
+  specimenTypeId: undefined
 })
 
 dateRange.value = getDefaultDateRange()
 
 const summaryData = reactive({
   totalCount: 0,
-  qualifiedCount: 0,
-  unqualifiedCount: 0,
-  qualificationRate: 0
+  receivedCount: 0,
+  rejectedCount: 0,
+  completedCount: 0,
+  completionRate: 0
 })
 
 const departments = [
@@ -226,8 +224,8 @@ const handleReset = () => {
   dateRange.value = defaultRange
   queryParams.startDate = defaultRange[0]
   queryParams.endDate = defaultRange[1]
-  queryParams.department = ''
-  queryParams.specimenType = ''
+  queryParams.deptId = undefined
+  queryParams.specimenTypeId = undefined
   handleQuery()
 }
 
@@ -273,10 +271,11 @@ const fetchStatistics = async () => {
 
 const updateSummary = (data: SpecimenStatistics[]) => {
   summaryData.totalCount = data.reduce((sum, item) => sum + item.totalCount, 0)
-  summaryData.qualifiedCount = data.reduce((sum, item) => sum + item.qualifiedCount, 0)
-  summaryData.unqualifiedCount = data.reduce((sum, item) => sum + item.unqualifiedCount, 0)
-  summaryData.qualificationRate = summaryData.totalCount
-    ? Math.round((summaryData.qualifiedCount / summaryData.totalCount) * 100)
+  summaryData.receivedCount = data.reduce((sum, item) => sum + item.receivedCount, 0)
+  summaryData.rejectedCount = data.reduce((sum, item) => sum + item.rejectedCount, 0)
+  summaryData.completedCount = data.reduce((sum, item) => sum + item.completedCount, 0)
+  summaryData.completionRate = summaryData.totalCount
+    ? Math.round((summaryData.completedCount / summaryData.totalCount) * 100)
     : 0
 }
 
@@ -325,8 +324,9 @@ const renderPieChart = () => {
             fontWeight: 'bold'
           }
         },
-        data: chartData.value.pieData.map((item, index) => ({
-          ...item,
+        data: chartData.value.series.map((s, index) => ({
+          name: s.name,
+          value: s.data.reduce((sum, val) => sum + val, 0),
           itemStyle: {
             color: getSeriesColor(index)
           }
@@ -353,7 +353,7 @@ const renderTrendChart = () => {
       }
     },
     legend: {
-      data: chartData.value.trendData.series.map(s => s.name),
+      data: chartData.value.series.map(s => s.name),
       top: 0
     },
     grid: {
@@ -366,13 +366,13 @@ const renderTrendChart = () => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: chartData.value.trendData.categories
+      data: chartData.value.xAxis.data
     },
     yAxis: {
       type: 'value',
       name: '数量'
     },
-    series: chartData.value.trendData.series.map((s, index) => ({
+    series: chartData.value.series.map((s, index) => ({
       name: s.name,
       type: 'line',
       stack: 'Total',

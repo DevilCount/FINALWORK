@@ -6,9 +6,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lis.common.exception.BusinessException;
 import com.lis.common.result.PageResult;
+import com.lis.common.result.ResultCode;
 import com.lis.user.dto.*;
+import com.lis.user.entity.DeptDO;
 import com.lis.user.entity.UserDO;
 import com.lis.user.entity.UserRoleDO;
+import com.lis.user.mapper.DeptMapper;
 import com.lis.user.mapper.MenuMapper;
 import com.lis.user.mapper.RoleMapper;
 import com.lis.user.mapper.UserMapper;
@@ -34,6 +37,7 @@ public class UserServiceImpl implements UserService {
     private final RoleMapper roleMapper;
     private final MenuMapper menuMapper;
     private final UserRoleMapper userRoleMapper;
+    private final DeptMapper deptMapper;
 
     @Override
     public PageResult<UserVO> getUserList(UserQueryDTO queryDTO) {
@@ -61,7 +65,7 @@ public class UserServiceImpl implements UserService {
     public UserVO getUserById(Long id) {
         UserDO userDO = userMapper.selectById(id);
         if (userDO == null) {
-            throw new BusinessException("用户不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "用户不存在");
         }
         UserVO userVO = convertToVO(userDO);
         List<Long> roleIds = userRoleMapper.selectRoleIdsByUserId(id);
@@ -83,7 +87,11 @@ public class UserServiceImpl implements UserService {
     public Long createUser(UserCreateDTO createDTO) {
         UserDO existUser = userMapper.selectByUserName(createDTO.getUserName());
         if (existUser != null) {
-            throw new BusinessException("用户名已存在");
+            throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS, "用户名已存在");
+        }
+
+        if (createDTO.getPassword() == null || createDTO.getPassword().isBlank()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "密码不能为空");
         }
 
         UserDO userDO = new UserDO();
@@ -109,7 +117,7 @@ public class UserServiceImpl implements UserService {
     public void updateUser(UserUpdateDTO updateDTO) {
         UserDO existUser = userMapper.selectById(updateDTO.getId());
         if (existUser == null) {
-            throw new BusinessException("用户不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "用户不存在");
         }
 
         UserDO userDO = new UserDO();
@@ -133,7 +141,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
         UserDO userDO = userMapper.selectById(id);
         if (userDO == null) {
-            throw new BusinessException("用户不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "用户不存在");
         }
 
         userMapper.deleteById(id);
@@ -160,13 +168,17 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updatePassword(PasswordUpdateDTO passwordDTO) {
+        if (passwordDTO.getUserId() == null) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "用户ID不能为空");
+        }
+
         UserDO userDO = userMapper.selectById(passwordDTO.getUserId());
         if (userDO == null) {
-            throw new BusinessException("用户不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "用户不存在");
         }
 
         if (!BCrypt.checkpw(passwordDTO.getOldPassword(), userDO.getPassword())) {
-            throw new BusinessException("旧密码错误");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "旧密码错误");
         }
 
         String newPassword = BCrypt.hashpw(passwordDTO.getNewPassword());
@@ -180,7 +192,7 @@ public class UserServiceImpl implements UserService {
     public void resetPassword(Long userId, String newPassword) {
         UserDO userDO = userMapper.selectById(userId);
         if (userDO == null) {
-            throw new BusinessException("用户不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "用户不存在");
         }
 
         String password = BCrypt.hashpw(newPassword);
@@ -191,10 +203,23 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void resetPasswordWithHash(Long userId, String passwordHash) {
+        UserDO userDO = userMapper.selectById(userId);
+        if (userDO == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "用户不存在");
+        }
+
+        userMapper.updatePassword(userId, passwordHash);
+
+        log.info("重置密码成功: userId={}", userId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateStatus(Long userId, Integer status) {
         UserDO userDO = userMapper.selectById(userId);
         if (userDO == null) {
-            throw new BusinessException("用户不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "用户不存在");
         }
 
         userMapper.updateStatus(userId, status);
@@ -207,7 +232,7 @@ public class UserServiceImpl implements UserService {
     public void assignRoles(UserRoleAssignDTO assignDTO) {
         UserDO userDO = userMapper.selectById(assignDTO.getUserId());
         if (userDO == null) {
-            throw new BusinessException("用户不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "用户不存在");
         }
 
         userRoleMapper.deleteByUserId(assignDTO.getUserId());
@@ -244,6 +269,46 @@ public class UserServiceImpl implements UserService {
         result.put("realName", userDO.getNickName());
         result.put("password", userDO.getPassword());
         result.put("status", userDO.getStatus());
+        result.put("phone", userDO.getPhone());
+        result.put("email", userDO.getEmail());
+        result.put("deptId", userDO.getDeptId());
+        result.put("avatar", userDO.getAvatar());
+
+        if (userDO.getDeptId() != null) {
+            DeptDO dept = deptMapper.selectById(userDO.getDeptId());
+            if (dept != null) {
+                result.put("deptName", dept.getDeptName());
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> getUserInfoById(Long id) {
+        UserDO userDO = userMapper.selectById(id);
+        if (userDO == null) {
+            return null;
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", userDO.getId());
+        result.put("username", userDO.getUserName());
+        result.put("realName", userDO.getNickName());
+        result.put("password", userDO.getPassword());
+        result.put("status", userDO.getStatus());
+        result.put("phone", userDO.getPhone());
+        result.put("email", userDO.getEmail());
+        result.put("deptId", userDO.getDeptId());
+        result.put("avatar", userDO.getAvatar());
+
+        if (userDO.getDeptId() != null) {
+            DeptDO dept = deptMapper.selectById(userDO.getDeptId());
+            if (dept != null) {
+                result.put("deptName", dept.getDeptName());
+            }
+        }
+
         return result;
     }
 

@@ -14,21 +14,21 @@
       <el-form :model="queryParams" inline class="search-form">
         <el-form-item label="关键词">
           <el-input
-            v-model="queryParams.keyword"
-            placeholder="规则名称/编码"
+            v-model="queryParams.ruleName"
+            placeholder="规则名称"
             clearable
             @keyup.enter="handleQuery"
           />
         </el-form-item>
         <el-form-item label="规则分类">
           <el-select v-model="queryParams.category" placeholder="请选择分类" clearable>
-            <el-option v-for="cat in categories" :key="cat.code" :label="cat.name" :value="cat.code" />
+            <el-option v-for="cat in categories" :key="cat" :label="cat" :value="cat" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="queryParams.isActive" placeholder="请选择状态" clearable>
-            <el-option label="启用" :value="true" />
-            <el-option label="禁用" :value="false" />
+          <el-select v-model="queryParams.isEnabled" placeholder="请选择状态" clearable>
+            <el-option label="启用" :value="1" />
+            <el-option label="禁用" :value="0" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -44,14 +44,14 @@
       </el-form>
 
       <el-table v-loading="loading" :data="ruleList" border stripe>
-        <el-table-column prop="code" label="规则编码" width="120" />
-        <el-table-column prop="name" label="规则名称" min-width="150" />
+        <el-table-column prop="ruleCode" label="规则编码" width="120" />
+        <el-table-column prop="ruleName" label="规则名称" min-width="150" />
         <el-table-column prop="category" label="分类" width="120" />
         <el-table-column prop="priority" label="优先级" width="80" />
         <el-table-column label="状态" width="80">
           <template #default="{ row }">
             <el-switch
-              v-model="row.isActive"
+              :model-value="row.isEnabled === 1"
               @change="handleToggleStatus(row)"
             />
           </template>
@@ -68,7 +68,7 @@
       </el-table>
 
       <el-pagination
-        v-model:current-page="queryParams.page"
+        v-model:current-page="queryParams.pageNum"
         v-model:page-size="queryParams.pageSize"
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
@@ -82,13 +82,13 @@
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="规则编码" prop="code">
-              <el-input v-model="formData.code" placeholder="请输入规则编码" />
+            <el-form-item label="规则编码" prop="ruleCode">
+              <el-input v-model="formData.ruleCode" placeholder="请输入规则编码" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="规则名称" prop="name">
-              <el-input v-model="formData.name" placeholder="请输入规则名称" />
+            <el-form-item label="规则名称" prop="ruleName">
+              <el-input v-model="formData.ruleName" placeholder="请输入规则名称" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -96,7 +96,7 @@
           <el-col :span="12">
             <el-form-item label="规则分类" prop="category">
               <el-select v-model="formData.category" placeholder="请选择分类" style="width: 100%">
-                <el-option v-for="cat in categories" :key="cat.code" :label="cat.name" :value="cat.code" />
+                <el-option v-for="cat in categories" :key="cat" :label="cat" :value="cat" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -148,13 +148,13 @@
               </el-row>
             </el-col>
             <el-col :span="4">
-              <el-select v-if="index < formData.conditions!.length - 1" v-model="condition.logic" placeholder="逻辑">
-                <el-option label="且" value="and" />
-                <el-option label="或" value="or" />
+              <el-select v-if="Number(index) < Number(formData.conditions!.length) - 1" v-model="condition.logic" placeholder="逻辑">
+                <el-option label="且" :value="'and'" />
+                <el-option label="或" :value="'or'" />
               </el-select>
             </el-col>
             <el-col :span="2">
-              <el-button type="danger" link @click="removeCondition(index)">
+              <el-button type="danger" link @click="removeCondition(Number(index))">
                 <el-icon><Delete /></el-icon>
               </el-button>
             </el-col>
@@ -188,7 +188,7 @@
               <el-input v-model="action.content" placeholder="动作内容" />
             </el-col>
             <el-col :span="2">
-              <el-button type="danger" link @click="removeAction(index)">
+              <el-button type="danger" link @click="removeAction(Number(index))">
                 <el-icon><Delete /></el-icon>
               </el-button>
             </el-col>
@@ -232,7 +232,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Search, Refresh, Delete } from '@element-plus/icons-vue'
-import type { AIRule, AIRuleQuery, RuleCondition, RuleAction } from '@/api/ai'
+import type { AIRule, AIRuleQuery } from '@/api/ai'
 import { getAIRules, getAIRuleDetail, createAIRule, updateAIRule, deleteAIRule, toggleAIRule, testAIRule, getAIRuleCategories } from '@/api/ai'
 
 const loading = ref(false)
@@ -240,33 +240,33 @@ const submitLoading = ref(false)
 const testLoading = ref(false)
 const ruleList = ref<AIRule[]>([])
 const total = ref(0)
-const categories = ref<{ code: string; name: string }[]>([])
+const categories = ref<string[]>([])
 
 const queryParams = reactive<AIRuleQuery>({
-  page: 1,
+  pageNum: 1,
   pageSize: 10,
-  keyword: '',
+  ruleName: '',
   category: '',
-  isActive: undefined
+  isEnabled: undefined
 })
 
 const dialogVisible = ref(false)
 const dialogTitle = computed(() => (formData.id ? '编辑规则' : '新增规则'))
 const formRef = ref<FormInstance>()
 const formData = reactive<Partial<AIRule>>({
-  code: '',
-  name: '',
+  ruleCode: '',
+  ruleName: '',
   category: '',
   description: '',
   priority: 50,
-  isActive: true,
+  isEnabled: 1,
   conditions: [],
   actions: []
 })
 
 const formRules: FormRules = {
-  code: [{ required: true, message: '请输入规则编码', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入规则名称', trigger: 'blur' }],
+  ruleCode: [{ required: true, message: '请输入规则编码', trigger: 'blur' }],
+  ruleName: [{ required: true, message: '请输入规则名称', trigger: 'blur' }],
   category: [{ required: true, message: '请选择规则分类', trigger: 'change' }],
   priority: [{ required: true, message: '请输入优先级', trigger: 'blur' }]
 }
@@ -288,7 +288,7 @@ const fetchRuleList = async () => {
   loading.value = true
   try {
     const res = await getAIRules(queryParams)
-    ruleList.value = res.list
+    ruleList.value = res.records
     total.value = res.total
   } catch {
     ElMessage.error('获取规则列表失败')
@@ -298,26 +298,26 @@ const fetchRuleList = async () => {
 }
 
 const handleQuery = () => {
-  queryParams.page = 1
+  queryParams.pageNum = 1
   fetchRuleList()
 }
 
 const handleReset = () => {
-  queryParams.keyword = ''
+  queryParams.ruleName = ''
   queryParams.category = ''
-  queryParams.isActive = undefined
+  queryParams.isEnabled = undefined
   handleQuery()
 }
 
 const resetForm = () => {
   Object.assign(formData, {
     id: undefined,
-    code: '',
-    name: '',
+    ruleCode: '',
+    ruleName: '',
     category: '',
     description: '',
     priority: 50,
-    isActive: true,
+    isEnabled: 1,
     conditions: [],
     actions: []
   })
@@ -330,7 +330,7 @@ const handleAdd = () => {
 
 const handleEdit = async (row: AIRule) => {
   try {
-    const detail = await getAIRuleDetail(row.id)
+    const detail = await getAIRuleDetail(Number(row.id))
     Object.assign(formData, detail)
     dialogVisible.value = true
   } catch {
@@ -341,7 +341,7 @@ const handleEdit = async (row: AIRule) => {
 const handleDelete = async (row: AIRule) => {
   try {
     await ElMessageBox.confirm('确定要删除该规则吗？', '提示', { type: 'warning' })
-    await deleteAIRule(row.id)
+    await deleteAIRule(Number(row.id))
     ElMessage.success('删除成功')
     fetchRuleList()
   } catch (error) {
@@ -353,10 +353,11 @@ const handleDelete = async (row: AIRule) => {
 
 const handleToggleStatus = async (row: AIRule) => {
   try {
-    await toggleAIRule(row.id, row.isActive)
-    ElMessage.success(row.isActive ? '已启用' : '已禁用')
+    const newStatus = row.isEnabled === 1 ? 0 : 1
+    await toggleAIRule(Number(row.id), newStatus === 1)
+    ElMessage.success(newStatus === 1 ? '已启用' : '已禁用')
+    fetchRuleList()
   } catch {
-    row.isActive = !row.isActive
     ElMessage.error('操作失败')
   }
 }
@@ -380,7 +381,7 @@ const handleRunTest = async () => {
   testLoading.value = true
   try {
     const testData = JSON.parse(testDataJson.value)
-    testResult.value = await testAIRule(currentTestRule.value.id, testData)
+    testResult.value = await testAIRule(Number(currentTestRule.value.id), testData)
   } catch {
     ElMessage.error('测试数据格式错误或测试失败')
   } finally {
@@ -426,7 +427,7 @@ const handleSubmit = async () => {
   submitLoading.value = true
   try {
     if (formData.id) {
-      await updateAIRule(formData.id, formData)
+      await updateAIRule(Number(formData.id), formData)
       ElMessage.success('更新成功')
     } else {
       await createAIRule(formData)

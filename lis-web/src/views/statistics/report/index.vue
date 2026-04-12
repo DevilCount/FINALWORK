@@ -14,13 +14,13 @@
           />
         </el-form-item>
         <el-form-item label="科室">
-          <el-select v-model="queryParams.department" placeholder="请选择科室" clearable>
+          <el-select v-model="queryParams.deptId" placeholder="请选择科室" clearable>
             <el-option v-for="dept in departments" :key="dept.value" :label="dept.label" :value="dept.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="报告类型">
-          <el-select v-model="queryParams.reportType" placeholder="请选择类型" clearable>
-            <el-option v-for="type in reportTypes" :key="type.value" :label="type.label" :value="type.value" />
+        <el-form-item label="报告状态">
+          <el-select v-model="queryParams.reportStatus" placeholder="请选择状态" clearable>
+            <el-option v-for="status in reportStatuses" :key="status.value" :label="status.label" :value="status.value" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -87,7 +87,7 @@
               <el-icon><Bell /></el-icon>
             </div>
             <div class="summary-info">
-              <div class="summary-value">{{ summaryData.criticalCount }}</div>
+              <div class="summary-value">{{ summaryData.panicCount }}</div>
               <div class="summary-label">危急值报告</div>
             </div>
           </div>
@@ -137,14 +137,14 @@
             </div>
           </template>
           <el-table v-loading="loading" :data="statisticsData" border stripe max-height="300">
-            <el-table-column prop="reportType" label="报告类型" width="120" />
+            <el-table-column prop="itemName" label="检验项目" width="120" />
             <el-table-column prop="totalCount" label="总数" width="80" />
             <el-table-column prop="normalCount" label="正常" width="80" />
             <el-table-column prop="abnormalCount" label="异常" width="80" />
-            <el-table-column prop="criticalCount" label="危急值" width="80" />
-            <el-table-column label="平均审核时间" width="120">
+            <el-table-column prop="panicCount" label="危急值" width="80" />
+            <el-table-column label="异常率" width="120">
               <template #default="{ row }">
-                {{ row.avgReviewTime ? `${row.avgReviewTime}分钟` : '-' }}
+                {{ row.abnormalRate ? `${(row.abnormalRate * 100).toFixed(1)}%` : '-' }}
               </template>
             </el-table-column>
           </el-table>
@@ -181,8 +181,8 @@ const formatDate = (date: Date) => {
 const queryParams = reactive<StatisticsReportQuery>({
   startDate: getDefaultDateRange()[0],
   endDate: getDefaultDateRange()[1],
-  department: '',
-  reportType: ''
+  deptId: undefined,
+  reportStatus: ''
 })
 
 dateRange.value = getDefaultDateRange()
@@ -191,7 +191,7 @@ const summaryData = reactive({
   totalCount: 0,
   normalCount: 0,
   abnormalCount: 0,
-  criticalCount: 0
+  panicCount: 0
 })
 
 const departments = [
@@ -202,13 +202,14 @@ const departments = [
   { label: '门诊检验', value: '门诊检验' }
 ]
 
-const reportTypes = [
-  { label: '血常规', value: '血常规' },
-  { label: '生化检验', value: '生化检验' },
-  { label: '免疫检验', value: '免疫检验' },
-  { label: '微生物检验', value: '微生物检验' },
-  { label: '尿液分析', value: '尿液分析' },
-  { label: '凝血功能', value: '凝血功能' }
+const reportStatuses = [
+  { label: '待检验', value: 'PENDING' },
+  { label: '检验中', value: 'TESTING' },
+  { label: '已提交', value: 'SUBMITTED' },
+  { label: '已审核', value: 'APPROVED' },
+  { label: '已驳回', value: 'REJECTED' },
+  { label: '已发布', value: 'PUBLISHED' },
+  { label: '已作废', value: 'CANCELLED' },
 ]
 
 const pieChartRef = ref<HTMLElement>()
@@ -237,8 +238,8 @@ const handleReset = () => {
   dateRange.value = defaultRange
   queryParams.startDate = defaultRange[0]
   queryParams.endDate = defaultRange[1]
-  queryParams.department = ''
-  queryParams.reportType = ''
+  queryParams.deptId = undefined
+  queryParams.reportStatus = ''
   handleQuery()
 }
 
@@ -280,7 +281,7 @@ const updateSummary = (data: ReportStatistics[]) => {
   summaryData.totalCount = data.reduce((sum, item) => sum + item.totalCount, 0)
   summaryData.normalCount = data.reduce((sum, item) => sum + item.normalCount, 0)
   summaryData.abnormalCount = data.reduce((sum, item) => sum + item.abnormalCount, 0)
-  summaryData.criticalCount = data.reduce((sum, item) => sum + item.criticalCount, 0)
+  summaryData.panicCount = data.reduce((sum, item) => sum + item.panicCount, 0)
 }
 
 const renderCharts = () => {
@@ -295,6 +296,15 @@ const renderPieChart = () => {
   if (!pieChart) {
     pieChart = echarts.init(pieChartRef.value)
   }
+
+  // Build pie data from the first series in chartData
+  const pieSeriesData = chartData.value.series.map((s, index) => ({
+    name: s.name,
+    value: s.data.reduce((sum, val) => sum + val, 0),
+    itemStyle: {
+      color: getSeriesColor(index)
+    }
+  }))
 
   const option: echarts.EChartsOption = {
     tooltip: {
@@ -329,12 +339,7 @@ const renderPieChart = () => {
             fontWeight: 'bold'
           }
         },
-        data: chartData.value.pieData.map((item, index) => ({
-          ...item,
-          itemStyle: {
-            color: getSeriesColor(index)
-          }
-        }))
+        data: pieSeriesData
       }
     ]
   }
@@ -357,7 +362,7 @@ const renderTrendChart = () => {
       }
     },
     legend: {
-      data: chartData.value.trendData.series.map(s => s.name),
+      data: chartData.value.series.map(s => s.name),
       top: 0
     },
     grid: {
@@ -370,19 +375,19 @@ const renderTrendChart = () => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: chartData.value.trendData.categories
+      data: chartData.value.xAxis.data
     },
     yAxis: {
       type: 'value',
       name: '数量'
     },
-    series: chartData.value.trendData.series.map((s, index) => ({
+    series: chartData.value.series.map((s, idx) => ({
       name: s.name,
       type: 'line',
       smooth: true,
       data: s.data,
       itemStyle: {
-        color: getSeriesColor(index)
+        color: getSeriesColor(idx)
       }
     }))
   }
@@ -405,7 +410,7 @@ const renderBarChart = () => {
       }
     },
     legend: {
-      data: chartData.value.barData.series.map(s => s.name),
+      data: chartData.value.series.map(s => s.name),
       top: 0
     },
     grid: {
@@ -417,13 +422,13 @@ const renderBarChart = () => {
     },
     xAxis: {
       type: 'category',
-      data: chartData.value.barData.categories
+      data: chartData.value.xAxis.data
     },
     yAxis: {
       type: 'value',
       name: '数量'
     },
-    series: chartData.value.barData.series.map((s, index) => ({
+    series: chartData.value.series.map((s) => ({
       name: s.name,
       type: 'bar',
       stack: 'total',

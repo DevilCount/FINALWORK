@@ -11,8 +11,8 @@
           <el-form :model="reportQuery" inline class="search-form">
             <el-form-item>
               <el-input
-                v-model="reportQuery.keyword"
-                placeholder="报告编号/患者姓名"
+                v-model="reportQuery.patientName"
+                placeholder="患者姓名"
                 clearable
                 @keyup.enter="handleSearchReports"
               />
@@ -32,15 +32,15 @@
             <el-table-column prop="reportNo" label="报告编号" width="140" />
             <el-table-column prop="patientName" label="患者姓名" width="100" />
             <el-table-column prop="reportType" label="报告类型" width="100" />
-            <el-table-column prop="createdAt" label="报告日期" width="160" />
+            <el-table-column prop="createTime" label="报告日期" width="160" />
           </el-table>
           <el-pagination
-            v-model:current-page="reportQuery.page"
+            v-model:current-page="reportQuery.pageNum"
             v-model:page-size="reportQuery.pageSize"
             :total="reportTotal"
             :page-sizes="[10, 20, 50]"
             layout="total, prev, pager, next"
-            small
+            size="small"
             @size-change="fetchReports"
             @current-change="fetchReports"
           />
@@ -66,9 +66,9 @@
             <el-descriptions :column="2" border>
               <el-descriptions-item label="报告编号">{{ selectedReport.reportNo }}</el-descriptions-item>
               <el-descriptions-item label="患者姓名">{{ selectedReport.patientName }}</el-descriptions-item>
-              <el-descriptions-item label="患者ID">{{ selectedReport.patientId }}</el-descriptions-item>
+              <el-descriptions-item label="样本类型">{{ selectedReport.specimenType }}</el-descriptions-item>
               <el-descriptions-item label="报告类型">{{ selectedReport.reportType }}</el-descriptions-item>
-              <el-descriptions-item label="报告日期" :span="2">{{ selectedReport.createdAt }}</el-descriptions-item>
+              <el-descriptions-item label="报告日期" :span="2">{{ selectedReport.createTime }}</el-descriptions-item>
             </el-descriptions>
           </el-card>
 
@@ -76,15 +76,15 @@
             <template #header>
               <div class="card-header">
                 <span>AI分析结果</span>
-                <el-tag :type="getRiskLevelType(analysisResult.riskLevel)">
-                  {{ getRiskLevelLabel(analysisResult.riskLevel) }}风险
+                <el-tag :type="getRiskLevelType(analysisResult?.riskLevel)">
+                  {{ getRiskLevelLabel(analysisResult?.riskLevel) }}风险
                 </el-tag>
               </div>
             </template>
 
             <el-alert
-              v-if="analysisResult.riskLevel === 'critical' || analysisResult.riskLevel === 'high'"
-              :title="analysisResult.riskLevel === 'critical' ? '危急值预警' : '高风险预警'"
+              v-if="analysisResult?.riskLevel === 'critical' || analysisResult?.riskLevel === 'high'"
+              :title="analysisResult?.riskLevel === 'critical' ? '危急值预警' : '高风险预警'"
               type="error"
               :closable="false"
               show-icon
@@ -93,14 +93,14 @@
 
             <el-collapse v-model="activeCollapse">
               <el-collapse-item title="诊断摘要" name="summary">
-                <div class="summary-content">{{ analysisResult.result?.summary }}</div>
-                <div v-if="analysisResult.result?.confidence" class="confidence">
-                  置信度: {{ (analysisResult.result.confidence * 100).toFixed(1) }}%
+                <div class="summary-content">{{ analysisResult?.summary }}</div>
+                <div v-if="analysisResult?.confidence" class="confidence">
+                  置信度: {{ (analysisResult.confidence * 100).toFixed(1) }}%
                 </div>
               </el-collapse-item>
 
               <el-collapse-item title="异常指标" name="abnormalities">
-                <el-table :data="analysisResult.result?.abnormalities || []" border stripe>
+                <el-table :data="analysisResult?.abnormalities || analysisResult?.details || []" border stripe>
                   <el-table-column prop="indicator" label="指标名称" width="150" />
                   <el-table-column label="检测值" width="120">
                     <template #default="{ row }">
@@ -130,9 +130,9 @@
               <el-collapse-item title="诊断建议" name="recommendations">
                 <el-timeline>
                   <el-timeline-item
-                    v-for="(item, index) in analysisResult.result?.recommendations || []"
+                    v-for="(item, index) in (analysisResult?.recommendations || analysisResult?.suggestions || [])"
                     :key="index"
-                    :type="getRecommendationType(index)"
+                    :type="getRecommendationType(Number(index))"
                   >
                     {{ item }}
                   </el-timeline-item>
@@ -141,18 +141,19 @@
 
               <el-collapse-item title="风险因素" name="riskFactors">
                 <el-tag
-                  v-for="(factor, index) in analysisResult.result?.riskFactors || []"
+                  v-for="(factor, index) in (analysisResult?.riskFactors || [])"
                   :key="index"
                   type="warning"
                   style="margin-right: 8px; margin-bottom: 8px"
                 >
                   {{ factor }}
                 </el-tag>
+                <span v-if="!(analysisResult?.riskFactors?.length)">-</span>
               </el-collapse-item>
 
               <el-collapse-item title="建议随访" name="followUp">
-                <el-tag :type="analysisResult.result?.followUpRequired ? 'warning' : 'success'">
-                  {{ analysisResult.result?.followUpRequired ? '需要随访' : '无需随访' }}
+                <el-tag :type="analysisResult?.followUpRequired ? 'warning' : 'success'">
+                  {{ analysisResult?.followUpRequired ? '需要随访' : '无需随访' }}
                 </el-tag>
               </el-collapse-item>
             </el-collapse>
@@ -167,7 +168,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Cpu } from '@element-plus/icons-vue'
-import type { ReportForAnalysis, ReportQuery, AIAnalysis } from '@/api/ai'
+import type { ReportForAnalysis, ReportQuery } from '@/api/ai'
 import { getReportsForAnalysis, createAIAnalysis, getAIAnalysisDetail } from '@/api/ai'
 
 const reportLoading = ref(false)
@@ -175,22 +176,20 @@ const analyzing = ref(false)
 const reportList = ref<ReportForAnalysis[]>([])
 const reportTotal = ref(0)
 const selectedReport = ref<ReportForAnalysis | null>(null)
-const analysisResult = ref<AIAnalysis | null>(null)
+const analysisResult = ref<any>(null)
 const activeCollapse = ref(['summary', 'abnormalities', 'recommendations'])
 
 const reportQuery = reactive<ReportQuery>({
-  page: 1,
+  pageNum: 1,
   pageSize: 10,
-  keyword: '',
-  reportType: '',
-  status: ''
+  patientName: ''
 })
 
 const fetchReports = async () => {
   reportLoading.value = true
   try {
     const res = await getReportsForAnalysis(reportQuery)
-    reportList.value = res.list
+    reportList.value = res.records
     reportTotal.value = res.total
   } catch {
     ElMessage.error('获取报告列表失败')
@@ -200,7 +199,7 @@ const fetchReports = async () => {
 }
 
 const handleSearchReports = () => {
-  reportQuery.page = 1
+  reportQuery.pageNum = 1
   fetchReports()
 }
 
@@ -210,7 +209,7 @@ const handleSelectReport = async (row: ReportForAnalysis | null) => {
   if (row) {
     try {
       const existingAnalysis = await getAIAnalysisDetail(row.id)
-      if (existingAnalysis && existingAnalysis.status === 'completed') {
+      if (existingAnalysis && existingAnalysis.reviewStatus === 1) {
         analysisResult.value = existingAnalysis
       }
     } catch {
@@ -224,7 +223,7 @@ const handleStartAnalysis = async () => {
 
   analyzing.value = true
   try {
-    const result = await createAIAnalysis(selectedReport.value.id)
+    const result = await createAIAnalysis({ reportId: selectedReport.value.id })
     analysisResult.value = result
     ElMessage.success('AI分析完成')
   } catch {

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lis.common.exception.BusinessException;
 import com.lis.common.result.PageResult;
+import com.lis.common.result.ResultCode;
 import com.lis.equipment.dto.EquipmentCalibrationDTO;
 import com.lis.equipment.dto.EquipmentCalibrationQueryDTO;
 import com.lis.equipment.entity.EquipmentCalibrationDO;
@@ -62,7 +63,7 @@ public class EquipmentCalibrationServiceImpl implements EquipmentCalibrationServ
     public EquipmentCalibrationVO getById(Long id) {
         EquipmentCalibrationDO calibrationDO = calibrationMapper.selectById(id);
         if (calibrationDO == null) {
-            throw new BusinessException("校准记录不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "校准记录不存在");
         }
         return convertToVO(calibrationDO);
     }
@@ -73,12 +74,12 @@ public class EquipmentCalibrationServiceImpl implements EquipmentCalibrationServ
         LambdaQueryWrapper<EquipmentCalibrationDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(EquipmentCalibrationDO::getCalibrationNo, dto.getCalibrationNo());
         if (calibrationMapper.selectCount(wrapper) > 0) {
-            throw new BusinessException("校准编号已存在");
+            throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS, "校准编号已存在");
         }
 
         EquipmentDO equipmentDO = equipmentMapper.selectById(dto.getEquipmentId());
         if (equipmentDO == null) {
-            throw new BusinessException("设备不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "设备不存在");
         }
 
         EquipmentCalibrationDO calibrationDO = new EquipmentCalibrationDO();
@@ -100,12 +101,12 @@ public class EquipmentCalibrationServiceImpl implements EquipmentCalibrationServ
     @Transactional(rollbackFor = Exception.class)
     public void update(EquipmentCalibrationDTO dto) {
         if (dto.getId() == null) {
-            throw new BusinessException("校准ID不能为空");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "校准ID不能为空");
         }
 
         EquipmentCalibrationDO existCalibration = calibrationMapper.selectById(dto.getId());
         if (existCalibration == null) {
-            throw new BusinessException("校准记录不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "校准记录不存在");
         }
 
         EquipmentCalibrationDO calibrationDO = new EquipmentCalibrationDO();
@@ -121,7 +122,7 @@ public class EquipmentCalibrationServiceImpl implements EquipmentCalibrationServ
     public void deleteById(Long id) {
         EquipmentCalibrationDO calibrationDO = calibrationMapper.selectById(id);
         if (calibrationDO == null) {
-            throw new BusinessException("校准记录不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "校准记录不存在");
         }
 
         calibrationMapper.deleteById(id);
@@ -132,7 +133,7 @@ public class EquipmentCalibrationServiceImpl implements EquipmentCalibrationServ
     @Transactional(rollbackFor = Exception.class)
     public void deleteBatch(Long[] ids) {
         if (ids == null || ids.length == 0) {
-            throw new BusinessException("请选择要删除的校准记录");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "请选择要删除的校准记录");
         }
 
         calibrationMapper.deleteBatchIds(Arrays.asList(ids));
@@ -144,7 +145,7 @@ public class EquipmentCalibrationServiceImpl implements EquipmentCalibrationServ
     public void completeCalibration(Long id) {
         EquipmentCalibrationDO calibrationDO = calibrationMapper.selectById(id);
         if (calibrationDO == null) {
-            throw new BusinessException("校准记录不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "校准记录不存在");
         }
 
         calibrationDO.setStatus(RecordStatusEnum.COMPLETED.getCode());

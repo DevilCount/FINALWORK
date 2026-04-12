@@ -9,7 +9,9 @@ import com.lis.ai.mapper.AiDiagnosisRuleItemMapper;
 import com.lis.ai.mapper.AiDiagnosisRuleMapper;
 import com.lis.ai.service.DiagnosisRuleService;
 import com.lis.ai.vo.DiagnosisRuleVO;
+import com.lis.common.exception.BusinessException;
 import com.lis.common.result.PageResult;
+import com.lis.common.result.ResultCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -36,7 +38,7 @@ public class DiagnosisRuleServiceImpl implements DiagnosisRuleService {
                         .eq(AiDiagnosisRuleDO::getRuleCode, dto.getRuleCode())
         );
         if (existingRule != null) {
-            throw new IllegalArgumentException("规则编码已存在: " + dto.getRuleCode());
+            throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS, "规则编码已存在: " + dto.getRuleCode());
         }
 
         AiDiagnosisRuleDO rule = new AiDiagnosisRuleDO();
@@ -66,12 +68,12 @@ public class DiagnosisRuleServiceImpl implements DiagnosisRuleService {
     @Transactional(rollbackFor = Exception.class)
     public void updateRule(DiagnosisRuleDTO dto) {
         if (dto.getId() == null) {
-            throw new IllegalArgumentException("规则ID不能为空");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "规则ID不能为空");
         }
 
         AiDiagnosisRuleDO rule = ruleMapper.selectById(dto.getId());
         if (rule == null) {
-            throw new IllegalArgumentException("规则不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "规则不存在");
         }
 
         if (!rule.getRuleCode().equals(dto.getRuleCode())) {
@@ -81,7 +83,7 @@ public class DiagnosisRuleServiceImpl implements DiagnosisRuleService {
                             .ne(AiDiagnosisRuleDO::getId, dto.getId())
             );
             if (existingRule != null) {
-                throw new IllegalArgumentException("规则编码已存在: " + dto.getRuleCode());
+                throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS, "规则编码已存在: " + dto.getRuleCode());
             }
         }
 
@@ -114,7 +116,7 @@ public class DiagnosisRuleServiceImpl implements DiagnosisRuleService {
     public void deleteRule(Long id) {
         AiDiagnosisRuleDO rule = ruleMapper.selectById(id);
         if (rule == null) {
-            throw new IllegalArgumentException("规则不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "规则不存在");
         }
 
         ruleItemMapper.delete(new LambdaQueryWrapper<AiDiagnosisRuleItemDO>()
@@ -200,7 +202,7 @@ public class DiagnosisRuleServiceImpl implements DiagnosisRuleService {
     public void enableRule(Long id) {
         AiDiagnosisRuleDO rule = ruleMapper.selectById(id);
         if (rule == null) {
-            throw new IllegalArgumentException("规则不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "规则不存在");
         }
         rule.setIsEnabled(1);
         ruleMapper.updateById(rule);
@@ -212,7 +214,7 @@ public class DiagnosisRuleServiceImpl implements DiagnosisRuleService {
     public void disableRule(Long id) {
         AiDiagnosisRuleDO rule = ruleMapper.selectById(id);
         if (rule == null) {
-            throw new IllegalArgumentException("规则不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "规则不存在");
         }
         rule.setIsEnabled(0);
         ruleMapper.updateById(rule);

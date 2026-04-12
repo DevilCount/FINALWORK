@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/statistics/workload")
+@RequestMapping("/workload")
 @RequiredArgsConstructor
 @Api(tags = "工作量统计")
 public class WorkloadStatController {

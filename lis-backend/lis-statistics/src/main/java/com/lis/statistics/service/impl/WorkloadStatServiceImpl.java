@@ -27,6 +27,7 @@ public class WorkloadStatServiceImpl implements WorkloadStatService {
 
     @Override
     public List<WorkloadStatVO> getDailyWorkload(WorkloadQueryDTO queryDTO) {
+        fillDefaultDateRange(queryDTO);
         List<Map<String, Object>> dataList = workloadDailyMapper.selectDailyWorkload(
                 queryDTO.getStartDate(),
                 queryDTO.getEndDate(),
@@ -37,6 +38,7 @@ public class WorkloadStatServiceImpl implements WorkloadStatService {
 
     @Override
     public PageResult<WorkloadStatVO> getUserWorkloadPage(WorkloadQueryDTO queryDTO) {
+        fillDefaultDateRange(queryDTO);
         List<Map<String, Object>> dataList = workloadDailyMapper.selectUserWorkload(
                 queryDTO.getStartDate(),
                 queryDTO.getEndDate(),
@@ -57,6 +59,7 @@ public class WorkloadStatServiceImpl implements WorkloadStatService {
 
     @Override
     public List<WorkloadStatVO> getDeptWorkload(WorkloadQueryDTO queryDTO) {
+        fillDefaultDateRange(queryDTO);
         List<Map<String, Object>> dataList = workloadDailyMapper.selectDeptWorkload(
                 queryDTO.getStartDate(),
                 queryDTO.getEndDate()
@@ -66,6 +69,7 @@ public class WorkloadStatServiceImpl implements WorkloadStatService {
 
     @Override
     public EChartsVO getWorkloadTrendChart(WorkloadQueryDTO queryDTO) {
+        fillDefaultDateRange(queryDTO);
         List<Map<String, Object>> dataList = workloadDailyMapper.selectDailyWorkload(
                 queryDTO.getStartDate(),
                 queryDTO.getEndDate(),
@@ -131,6 +135,7 @@ public class WorkloadStatServiceImpl implements WorkloadStatService {
 
     @Override
     public EChartsVO getWorkloadDistributionChart(WorkloadQueryDTO queryDTO) {
+        fillDefaultDateRange(queryDTO);
         List<Map<String, Object>> dataList = workloadDailyMapper.selectUserWorkload(
                 queryDTO.getStartDate(),
                 queryDTO.getEndDate(),
@@ -156,6 +161,15 @@ public class WorkloadStatServiceImpl implements WorkloadStatService {
                 "人员",
                 "工作量"
         );
+    }
+
+    private void fillDefaultDateRange(WorkloadQueryDTO queryDTO) {
+        if (queryDTO.getStartDate() == null) {
+            queryDTO.setStartDate(LocalDate.now().minusDays(30));
+        }
+        if (queryDTO.getEndDate() == null) {
+            queryDTO.setEndDate(LocalDate.now());
+        }
     }
 
     private List<WorkloadStatVO> convertToDailyWorkloadVO(List<Map<String, Object>> dataList) {

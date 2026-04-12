@@ -6,6 +6,8 @@ import com.lis.report.dto.PatientQueryDTO;
 import com.lis.report.dto.PatientUpdateDTO;
 import com.lis.report.vo.PatientVO;
 
+import java.util.List;
+
 public interface PatientService {
 
     Long createPatient(PatientCreateDTO dto);
@@ -19,4 +21,6 @@ public interface PatientService {
     PatientVO getPatientByIdNo(String idNo);
 
     PageResult<PatientVO> queryPatients(PatientQueryDTO dto);
+
+    List<PatientVO> listPatients(PatientQueryDTO dto);
 }

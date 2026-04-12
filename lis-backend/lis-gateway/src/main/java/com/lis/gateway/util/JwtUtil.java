@@ -58,14 +58,30 @@ public class JwtUtil {
     }
 
     public String getUsername(Claims claims) {
+        Object username = claims.get("username");
+        if (username != null) {
+            return username.toString();
+        }
         return claims.getSubject();
     }
 
     public Long getUserId(Claims claims) {
         Object userId = claims.get("userId");
-        if (userId instanceof Integer) {
-            return ((Integer) userId).longValue();
+        if (userId != null) {
+            if (userId instanceof Integer) {
+                return ((Integer) userId).longValue();
+            }
+            if (userId instanceof Long) {
+                return (Long) userId;
+            }
+            if (userId instanceof String) {
+                return Long.parseLong((String) userId);
+            }
         }
-        return (Long) userId;
+        String sub = claims.getSubject();
+        if (sub != null) {
+            return Long.parseLong(sub);
+        }
+        return null;
     }
 }

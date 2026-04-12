@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar" :class="{ 'is-collapsed': collapsed }">
     <div class="sidebar-logo">
-      <router-link to="/" class="logo-link">
+      <router-link to="/dashboard/index" class="logo-link">
         <img src="@/assets/images/logo.svg" alt="LIS" class="logo-img" />
         <span v-show="!collapsed" class="logo-text">LIS系统</span>
       </router-link>

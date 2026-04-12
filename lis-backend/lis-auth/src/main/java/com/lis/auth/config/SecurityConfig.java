@@ -23,10 +23,13 @@ public class SecurityConfig {
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
+                .logout().disable()
                 .authorizeRequests()
                 .antMatchers(
-                        "/auth/login",
-                        "/auth/refresh",
+                        "/login",
+                        "/captcha",
+                        "/refresh",
+                        "/register",
                         "/doc.html",
                         "/webjars/**",
                         "/swagger-resources/**",

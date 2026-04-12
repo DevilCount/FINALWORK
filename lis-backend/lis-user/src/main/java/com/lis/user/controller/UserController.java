@@ -16,7 +16,7 @@ import java.util.Map;
 
 @Api(tags = "用户管理")
 @RestController
-@RequestMapping("/user")
+@RequestMapping("")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -66,15 +66,19 @@ public class UserController {
 
     @ApiOperation("修改密码")
     @PutMapping("/password")
-    public Result<Void> updatePassword(@Validated @RequestBody PasswordUpdateDTO passwordDTO) {
+    public Result<Void> updatePassword(@Validated @RequestBody PasswordUpdateDTO passwordDTO,
+                                       @RequestHeader(value = "X-User-Id", required = false) Long headerUserId) {
+        if (passwordDTO.getUserId() == null && headerUserId != null) {
+            passwordDTO.setUserId(headerUserId);
+        }
         userService.updatePassword(passwordDTO);
         return Result.success("密码修改成功", null);
     }
 
     @ApiOperation("重置密码")
     @PutMapping("/{id}/reset-password")
-    public Result<Void> resetPassword(@PathVariable Long id, @RequestParam String newPassword) {
-        userService.resetPassword(id, newPassword);
+    public Result<Void> resetPassword(@PathVariable Long id, @RequestParam String passwordHash) {
+        userService.resetPasswordWithHash(id, passwordHash);
         return Result.success("密码重置成功", null);
     }
 
@@ -110,6 +114,22 @@ public class UserController {
     @GetMapping("/username/{username}")
     public Result<Map<String, Object>> getUserInfoByUsername(@PathVariable String username) {
         Map<String, Object> userInfo = userService.getUserInfoByUsername(username);
+        if (userInfo != null) {
+            userInfo.remove("password");
+            userInfo.put("hasPassword", true);
+        }
+        return Result.success(userInfo);
+    }
+
+    @GetMapping("/internal/username/{username}")
+    public Result<Map<String, Object>> getUserInfoByUsernameInternal(@PathVariable String username) {
+        Map<String, Object> userInfo = userService.getUserInfoByUsername(username);
+        return Result.success(userInfo);
+    }
+
+    @GetMapping("/internal/id/{id}")
+    public Result<Map<String, Object>> getUserInfoByIdInternal(@PathVariable Long id) {
+        Map<String, Object> userInfo = userService.getUserInfoById(id);
         return Result.success(userInfo);
     }
 }

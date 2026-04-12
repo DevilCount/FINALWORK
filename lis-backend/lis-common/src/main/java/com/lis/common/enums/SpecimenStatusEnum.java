@@ -2,6 +2,7 @@ package com.lis.common.enums;
 
 import lombok.Getter;
 
+@Deprecated
 @Getter
 public enum SpecimenStatusEnum {
 

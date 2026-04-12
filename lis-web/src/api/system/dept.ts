@@ -3,12 +3,12 @@ import { get, post, put, del } from '@/utils/request'
 export interface Dept {
   id: number
   parentId: number
-  name: string
-  code: string
+  deptName: string
+  deptCode: string
   leader: string
   phone: string
   email: string
-  status: 'normal' | 'disable'
+  status: number
   sort: number
   createTime: string
   updateTime: string
@@ -18,18 +18,18 @@ export interface Dept {
 export interface DeptForm {
   id?: number
   parentId: number
-  name: string
-  code: string
+  deptName: string
+  deptCode: string
   leader: string
   phone: string
   email: string
-  status: 'normal' | 'disable'
+  status: number
   sort: number
 }
 
 export interface DeptQuery {
-  name?: string
-  status?: string
+  deptName?: string
+  status?: number
 }
 
 export interface DeptTree {
@@ -40,33 +40,33 @@ export interface DeptTree {
 }
 
 export function getDeptList(params?: DeptQuery): Promise<Dept[]> {
-  return get('/system/dept/list', params)
+  return get('/user/dept/list', params)
 }
 
-export function getDeptTree(): Promise<DeptTree[]> {
-  return get('/system/dept/tree')
+export function getDeptTree(): Promise<Dept[]> {
+  return get('/user/dept/tree')
+}
+
+export function getDeptTreeNodes(): Promise<DeptTree[]> {
+  return get('/user/dept/tree-nodes')
 }
 
 export function getDeptById(id: number): Promise<Dept> {
-  return get(`/system/dept/${id}`)
+  return get(`/user/dept/${id}`)
 }
 
-export function createDept(data: DeptForm): Promise<void> {
-  return post('/system/dept', data)
+export function createDept(data: DeptForm): Promise<number> {
+  return post('/user/dept', data)
 }
 
 export function updateDept(data: DeptForm): Promise<void> {
-  return put('/system/dept', data)
+  return put('/user/dept', data)
 }
 
 export function deleteDept(id: number): Promise<void> {
-  return del(`/system/dept/${id}`)
+  return del(`/user/dept/${id}`)
 }
 
-export function updateDeptStatus(id: number, status: 'normal' | 'disable'): Promise<void> {
-  return put(`/system/dept/${id}/status`, { status })
-}
-
-export function getDeptUsers(id: number): Promise<{ id: number; realName: string }[]> {
-  return get(`/system/dept/${id}/users`)
+export function getRoleDeptIds(roleId: number): Promise<number[]> {
+  return get(`/user/dept/role/${roleId}`)
 }

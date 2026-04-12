@@ -6,17 +6,22 @@ spring:
     name: lis-gateway
   profiles:
     active: dev
+  config:
+    import:
+      - optional:nacos:lis-gateway.yaml?refresh=true
   cloud:
     nacos:
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
         namespace: ${NACOS_NAMESPACE:}
         group: ${NACOS_GROUP:DEFAULT_GROUP}
+        fail-fast: false
       config:
         server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
         namespace: ${NACOS_NAMESPACE:}
         group: ${NACOS_GROUP:DEFAULT_GROUP}
         file-extension: yaml
+        fail-fast: false
     gateway:
       discovery:
         locator:
@@ -82,7 +87,6 @@ spring:
   redis:
     host: ${REDIS_HOST:localhost}
     port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:}
     database: 0
     timeout: 10000ms
     lettuce:
@@ -91,12 +95,14 @@ spring:
         max-wait: -1ms
         max-idle: 8
         min-idle: 0
+    redisson:
+      file: classpath:redisson.yaml
 
 jwt:
-  secret: ${JWT_SECRET:lis-backend-jwt-secret-key-2024-very-long-secret-key-for-security}
-  expiration: 86400000
+  secret: ${JWT_SECRET:lis-backend-jwt-secret-key-for-hs512-algorithm-must-be-at-least-512-bits-long-aka-64-bytes}
+  expiration: 7200000
   header: Authorization
-  prefix: Bearer
+  prefix: "Bearer "
 
 gateway:
   white-list:

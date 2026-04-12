@@ -83,4 +83,11 @@ public class RoleController {
         List<RoleVO> roles = roleService.getAllRoles();
         return Result.success(roles);
     }
+
+    @ApiOperation("更新角色状态")
+    @PutMapping("/{id}/status")
+    public Result<Void> updateRoleStatus(@PathVariable Long id, @RequestParam Integer status) {
+        roleService.updateRoleStatus(id, status);
+        return Result.success("更新成功", null);
+    }
 }

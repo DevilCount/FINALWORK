@@ -11,7 +11,7 @@
       <el-form :model="queryParams" inline class="search-form">
         <el-form-item label="菜单名称">
           <el-input
-            v-model="queryParams.name"
+            v-model="queryParams.menuName"
             placeholder="请输入菜单名称"
             clearable
             @keyup.enter="handleQuery"
@@ -19,8 +19,8 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
-            <el-option label="正常" value="normal" />
-            <el-option label="禁用" value="disable" />
+            <el-option label="正常" :value="0" />
+            <el-option label="禁用" :value="2" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -37,7 +37,7 @@
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         default-expand-all
       >
-        <el-table-column prop="name" label="菜单名称" min-width="160" />
+        <el-table-column prop="menuName" label="菜单名称" min-width="160" />
         <el-table-column label="图标" width="80" align="center">
           <template #default="{ row }">
             <el-icon v-if="row.icon">
@@ -64,7 +64,7 @@
         </el-table-column>
         <el-table-column label="状态" width="80" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.status === 'normal'" type="success">正常</el-tag>
+            <el-tag v-if="row.status === 0" type="success">正常</el-tag>
             <el-tag v-else type="danger">禁用</el-tag>
           </template>
         </el-table-column>
@@ -105,8 +105,8 @@ const currentMenuId = ref<number | undefined>(undefined)
 const currentParentId = ref<number>(0)
 
 const queryParams = reactive<MenuQuery>({
-  name: '',
-  status: '',
+  menuName: '',
+  status: undefined,
 })
 
 const loadMenuList = async () => {
@@ -125,8 +125,8 @@ const handleQuery = () => {
 }
 
 const handleReset = () => {
-  queryParams.name = ''
-  queryParams.status = ''
+  queryParams.menuName = ''
+  queryParams.status = undefined
   handleQuery()
 }
 
@@ -154,7 +154,7 @@ const handleDelete = async (row: Menu) => {
     return
   }
   try {
-    await ElMessageBox.confirm(`确定要删除菜单"${row.name}"吗？`, '提示', {
+    await ElMessageBox.confirm(`确定要删除菜单"${row.menuName}"吗？`, '提示', {
       type: 'warning',
     })
     await deleteMenu(row.id)

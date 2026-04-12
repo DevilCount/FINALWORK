@@ -13,13 +13,13 @@
 
       <el-form :model="queryParams" inline class="search-form">
         <el-form-item label="标本编号">
-          <el-input v-model="queryParams.specimenCode" placeholder="请输入标本编号" clearable @keyup.enter="handleSearch" />
+          <el-input v-model="queryParams.specimenNo" placeholder="请输入标本编号" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item label="患者姓名">
           <el-input v-model="queryParams.patientName" placeholder="请输入患者姓名" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item label="身份证号">
-          <el-input v-model="queryParams.patientIdCard" placeholder="请输入身份证号" clearable @keyup.enter="handleSearch" />
+          <el-input v-model="queryParams.patientIdNo" placeholder="请输入身份证号" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item label="标本状态">
           <el-select v-model="queryParams.status" placeholder="请选择状态" clearable style="width: 150px">
@@ -27,8 +27,8 @@
           </el-select>
         </el-form-item>
         <el-form-item label="标本类型">
-          <el-select v-model="queryParams.specimenType" placeholder="请选择类型" clearable style="width: 150px">
-            <el-option v-for="item in specimenTypes" :key="item.code" :label="item.name" :value="item.code" />
+          <el-select v-model="queryParams.specimenTypeId" placeholder="请选择类型" clearable style="width: 150px">
+            <el-option v-for="item in specimenTypes" :key="item.id" :label="item.typeName" :value="item.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="采集时间">
@@ -56,7 +56,7 @@
 
       <el-table v-loading="loading" :data="tableData" border stripe @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="specimenCode" label="标本编号" width="150" />
+        <el-table-column prop="specimenNo" label="标本编号" width="150" />
         <el-table-column prop="specimenTypeName" label="标本类型" width="100" />
         <el-table-column prop="patientName" label="患者姓名" width="100" />
         <el-table-column prop="patientGender" label="性别" width="60">
@@ -65,7 +65,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="patientAge" label="年龄" width="70" />
-        <el-table-column prop="departmentName" label="科室" width="120" />
+        <el-table-column prop="deptName" label="科室" width="120" />
         <el-table-column prop="bedNo" label="床号" width="80" />
         <el-table-column label="检验项目" min-width="200">
           <template #default="{ row }">
@@ -88,21 +88,17 @@
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="handleDetail(row)">详情</el-button>
             <el-button type="primary" link size="small" @click="handleTrace(row)">追溯</el-button>
-            <el-button v-if="row.status === 'pending_collect'" type="success" link size="small" @click="handleCollect(row)">采集</el-button>
-            <el-button v-if="row.status === 'collected'" type="warning" link size="small" @click="handleReceive(row)">接收</el-button>
-            <el-button v-if="['pending_collect', 'collected'].includes(row.status)" type="danger" link size="small" @click="handleReject(row)">拒收</el-button>
+            <el-button v-if="row.status === 'REGISTERED'" type="success" link size="small" @click="handleReceive(row)">接收</el-button>
+            <el-button v-if="['REGISTERED', 'RECEIVED'].includes(row.status)" type="danger" link size="small" @click="handleReject(row)">拒收</el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <div class="pagination-container">
         <div class="batch-actions">
-          <el-button v-if="selectedRows.some(r => r.status === 'pending_collect')" type="success" @click="handleBatchCollect">
-            批量采集
-          </el-button>
-          <el-button v-if="selectedRows.some(r => r.status === 'collected')" type="warning" @click="handleBatchReceive">
-            批量接收
-          </el-button>
+          <el-button v-if="selectedRows.some(r => r.status === 'REGISTERED')" type="success" @click="handleBatchReceive">
+          批量接收
+        </el-button>
         </div>
         <el-pagination
           v-model:current-page="queryParams.pageNum"
@@ -136,7 +132,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import type { Specimen, SpecimenQueryParams, SpecimenStatus, SpecimenType } from '@/types/specimen'
-import { getSpecimenList, collectSpecimen, receiveSpecimen, rejectSpecimen, batchCollectSpecimen, batchReceiveSpecimen, getSpecimenTypes } from '@/api/specimen'
+import { getSpecimenList, receiveSpecimen, rejectSpecimen, batchReceiveSpecimen, getSpecimenTypes } from '@/api/specimen'
 
 const router = useRouter()
 
@@ -151,38 +147,41 @@ const collectTimeRange = ref<[string, string] | null>(null)
 const queryParams = reactive<SpecimenQueryParams>({
   pageNum: 1,
   pageSize: 10,
-  specimenCode: '',
+  specimenNo: '',
   patientName: '',
-  patientIdCard: '',
+  patientIdNo: '',
   status: '',
-  specimenType: '',
+  specimenTypeId: undefined,
   collectTimeStart: '',
   collectTimeEnd: '',
 })
 
 const statusOptions = [
-  { label: '待采集', value: 'pending_collect' },
-  { label: '已采集', value: 'collected' },
-  { label: '已接收', value: 'received' },
-  { label: '检验中', value: 'testing' },
-  { label: '已完成', value: 'completed' },
-  { label: '已拒收', value: 'rejected' },
+  { label: '已登记', value: 'REGISTERED' },
+  { label: '已接收', value: 'RECEIVED' },
+  { label: '检验中', value: 'TESTING' },
+  { label: '已完成', value: 'COMPLETED' },
+  { label: '已拒收', value: 'REJECTED' },
+  { label: '已入库', value: 'STORAGE' },
+  { label: '已取消', value: 'CANCELLED' },
 ]
 
 const rejectDialogVisible = ref(false)
 const rejectForm = reactive({
   id: '',
+  specimenNo: '',
   reason: '',
 })
 
 const getStatusTagType = (status: SpecimenStatus): 'success' | 'primary' | 'warning' | 'info' | 'danger' | undefined => {
   const typeMap: Record<SpecimenStatus, 'success' | 'primary' | 'warning' | 'info' | 'danger' | undefined> = {
-    pending_collect: 'info',
-    collected: 'warning',
-    received: 'primary',
-    testing: undefined,
-    completed: 'success',
-    rejected: 'danger',
+    REGISTERED: 'info',
+    RECEIVED: 'primary',
+    STORAGE: 'warning',
+    TESTING: undefined,
+    COMPLETED: 'success',
+    REJECTED: 'danger',
+    CANCELLED: 'info',
   }
   return typeMap[status]
 }
@@ -221,11 +220,11 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  queryParams.specimenCode = ''
+  queryParams.specimenNo = ''
   queryParams.patientName = ''
-  queryParams.patientIdCard = ''
+  queryParams.patientIdNo = ''
   queryParams.status = ''
-  queryParams.specimenType = ''
+  queryParams.specimenTypeId = undefined
   collectTimeRange.value = null
   queryParams.collectTimeStart = ''
   queryParams.collectTimeEnd = ''
@@ -258,19 +257,6 @@ const handleTrace = (row: Specimen) => {
   router.push(`/specimen/trace?specimenId=${row.id}`)
 }
 
-const handleCollect = async (row: Specimen) => {
-  try {
-    await ElMessageBox.confirm('确认采集该标本？', '提示', { type: 'warning' })
-    await collectSpecimen(row.id)
-    ElMessage.success('采集成功')
-    fetchData()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('采集失败:', error)
-    }
-  }
-}
-
 const handleReceive = async (row: Specimen) => {
   try {
     await ElMessageBox.confirm('确认接收该标本？', '提示', { type: 'warning' })
@@ -286,6 +272,7 @@ const handleReceive = async (row: Specimen) => {
 
 const handleReject = (row: Specimen) => {
   rejectForm.id = row.id
+  rejectForm.specimenNo = row.specimenNo
   rejectForm.reason = ''
   rejectDialogVisible.value = true
 }
@@ -305,34 +292,16 @@ const confirmReject = async () => {
   }
 }
 
-const handleBatchCollect = async () => {
-  const ids = selectedRows.value.filter(r => r.status === 'pending_collect').map(r => r.id)
-  if (ids.length === 0) {
-    ElMessage.warning('请选择待采集的标本')
-    return
-  }
-  try {
-    await ElMessageBox.confirm(`确认批量采集 ${ids.length} 个标本？`, '提示', { type: 'warning' })
-    const res = await batchCollectSpecimen(ids)
-    ElMessage.success(`成功采集 ${res.success} 个标本`)
-    fetchData()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('批量采集失败:', error)
-    }
-  }
-}
-
 const handleBatchReceive = async () => {
-  const ids = selectedRows.value.filter(r => r.status === 'collected').map(r => r.id)
+  const ids = selectedRows.value.filter(r => r.status === 'REGISTERED').map(r => r.id)
   if (ids.length === 0) {
-    ElMessage.warning('请选择已采集的标本')
+    ElMessage.warning('请选择已登记的标本')
     return
   }
   try {
     await ElMessageBox.confirm(`确认批量接收 ${ids.length} 个标本？`, '提示', { type: 'warning' })
-    const res = await batchReceiveSpecimen(ids)
-    ElMessage.success(`成功接收 ${res.success} 个标本`)
+    await batchReceiveSpecimen(ids)
+    ElMessage.success(`成功接收 ${ids.length} 个标本`)
     fetchData()
   } catch (error) {
     if (error !== 'cancel') {

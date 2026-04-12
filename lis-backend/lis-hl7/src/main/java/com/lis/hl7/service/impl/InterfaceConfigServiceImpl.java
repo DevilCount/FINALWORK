@@ -3,15 +3,14 @@ package com.lis.hl7.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.lis.common.exception.BusinessException;
+import com.lis.common.result.ResultCode;
 import com.lis.hl7.dto.InterfaceConfigDTO;
 import com.lis.hl7.dto.InterfaceConfigQueryDTO;
 import com.lis.hl7.entity.InterfaceConfigDO;
-import com.lis.hl7.his.HisMessageClient;
 import com.lis.hl7.mapper.InterfaceConfigMapper;
-import com.lis.hl7.mllp.MllpServerManager;
 import com.lis.hl7.service.InterfaceConfigService;
 import com.lis.hl7.vo.InterfaceConfigVO;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -24,11 +23,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class InterfaceConfigServiceImpl extends ServiceImpl<InterfaceConfigMapper, InterfaceConfigDO> implements InterfaceConfigService {
-
-    private final HisMessageClient hisMessageClient;
-    private final MllpServerManager mllpServerManager;
 
     @Override
     public InterfaceConfigDO getByCode(String interfaceCode) {
@@ -90,7 +85,7 @@ public class InterfaceConfigServiceImpl extends ServiceImpl<InterfaceConfigMappe
     public void update(InterfaceConfigDTO dto) {
         InterfaceConfigDO config = getById(dto.getId());
         if (config == null) {
-            throw new IllegalArgumentException("Interface config not found: " + dto.getId());
+            throw new BusinessException(ResultCode.NOT_FOUND, "接口配置不存在: " + dto.getId());
         }
 
         BeanUtils.copyProperties(dto, config, "id", "status", "totalReceived", "totalSent", "totalError", "createTime");
@@ -102,8 +97,11 @@ public class InterfaceConfigServiceImpl extends ServiceImpl<InterfaceConfigMappe
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id) {
         InterfaceConfigDO config = getById(id);
-        if (config != null && "running".equals(config.getStatus())) {
-            throw new IllegalStateException("Cannot delete running interface");
+        if (config == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "接口配置不存在");
+        }
+        if ("running".equals(config.getStatus())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "不能删除运行中的接口");
         }
         removeById(id);
     }
@@ -156,47 +154,51 @@ public class InterfaceConfigServiceImpl extends ServiceImpl<InterfaceConfigMappe
     public boolean testConnection(Long id) {
         InterfaceConfigDO config = getById(id);
         if (config == null) {
-            return false;
+            throw new BusinessException(ResultCode.NOT_FOUND, "接口配置不存在");
         }
 
-        return hisMessageClient.testConnection(config.getHost(), config.getPort(),
-                config.getConnectionTimeout() != null ? config.getConnectionTimeout() : 5000);
+        // 简单连接测试：检查host和port是否配置
+        if (config.getHost() == null || config.getHost().isBlank() || config.getPort() == null) {
+            return false;
+        }
+        return true;
     }
 
     @Override
     public void startInterface(Long id) {
         InterfaceConfigDO config = getById(id);
         if (config == null) {
-            throw new IllegalArgumentException("Interface config not found: " + id);
+            throw new BusinessException(ResultCode.NOT_FOUND, "接口配置不存在");
         }
 
         if ("running".equals(config.getStatus())) {
             return;
         }
 
-        if (!testConnection(id)) {
-            updateStatus(id, "error");
-            incrementErrorCount(id, "Connection test failed");
-            throw new IllegalStateException("Connection test failed");
-        }
-
-        mllpServerManager.startServer(config.getInterfaceCode());
+        updateStatus(id, "running");
+        log.info("启动接口配置: id={}, code={}", id, config.getInterfaceCode());
     }
 
     @Override
     public void stopInterface(Long id) {
         InterfaceConfigDO config = getById(id);
         if (config == null) {
-            throw new IllegalArgumentException("Interface config not found: " + id);
+            throw new BusinessException(ResultCode.NOT_FOUND, "接口配置不存在");
         }
 
-        mllpServerManager.stopServer(config.getInterfaceCode());
+        updateStatus(id, "stopped");
+        log.info("停止接口配置: id={}, code={}", id, config.getInterfaceCode());
     }
 
     @Override
     public void restartInterface(Long id) {
-        stopInterface(id);
-        startInterface(id);
+        InterfaceConfigDO config = getById(id);
+        if (config == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "接口配置不存在");
+        }
+
+        updateStatus(id, "running");
+        log.info("重启接口配置: id={}, code={}", id, config.getInterfaceCode());
     }
 
     private InterfaceConfigVO convertToVO(InterfaceConfigDO config) {

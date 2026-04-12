@@ -88,6 +88,30 @@ public class ReportDetailVO implements Serializable {
     @ApiModelProperty(value = "审核人姓名")
     private String auditUserName;
 
+    @ApiModelProperty(value = "初审人ID")
+    private Long firstAuditUserId;
+
+    @ApiModelProperty(value = "初审人姓名")
+    private String firstAuditUserName;
+
+    @ApiModelProperty(value = "初审时间")
+    private LocalDateTime firstAuditTime;
+
+    @ApiModelProperty(value = "初审意见")
+    private String firstAuditOpinion;
+
+    @ApiModelProperty(value = "终审人ID")
+    private Long finalAuditUserId;
+
+    @ApiModelProperty(value = "终审人姓名")
+    private String finalAuditUserName;
+
+    @ApiModelProperty(value = "终审时间")
+    private LocalDateTime finalAuditTime;
+
+    @ApiModelProperty(value = "终审意见")
+    private String finalAuditOpinion;
+
     @ApiModelProperty(value = "报告人ID")
     private Long reportUserId;
 

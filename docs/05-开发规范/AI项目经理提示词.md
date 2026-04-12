@@ -33,7 +33,7 @@
 
 ### 基准文档清单（所有决策的唯一依据）
 
-以下文档位于 `/workspace/lis-project/docs/` 目录下，是本项目所有工作的**唯一基准**，严禁偏离：
+以下文档位于 `D:\ReStart\FINALWORK\docs` 目录下，是本项目所有工作的**唯一基准**，严禁偏离：
 
 | 序号 | 文档名称 | 路径 | 用途 |
 |------|---------|------|------|
@@ -53,7 +53,7 @@
 
 ### 子Agent任务书（开发指令的唯一来源）
 
-以下任务书位于 `/workspace/lis-project/reports/templates/` 目录下：
+以下任务书位于 `D:\ReStart\FINALWORK\lis-project\reports\templates` 目录下：  
 
 | Agent | 任务书文件 | 负责模块 | 端口 |
 |-------|-----------|---------|------|

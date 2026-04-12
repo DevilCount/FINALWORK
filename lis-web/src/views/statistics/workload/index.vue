@@ -14,15 +14,8 @@
           />
         </el-form-item>
         <el-form-item label="科室">
-          <el-select v-model="queryParams.department" placeholder="请选择科室" clearable>
+          <el-select v-model="queryParams.deptId" placeholder="请选择科室" clearable>
             <el-option v-for="dept in departments" :key="dept.value" :label="dept.label" :value="dept.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="统计周期">
-          <el-select v-model="queryParams.groupBy" placeholder="请选择">
-            <el-option label="按天" value="day" />
-            <el-option label="按周" value="week" />
-            <el-option label="按月" value="month" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -50,8 +43,8 @@
               <el-icon><Document /></el-icon>
             </div>
             <div class="summary-info">
-              <div class="summary-value">{{ summaryData.totalSamples }}</div>
-              <div class="summary-label">总样本数</div>
+              <div class="summary-value">{{ summaryData.specimenReceiveCount }}</div>
+              <div class="summary-label">接收样本数</div>
             </div>
           </div>
         </el-card>
@@ -63,8 +56,8 @@
               <el-icon><CircleCheck /></el-icon>
             </div>
             <div class="summary-info">
-              <div class="summary-value">{{ summaryData.completedSamples }}</div>
-              <div class="summary-label">已完成样本</div>
+              <div class="summary-value">{{ summaryData.testCount }}</div>
+              <div class="summary-label">检验数</div>
             </div>
           </div>
         </el-card>
@@ -76,8 +69,8 @@
               <el-icon><Tickets /></el-icon>
             </div>
             <div class="summary-info">
-              <div class="summary-value">{{ summaryData.totalReports }}</div>
-              <div class="summary-label">报告总数</div>
+              <div class="summary-value">{{ summaryData.reportCount }}</div>
+              <div class="summary-label">报告数</div>
             </div>
           </div>
         </el-card>
@@ -89,8 +82,8 @@
               <el-icon><Timer /></el-icon>
             </div>
             <div class="summary-info">
-              <div class="summary-value">{{ summaryData.avgTurnaroundTime }}h</div>
-              <div class="summary-label">平均周转时间</div>
+              <div class="summary-value">{{ summaryData.workHours }}h</div>
+              <div class="summary-label">工作时长</div>
             </div>
           </div>
         </el-card>
@@ -127,19 +120,19 @@
         </div>
       </template>
       <el-table v-loading="loading" :data="statisticsData" border stripe max-height="400">
-        <el-table-column prop="date" label="日期" width="120" />
-        <el-table-column prop="totalSamples" label="总样本数" width="100" />
-        <el-table-column prop="completedSamples" label="已完成" width="100" />
-        <el-table-column prop="pendingSamples" label="待处理" width="100" />
-        <el-table-column prop="totalReports" label="报告数" width="100" />
+        <el-table-column prop="statDate" label="日期" width="120" />
+        <el-table-column prop="specimenReceiveCount" label="接收样本数" width="100" />
+        <el-table-column prop="testCount" label="检验数" width="100" />
+        <el-table-column prop="auditCount" label="审核数" width="100" />
+        <el-table-column prop="reportCount" label="报告数" width="100" />
         <el-table-column label="完成率" width="120">
           <template #default="{ row }">
             <el-progress :percentage="getCompletionRate(row)" :color="getProgressColor(getCompletionRate(row))" />
           </template>
         </el-table-column>
-        <el-table-column label="平均周转时间" width="140">
+        <el-table-column label="工作时长" width="140">
           <template #default="{ row }">
-            {{ row.avgTurnaroundTime ? `${row.avgTurnaroundTime}小时` : '-' }}
+            {{ row.workHours ? `${row.workHours}小时` : '-' }}
           </template>
         </el-table-column>
       </el-table>
@@ -174,18 +167,16 @@ const formatDate = (date: Date) => {
 const queryParams = reactive<WorkloadQuery>({
   startDate: getDefaultDateRange()[0],
   endDate: getDefaultDateRange()[1],
-  department: '',
-  groupBy: 'day'
+  deptId: undefined,
 })
 
 dateRange.value = getDefaultDateRange()
 
 const summaryData = reactive({
-  totalSamples: 0,
-  completedSamples: 0,
-  pendingSamples: 0,
-  totalReports: 0,
-  avgTurnaroundTime: 0
+  specimenReceiveCount: 0,
+  testCount: 0,
+  reportCount: 0,
+  workHours: 0
 })
 
 const departments = [
@@ -220,8 +211,7 @@ const handleReset = () => {
   dateRange.value = defaultRange
   queryParams.startDate = defaultRange[0]
   queryParams.endDate = defaultRange[1]
-  queryParams.department = ''
-  queryParams.groupBy = 'day'
+  queryParams.deptId = undefined
   handleQuery()
 }
 
@@ -241,8 +231,8 @@ const handleExport = async () => {
 }
 
 const getCompletionRate = (row: WorkloadStatistics) => {
-  if (!row.totalSamples) return 0
-  return Math.round((row.completedSamples / row.totalSamples) * 100)
+  if (!row.specimenReceiveCount) return 0
+  return Math.round((row.reportCount / row.specimenReceiveCount) * 100)
 }
 
 const getProgressColor = (percentage: number) => {
@@ -271,12 +261,11 @@ const fetchStatistics = async () => {
 }
 
 const updateSummary = (data: WorkloadStatistics[]) => {
-  summaryData.totalSamples = data.reduce((sum, item) => sum + item.totalSamples, 0)
-  summaryData.completedSamples = data.reduce((sum, item) => sum + item.completedSamples, 0)
-  summaryData.pendingSamples = data.reduce((sum, item) => sum + item.pendingSamples, 0)
-  summaryData.totalReports = data.reduce((sum, item) => sum + item.totalReports, 0)
-  const avgTime = data.reduce((sum, item) => sum + (item.avgTurnaroundTime || 0), 0)
-  summaryData.avgTurnaroundTime = data.length ? Math.round(avgTime / data.length) : 0
+  summaryData.specimenReceiveCount = data.reduce((sum, item) => sum + item.specimenReceiveCount, 0)
+  summaryData.testCount = data.reduce((sum, item) => sum + item.testCount, 0)
+  summaryData.reportCount = data.reduce((sum, item) => sum + item.reportCount, 0)
+  const avgHours = data.reduce((sum, item) => sum + (item.workHours || 0), 0)
+  summaryData.workHours = data.length ? Math.round(avgHours / data.length) : 0
 }
 
 const renderCharts = () => {
@@ -310,7 +299,7 @@ const renderTrendChart = () => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: chartData.value.categories
+      data: chartData.value.xAxis.data
     },
     yAxis: [
       {
@@ -347,8 +336,8 @@ const renderPieChart = () => {
   }
 
   const pieData = [
-    { name: '已完成', value: summaryData.completedSamples },
-    { name: '待处理', value: summaryData.pendingSamples }
+    { name: '检验数', value: summaryData.testCount },
+    { name: '报告数', value: summaryData.reportCount }
   ]
 
   const option: echarts.EChartsOption = {

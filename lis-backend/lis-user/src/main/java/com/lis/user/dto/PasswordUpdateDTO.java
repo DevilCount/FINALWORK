@@ -5,7 +5,6 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 
@@ -13,8 +12,7 @@ import java.io.Serializable;
 @ApiModel(description = "密码修改参数")
 public class PasswordUpdateDTO implements Serializable {
 
-    @NotNull(message = "用户ID不能为空")
-    @ApiModelProperty(value = "用户ID", required = true)
+    @ApiModelProperty(value = "用户ID（管理员重置时必填，用户自改时从请求头获取）")
     private Long userId;
 
     @NotBlank(message = "旧密码不能为空")

@@ -14,7 +14,6 @@ import java.io.Serializable;
 public class SpecimenTypeDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
-    @TableLogic
     private Long id;
 
     private String typeCode;
@@ -45,6 +44,8 @@ public class SpecimenTypeDO implements Serializable {
 
     private String updateTime;
 
+    @TableField("del_flag")
+    @TableLogic
     private Integer delFlag;
 
     @TableField(exist = false)

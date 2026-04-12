@@ -36,26 +36,10 @@
             />
           </el-form-item>
           
-          <el-form-item prop="captcha">
-            <div class="captcha-row">
-              <el-input
-                v-model="loginForm.captcha"
-                placeholder="请输入验证码"
-                prefix-icon="Picture"
-                clearable
-                @keyup.enter="handleLogin"
-              />
-              <div class="captcha-image" @click="refreshCaptcha">
-                <img v-if="captchaImage" :src="captchaImage" alt="验证码" />
-                <span v-else>点击获取</span>
-              </div>
-            </div>
-          </el-form-item>
-          
           <el-form-item>
             <div class="login-options">
               <el-checkbox v-model="loginForm.rememberMe">记住密码</el-checkbox>
-              <el-link type="primary" :underline="false">忘记密码？</el-link>
+              <el-link type="primary" :underline="'never'">忘记密码？</el-link>
             </div>
           </el-form-item>
           
@@ -84,7 +68,6 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { useUserStore } from '@/stores/modules/user'
-import { getCaptcha } from '@/api/auth'
 import type { LoginForm } from '@/types/user'
 
 const router = useRouter()
@@ -93,13 +76,10 @@ const userStore = useUserStore()
 
 const loginFormRef = ref<FormInstance>()
 const loading = ref(false)
-const captchaImage = ref('')
 
 const loginForm = reactive<LoginForm>({
   username: '',
   password: '',
-  captcha: '',
-  uuid: '',
   rememberMe: false,
 })
 
@@ -112,20 +92,6 @@ const loginRules: FormRules = {
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, max: 20, message: '密码长度为6-20个字符', trigger: 'blur' },
   ],
-  captcha: [
-    { required: true, message: '请输入验证码', trigger: 'blur' },
-    { min: 4, max: 4, message: '验证码为4位字符', trigger: 'blur' },
-  ],
-}
-
-const refreshCaptcha = async () => {
-  try {
-    const data = await getCaptcha()
-    captchaImage.value = data.captchaImage
-    loginForm.uuid = data.uuid
-  } catch (error) {
-    console.error('获取验证码失败', error)
-  }
 }
 
 const handleLogin = async () => {
@@ -135,7 +101,10 @@ const handleLogin = async () => {
     if (valid) {
       loading.value = true
       try {
-        await userStore.loginAction(loginForm)
+        await userStore.loginAction({
+          username: loginForm.username,
+          password: loginForm.password,
+        })
         
         if (loginForm.rememberMe) {
           localStorage.setItem('lis_username', loginForm.username)
@@ -147,11 +116,9 @@ const handleLogin = async () => {
         
         ElMessage.success('登录成功')
         
-        const redirectPath = route.query.redirect as string || '/dashboard'
+        const redirectPath = route.query.redirect as string || '/dashboard/index'
         router.push(redirectPath)
       } catch (error: any) {
-        refreshCaptcha()
-        loginForm.captcha = ''
         ElMessage.error(error.message || '登录失败')
       } finally {
         loading.value = false
@@ -161,8 +128,6 @@ const handleLogin = async () => {
 }
 
 onMounted(() => {
-  refreshCaptcha()
-  
   const savedUsername = localStorage.getItem('lis_username')
   const savedRemember = localStorage.getItem('lis_remember')
   
@@ -230,44 +195,6 @@ $border-color-base: #dcdfe6;
 }
 
 .login-form {
-  .captcha-row {
-    display: flex;
-    gap: 12px;
-    width: 100%;
-    
-    .el-input {
-      flex: 1;
-    }
-    
-    .captcha-image {
-      width: 120px;
-      height: 40px;
-      border: 1px solid $border-color-base;
-      border-radius: 4px;
-      cursor: pointer;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f5f5f5;
-      
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      
-      span {
-        font-size: 12px;
-        color: $text-secondary;
-      }
-      
-      &:hover {
-        border-color: $primary-color;
-      }
-    }
-  }
-  
   .login-options {
     width: 100%;
     display: flex;

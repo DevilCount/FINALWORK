@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Api(tags = "患者管理")
 @RestController
 @RequestMapping("/patient")
@@ -40,6 +42,13 @@ public class PatientController {
     public Result<Void> deletePatient(@PathVariable Long id) {
         patientService.deletePatient(id);
         return Result.success("删除成功", null);
+    }
+
+    @ApiOperation("患者列表")
+    @GetMapping("/list")
+    public Result<List<PatientVO>> listPatients(PatientQueryDTO dto) {
+        List<PatientVO> list = patientService.listPatients(dto);
+        return Result.success(list);
     }
 
     @ApiOperation("根据ID获取患者")

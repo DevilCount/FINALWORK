@@ -14,24 +14,24 @@
           </template>
           <el-row :gutter="20">
             <el-col :span="6">
-              <div class="status-card online">
+              <div class="status-card normal">
                 <div class="status-icon">
                   <el-icon><CircleCheck /></el-icon>
                 </div>
                 <div class="status-info">
-                  <div class="status-count">{{ statusOverview.online }}</div>
-                  <div class="status-label">在线设备</div>
+                  <div class="status-count">{{ statusOverview.normal }}</div>
+                  <div class="status-label">正常设备</div>
                 </div>
               </div>
             </el-col>
             <el-col :span="6">
-              <div class="status-card offline">
+              <div class="status-card idle">
                 <div class="status-icon">
                   <el-icon><CircleClose /></el-icon>
                 </div>
                 <div class="status-info">
-                  <div class="status-count">{{ statusOverview.offline }}</div>
-                  <div class="status-label">离线设备</div>
+                  <div class="status-count">{{ statusOverview.idle }}</div>
+                  <div class="status-label">空闲设备</div>
                 </div>
               </div>
             </el-col>
@@ -84,14 +84,15 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
-            <el-option label="在线" value="online" />
-            <el-option label="离线" value="offline" />
-            <el-option label="维护中" value="maintenance" />
-            <el-option label="故障" value="fault" />
+            <el-option label="正常" value="NORMAL" />
+            <el-option label="空闲" value="IDLE" />
+            <el-option label="维护中" value="MAINTENANCE" />
+            <el-option label="故障" value="FAULT" />
+            <el-option label="报废" value="SCRAPPED" />
           </el-select>
         </el-form-item>
         <el-form-item label="科室">
-          <el-select v-model="queryParams.department" placeholder="请选择科室" clearable>
+          <el-select v-model="queryParams.labId" placeholder="请选择科室" clearable>
             <el-option v-for="dept in departments" :key="dept.value" :label="dept.label" :value="dept.value" />
           </el-select>
         </el-form-item>
@@ -108,13 +109,13 @@
       </el-form>
 
       <el-table v-loading="loading" :data="equipmentList" border stripe>
-        <el-table-column prop="code" label="设备编号" width="120" />
-        <el-table-column prop="name" label="设备名称" min-width="150" />
+        <el-table-column prop="equipmentCode" label="设备编号" width="120" />
+        <el-table-column prop="equipmentName" label="设备名称" min-width="150" />
         <el-table-column prop="model" label="型号" width="120" />
         <el-table-column prop="manufacturer" label="厂商" width="120" />
-        <el-table-column prop="department" label="所属科室" width="120" />
+        <el-table-column prop="labName" label="所属科室" width="120" />
         <el-table-column prop="location" label="位置" width="100" />
-        <el-table-column prop="responsiblePerson" label="负责人" width="100" />
+        <el-table-column prop="responsibleUserName" label="负责人" width="100" />
         <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
@@ -140,7 +141,7 @@
       </el-table>
 
       <el-pagination
-        v-model:current-page="queryParams.page"
+        v-model:current-page="queryParams.pageNum"
         v-model:page-size="queryParams.pageSize"
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
@@ -154,13 +155,13 @@
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="设备编号" prop="code">
-              <el-input v-model="formData.code" placeholder="请输入设备编号" />
+            <el-form-item label="设备编号" prop="equipmentCode">
+              <el-input v-model="formData.equipmentCode" placeholder="请输入设备编号" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="设备名称" prop="name">
-              <el-input v-model="formData.name" placeholder="请输入设备名称" />
+            <el-form-item label="设备名称" prop="equipmentName">
+              <el-input v-model="formData.equipmentName" placeholder="请输入设备名称" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -178,25 +179,26 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="序列号" prop="serialNumber">
-              <el-input v-model="formData.serialNumber" placeholder="请输入序列号" />
+            <el-form-item label="序列号" prop="serialNo">
+              <el-input v-model="formData.serialNo" placeholder="请输入序列号" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
               <el-select v-model="formData.status" placeholder="请选择状态">
-                <el-option label="在线" value="online" />
-                <el-option label="离线" value="offline" />
-                <el-option label="维护中" value="maintenance" />
-                <el-option label="故障" value="fault" />
+                <el-option label="正常" value="NORMAL" />
+                <el-option label="空闲" value="IDLE" />
+                <el-option label="维护中" value="MAINTENANCE" />
+                <el-option label="故障" value="FAULT" />
+                <el-option label="报废" value="SCRAPPED" />
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="所属科室" prop="department">
-              <el-select v-model="formData.department" placeholder="请选择科室">
+            <el-form-item label="所属科室" prop="labId">
+              <el-select v-model="formData.labId" placeholder="请选择科室">
                 <el-option v-for="dept in departments" :key="dept.value" :label="dept.label" :value="dept.value" />
               </el-select>
             </el-form-item>
@@ -209,8 +211,8 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="负责人" prop="responsiblePerson">
-              <el-input v-model="formData.responsiblePerson" placeholder="请输入负责人" />
+            <el-form-item label="负责人" prop="responsibleUserName">
+              <el-input v-model="formData.responsibleUserName" placeholder="请输入负责人" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -221,8 +223,8 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="保修到期" prop="warrantyExpiry">
-              <el-date-picker v-model="formData.warrantyExpiry" type="date" placeholder="请选择日期" value-format="YYYY-MM-DD" />
+            <el-form-item label="保修到期" prop="warrantyExpireDate">
+              <el-date-picker v-model="formData.warrantyExpireDate" type="date" placeholder="请选择日期" value-format="YYYY-MM-DD" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -241,17 +243,17 @@
     <el-dialog v-model="maintenanceDialogVisible" title="新增维护记录" width="600px" destroy-on-close>
       <el-form ref="maintenanceFormRef" :model="maintenanceFormData" :rules="maintenanceFormRules" label-width="100px">
         <el-form-item label="设备" prop="equipmentId">
-          <el-input :model-value="currentEquipment?.name" disabled />
+          <el-input :model-value="currentEquipment?.equipmentName" disabled />
         </el-form-item>
-        <el-form-item label="维护类型" prop="type">
-          <el-select v-model="maintenanceFormData.type" placeholder="请选择类型">
+        <el-form-item label="维护类型" prop="maintenanceType">
+          <el-select v-model="maintenanceFormData.maintenanceType" placeholder="请选择类型">
             <el-option label="校准" value="calibration" />
             <el-option label="维护" value="maintenance" />
             <el-option label="维修" value="repair" />
           </el-select>
         </el-form-item>
-        <el-form-item label="维护内容" prop="content">
-          <el-input v-model="maintenanceFormData.content" type="textarea" :rows="3" placeholder="请输入维护内容" />
+        <el-form-item label="维护内容" prop="maintenanceContent">
+          <el-input v-model="maintenanceFormData.maintenanceContent" type="textarea" :rows="3" placeholder="请输入维护内容" />
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
@@ -272,8 +274,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="维护结果" prop="result">
-              <el-select v-model="maintenanceFormData.result" placeholder="请选择结果">
+            <el-form-item label="维护结果" prop="maintenanceResult">
+              <el-select v-model="maintenanceFormData.maintenanceResult" placeholder="请选择结果">
                 <el-option label="成功" value="success" />
                 <el-option label="部分成功" value="partial" />
                 <el-option label="失败" value="failed" />
@@ -284,8 +286,8 @@
         <el-form-item label="费用" prop="cost">
           <el-input-number v-model="maintenanceFormData.cost" :min="0" :precision="2" placeholder="请输入费用" />
         </el-form-item>
-        <el-form-item label="备注" prop="notes">
-          <el-input v-model="maintenanceFormData.notes" type="textarea" :rows="2" placeholder="请输入备注" />
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="maintenanceFormData.remark" type="textarea" :rows="2" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -312,18 +314,19 @@ const equipmentList = ref<Equipment[]>([])
 const total = ref(0)
 
 const queryParams = reactive<EquipmentQuery>({
-  page: 1,
+  pageNum: 1,
   pageSize: 10,
   keyword: '',
   status: '',
-  department: ''
+  labId: undefined
 })
 
 const statusOverview = reactive({
-  online: 0,
-  offline: 0,
+  normal: 0,
+  idle: 0,
   maintenance: 0,
-  fault: 0
+  fault: 0,
+  scrapped: 0
 })
 
 const departments = [
@@ -338,68 +341,70 @@ const dialogVisible = ref(false)
 const dialogTitle = computed(() => (formData.id ? '编辑设备' : '新增设备'))
 const formRef = ref<FormInstance>()
 const formData = reactive<Partial<Equipment>>({
-  code: '',
-  name: '',
+  equipmentCode: '',
+  equipmentName: '',
   model: '',
   manufacturer: '',
-  serialNumber: '',
-  status: 'online',
-  department: '',
+  serialNo: '',
+  status: 'NORMAL',
+  labId: undefined,
   location: '',
-  responsiblePerson: '',
+  responsibleUserName: '',
   purchaseDate: '',
-  warrantyExpiry: '',
+  warrantyExpireDate: '',
   nextCalibrationDate: ''
 })
 
 const formRules: FormRules = {
-  code: [{ required: true, message: '请输入设备编号', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入设备名称', trigger: 'blur' }],
+  equipmentCode: [{ required: true, message: '请输入设备编号', trigger: 'blur' }],
+  equipmentName: [{ required: true, message: '请输入设备名称', trigger: 'blur' }],
   model: [{ required: true, message: '请输入型号', trigger: 'blur' }],
   manufacturer: [{ required: true, message: '请输入厂商', trigger: 'blur' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
-  department: [{ required: true, message: '请选择科室', trigger: 'change' }]
+  labId: [{ required: true, message: '请选择科室', trigger: 'change' }]
 }
 
 const maintenanceDialogVisible = ref(false)
 const maintenanceFormRef = ref<FormInstance>()
 const currentEquipment = ref<Equipment | null>(null)
 const maintenanceFormData = reactive<Partial<MaintenanceRecord>>({
-  equipmentId: '',
-  type: 'maintenance',
-  content: '',
+  equipmentId: 0,
+  maintenanceType: 'maintenance',
+  maintenanceContent: '',
   technician: '',
   startTime: '',
   endTime: '',
-  result: 'success',
+  maintenanceResult: 'success',
   cost: 0,
-  notes: ''
+  remark: ''
 })
 
 const maintenanceFormRules: FormRules = {
-  type: [{ required: true, message: '请选择维护类型', trigger: 'change' }],
-  content: [{ required: true, message: '请输入维护内容', trigger: 'blur' }],
+  maintenanceType: [{ required: true, message: '请选择维护类型', trigger: 'change' }],
+  maintenanceContent: [{ required: true, message: '请输入维护内容', trigger: 'blur' }],
   technician: [{ required: true, message: '请输入技术人员', trigger: 'blur' }],
   startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
-  result: [{ required: true, message: '请选择维护结果', trigger: 'change' }]
+  maintenanceResult: [{ required: true, message: '请选择维护结果', trigger: 'change' }]
 }
 
 const getStatusType = (status: string): 'success' | 'info' | 'warning' | 'danger' | 'primary' => {
   const map: Record<string, 'success' | 'info' | 'warning' | 'danger' | 'primary'> = {
-    online: 'success',
-    offline: 'info',
-    maintenance: 'warning',
-    fault: 'danger'
+    NORMAL: 'success',
+    IDLE: 'info',
+    MAINTENANCE: 'warning',
+    FAULT: 'danger',
+    SCRAPPED: 'info'
   }
   return map[status] || 'info'
 }
 
 const getStatusLabel = (status: string) => {
   const map: Record<string, string> = {
-    online: '在线',
-    offline: '离线',
-    maintenance: '维护中',
-    fault: '故障'
+    NORMAL: '正常',
+    IDLE: '空闲',
+    MAINTENANCE: '维护中',
+    FAULT: '故障',
+    SCRAPPED: '报废'
   }
   return map[status] || status
 }
@@ -416,9 +421,9 @@ const fetchEquipmentList = async () => {
   loading.value = true
   try {
     const res = await getEquipmentList(queryParams)
-    equipmentList.value = res.list
+    equipmentList.value = res.records
     total.value = res.total
-    updateStatusOverview(res.list)
+    updateStatusOverview(res.records)
   } catch {
     ElMessage.error('获取设备列表失败')
   } finally {
@@ -427,10 +432,11 @@ const fetchEquipmentList = async () => {
 }
 
 const updateStatusOverview = (list: Equipment[]) => {
-  statusOverview.online = list.filter(item => item.status === 'online').length
-  statusOverview.offline = list.filter(item => item.status === 'offline').length
-  statusOverview.maintenance = list.filter(item => item.status === 'maintenance').length
-  statusOverview.fault = list.filter(item => item.status === 'fault').length
+  statusOverview.normal = list.filter(item => item.status === 'NORMAL').length
+  statusOverview.idle = list.filter(item => item.status === 'IDLE').length
+  statusOverview.maintenance = list.filter(item => item.status === 'MAINTENANCE').length
+  statusOverview.fault = list.filter(item => item.status === 'FAULT').length
+  statusOverview.scrapped = list.filter(item => item.status === 'SCRAPPED').length
 }
 
 const refreshStatus = () => {
@@ -438,31 +444,31 @@ const refreshStatus = () => {
 }
 
 const handleQuery = () => {
-  queryParams.page = 1
+  queryParams.pageNum = 1
   fetchEquipmentList()
 }
 
 const handleReset = () => {
   queryParams.keyword = ''
   queryParams.status = ''
-  queryParams.department = ''
+  queryParams.labId = undefined
   handleQuery()
 }
 
 const resetForm = () => {
   Object.assign(formData, {
     id: undefined,
-    code: '',
-    name: '',
+    equipmentCode: '',
+    equipmentName: '',
     model: '',
     manufacturer: '',
-    serialNumber: '',
-    status: 'online',
-    department: '',
+    serialNo: '',
+    status: 'NORMAL',
+    labId: undefined,
     location: '',
-    responsiblePerson: '',
+    responsibleUserName: '',
     purchaseDate: '',
-    warrantyExpiry: '',
+    warrantyExpireDate: '',
     nextCalibrationDate: ''
   })
 }
@@ -521,14 +527,14 @@ const handleSubmit = async () => {
 const handleMaintenance = (row: Equipment) => {
   currentEquipment.value = row
   maintenanceFormData.equipmentId = row.id
-  maintenanceFormData.type = 'maintenance'
-  maintenanceFormData.content = ''
+  maintenanceFormData.maintenanceType = 'maintenance'
+  maintenanceFormData.maintenanceContent = ''
   maintenanceFormData.technician = ''
   maintenanceFormData.startTime = ''
   maintenanceFormData.endTime = ''
-  maintenanceFormData.result = 'success'
+  maintenanceFormData.maintenanceResult = 'success'
   maintenanceFormData.cost = 0
-  maintenanceFormData.notes = ''
+  maintenanceFormData.remark = ''
   maintenanceDialogVisible.value = true
 }
 
@@ -604,11 +610,11 @@ onMounted(() => {
     }
   }
 
-  &.online .status-icon {
+  &.normal .status-icon {
     background: linear-gradient(135deg, #67c23a, #85ce61);
   }
 
-  &.offline .status-icon {
+  &.idle .status-icon {
     background: linear-gradient(135deg, #909399, #b4b4b4);
   }
 

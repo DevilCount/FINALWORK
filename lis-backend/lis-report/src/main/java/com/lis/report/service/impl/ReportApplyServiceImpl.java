@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lis.common.exception.BusinessException;
 import com.lis.common.result.PageResult;
 import com.lis.report.dto.ReportApplyDTO;
+import com.lis.report.dto.ReportApplyItemDTO;
 import com.lis.report.dto.ReportQueryDTO;
 import com.lis.report.entity.ReportDO;
 import com.lis.report.entity.ReportItemDO;
@@ -35,11 +36,14 @@ public class ReportApplyServiceImpl implements ReportApplyService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createReportApply(ReportApplyDTO dto) {
-        LambdaQueryWrapper<ReportDO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ReportDO::getSpecimenNo, dto.getSpecimenNo());
-        ReportDO existReport = reportMapper.selectOne(wrapper);
-        if (existReport != null) {
-            throw new BusinessException("该标本已存在报告");
+        // 如果提供了标本编号，检查是否已存在报告
+        if (StrUtil.isNotBlank(dto.getSpecimenNo())) {
+            LambdaQueryWrapper<ReportDO> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(ReportDO::getSpecimenNo, dto.getSpecimenNo());
+            ReportDO existReport = reportMapper.selectOne(wrapper);
+            if (existReport != null) {
+                throw new BusinessException("该标本已存在报告");
+            }
         }
 
         ReportDO reportDO = new ReportDO();
@@ -54,7 +58,67 @@ public class ReportApplyServiceImpl implements ReportApplyService {
         reportDO.setUpdateTime(LocalDateTime.now());
 
         reportMapper.insert(reportDO);
+
+        // 创建报告检验项目
+        if (dto.getTestItems() != null && !dto.getTestItems().isEmpty()) {
+            int sort = 1;
+            for (ReportApplyItemDTO itemDTO : dto.getTestItems()) {
+                ReportItemDO itemDO = new ReportItemDO();
+                itemDO.setReportId(reportDO.getId());
+                itemDO.setReportNo(reportDO.getReportNo());
+                itemDO.setSpecimenTestItemId(itemDTO.getSpecimenTestItemId());
+                itemDO.setItemCode(itemDTO.getItemCode());
+                itemDO.setItemName(itemDTO.getItemName());
+                itemDO.setItemNameEn(itemDTO.getItemNameEn());
+                itemDO.setUnit(itemDTO.getUnit());
+                itemDO.setReferenceLow(itemDTO.getReferenceLow());
+                itemDO.setReferenceHigh(itemDTO.getReferenceHigh());
+                itemDO.setReferenceText(itemDTO.getReferenceText());
+                itemDO.setPanicLow(itemDTO.getPanicLow());
+                itemDO.setPanicHigh(itemDTO.getPanicHigh());
+                itemDO.setMethod(itemDTO.getMethod());
+                itemDO.setIsPanic(0);
+                itemDO.setIsAbnormal(0);
+                itemDO.setSort(itemDTO.getSort() != null ? itemDTO.getSort() : sort++);
+                itemDO.setCreateTime(LocalDateTime.now());
+                itemDO.setUpdateTime(LocalDateTime.now());
+                reportItemMapper.insert(itemDO);
+            }
+        }
+
         return reportDO.getId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateReportApply(Long reportId, ReportApplyDTO dto) {
+        ReportDO reportDO = reportMapper.selectById(reportId);
+        if (reportDO == null) {
+            throw new BusinessException("报告不存在");
+        }
+        if (!"draft".equals(reportDO.getStatus())) {
+            throw new BusinessException("只有草稿状态的报告才能修改");
+        }
+        BeanUtils.copyProperties(dto, reportDO);
+        reportDO.setId(reportId);
+        reportDO.setUpdateTime(LocalDateTime.now());
+        reportMapper.updateById(reportDO);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteReportApply(Long reportId) {
+        ReportDO reportDO = reportMapper.selectById(reportId);
+        if (reportDO == null) {
+            throw new BusinessException("报告不存在");
+        }
+        if (!"draft".equals(reportDO.getStatus()) && !"cancelled".equals(reportDO.getStatus())) {
+            throw new BusinessException("只有草稿或已取消状态的报告才能删除");
+        }
+        // 删除报告明细
+        reportItemMapper.deleteByReportId(reportId);
+        // 删除报告
+        reportMapper.deleteById(reportId);
     }
 
     @Override

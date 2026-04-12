@@ -7,6 +7,7 @@ public enum SpecimenStatusEnum {
 
     PENDING("pending", "待接收"),
     RECEIVED("received", "已接收"),
+    STORED("stored", "已入库"),
     TESTING("testing", "检验中"),
     COMPLETED("completed", "已完成"),
     REJECTED("rejected", "已拒收"),

@@ -19,14 +19,14 @@
           <el-col :span="8">
             <el-form-item label="性别" prop="patientGender">
               <el-radio-group v-model="formData.patientGender">
-                <el-radio value="male">男</el-radio>
-                <el-radio value="female">女</el-radio>
+                <el-radio value="男">男</el-radio>
+                <el-radio value="女">女</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="年龄" prop="patientAge">
-              <el-input-number v-model="formData.patientAge" :min="0" :max="150" style="width: 100%" />
+              <el-input v-model="formData.patientAge" placeholder="请输入年龄" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -38,14 +38,14 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="身份证号" prop="patientIdCard">
-              <el-input v-model="formData.patientIdCard" placeholder="请输入身份证号" />
+            <el-form-item label="身份证号" prop="patientIdNo">
+              <el-input v-model="formData.patientIdNo" placeholder="请输入身份证号" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="科室" prop="departmentId">
-              <el-select v-model="formData.departmentId" placeholder="请选择科室" style="width: 100%">
-                <el-option v-for="item in departments" :key="item.id" :label="item.name" :value="item.id" />
+            <el-form-item label="科室" prop="deptId">
+              <el-select v-model="formData.deptId" placeholder="请选择科室" style="width: 100%">
+                <el-option v-for="item in departments" :key="item.id" :label="item.deptName" :value="item.id" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -59,7 +59,7 @@
           </el-col>
           <el-col :span="16">
             <el-form-item label="诊断">
-              <el-input v-model="formData.diagnosis" placeholder="请输入诊断信息" />
+              <el-input v-model="formData.clinicalDiagnosis" placeholder="请输入诊断信息" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -68,9 +68,9 @@
 
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="标本类型" prop="specimenType">
-              <el-select v-model="formData.specimenType" placeholder="请选择标本类型" style="width: 100%">
-                <el-option v-for="item in specimenTypes" :key="item.code" :label="item.name" :value="item.code" />
+            <el-form-item label="标本类型" prop="specimenTypeId">
+              <el-select v-model="formData.specimenTypeId" placeholder="请选择标本类型" style="width: 100%">
+                <el-option v-for="item in specimenTypes" :key="item.id" :label="item.typeName" :value="item.id" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -85,8 +85,8 @@
                 <div class="category-tabs">
                   <el-radio-group v-model="selectedCategory" @change="handleCategoryChange">
                     <el-radio-button value="">全部</el-radio-button>
-                    <el-radio-button v-for="cat in testItemCategories" :key="cat.code" :value="cat.code">
-                      {{ cat.name }}
+                    <el-radio-button v-for="cat in testItemCategories" :key="cat" :value="cat">
+                      {{ cat }}
                     </el-radio-button>
                   </el-radio-group>
                 </div>
@@ -171,24 +171,24 @@ const router = useRouter()
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
 
-const departments = ref<{ id: string; name: string }[]>([])
+const departments = ref<{ id: number; deptName: string }[]>([])
 const specimenTypes = ref<SpecimenType[]>([])
 const testItems = ref<TestItem[]>([])
-const testItemCategories = ref<{ code: string; name: string }[]>([])
+const testItemCategories = ref<string[]>([])
 const selectedCategory = ref('')
 const testItemSearch = ref('')
 
 const formData = reactive<SpecimenRegisterForm>({
   patientName: '',
-  patientGender: 'male',
-  patientAge: 0,
+  patientGender: '男',
+  patientAge: '',
   patientPhone: '',
-  patientIdCard: '',
-  departmentId: '',
+  patientIdNo: '',
+  deptId: 0,
   bedNo: '',
-  diagnosis: '',
-  specimenType: '',
-  testItemIds: [],
+  clinicalDiagnosis: '',
+  specimenTypeId: 0,
+  testItemIds: [] as number[],
   remark: '',
 })
 
@@ -196,15 +196,15 @@ const rules: FormRules = {
   patientName: [{ required: true, message: '请输入患者姓名', trigger: 'blur' }],
   patientGender: [{ required: true, message: '请选择性别', trigger: 'change' }],
   patientAge: [{ required: true, message: '请输入年龄', trigger: 'blur' }],
-  departmentId: [{ required: true, message: '请选择科室', trigger: 'change' }],
-  specimenType: [{ required: true, message: '请选择标本类型', trigger: 'change' }],
+  deptId: [{ required: true, message: '请选择科室', trigger: 'change' }],
+  specimenTypeId: [{ required: true, message: '请选择标本类型', trigger: 'change' }],
   testItemIds: [{ required: true, message: '请选择检验项目', trigger: 'change', type: 'array', min: 1 }],
 }
 
 const filteredTestItems = computed(() => {
   let items = testItems.value
   if (selectedCategory.value) {
-    items = items.filter(item => item.itemCategory === selectedCategory.value)
+    items = items.filter(item => item.itemCode === selectedCategory.value)
   }
   if (testItemSearch.value) {
     const search = testItemSearch.value.toLowerCase()
@@ -223,12 +223,12 @@ const totalPrice = computed(() => {
   }, 0)
 })
 
-const getTestItemName = (id: string) => {
+const getTestItemName = (id: number) => {
   const item = testItems.value.find(t => t.id === id)
-  return item ? `${item.itemName}(${item.itemCode})` : id
+  return item ? `${item.itemName}(${item.itemCode})` : String(id)
 }
 
-const removeTestItem = (id: string) => {
+const removeTestItem = (id: number) => {
   const index = formData.testItemIds.indexOf(id)
   if (index > -1) {
     formData.testItemIds.splice(index, 1)

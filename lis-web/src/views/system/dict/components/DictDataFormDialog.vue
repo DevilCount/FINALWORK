@@ -12,19 +12,19 @@
       :rules="formRules"
       label-width="80px"
     >
-      <el-form-item label="字典标签" prop="label">
-        <el-input v-model="formData.label" placeholder="请输入字典标签" />
+      <el-form-item label="字典标签" prop="dataLabel">
+        <el-input v-model="formData.dataLabel" placeholder="请输入字典标签" />
       </el-form-item>
-      <el-form-item label="字典值" prop="value">
-        <el-input v-model="formData.value" placeholder="请输入字典值" />
+      <el-form-item label="字典值" prop="dataValue">
+        <el-input v-model="formData.dataValue" placeholder="请输入字典值" />
       </el-form-item>
       <el-form-item label="排序" prop="sort">
         <el-input-number v-model="formData.sort" :min="0" :max="999" />
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="normal">正常</el-radio>
-          <el-radio value="disable">禁用</el-radio>
+          <el-radio :value="0">正常</el-radio>
+          <el-radio :value="2">禁用</el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="样式属性" prop="cssClass">
@@ -91,10 +91,11 @@ const dialogVisible = computed({
 const isEdit = computed(() => !!props.dataId)
 
 const formData = reactive<DictDataForm>({
-  typeId: 0,
-  label: '',
-  value: '',
-  status: 'normal',
+  dictTypeId: 0,
+  dictType: '',
+  dataLabel: '',
+  dataValue: '',
+  status: 0,
   sort: 0,
   remark: '',
   cssClass: '',
@@ -102,13 +103,13 @@ const formData = reactive<DictDataForm>({
 })
 
 const formRules: FormRules = {
-  label: [
+  dataLabel: [
     { required: true, message: '请输入字典标签', trigger: 'blur' },
   ],
-  value: [
+  dataValue: [
     { required: true, message: '请输入字典值', trigger: 'blur' },
   ],
-  typeId: [
+  dictTypeId: [
     { required: true, message: '请选择字典类型', trigger: 'change' },
   ],
 }
@@ -117,9 +118,10 @@ const loadDataInfo = async () => {
   if (!props.dataId) return
   try {
     const data = await getDictDataById(props.dataId)
-    formData.typeId = data.typeId
-    formData.label = data.label
-    formData.value = data.value
+    formData.dictTypeId = data.dictTypeId
+    formData.dictType = data.dictType
+    formData.dataLabel = data.dataLabel
+    formData.dataValue = data.dataValue
     formData.status = data.status
     formData.sort = data.sort
     formData.remark = data.remark
@@ -131,10 +133,11 @@ const loadDataInfo = async () => {
 }
 
 const resetForm = () => {
-  formData.typeId = props.typeId || 0
-  formData.label = ''
-  formData.value = ''
-  formData.status = 'normal'
+  formData.dictTypeId = props.typeId || 0
+  formData.dictType = ''
+  formData.dataLabel = ''
+  formData.dataValue = ''
+  formData.status = 0
   formData.sort = 0
   formData.remark = ''
   formData.cssClass = ''
@@ -179,7 +182,7 @@ watch(
       if (props.dataId) {
         loadDataInfo()
       } else {
-        formData.typeId = props.typeId || 0
+        formData.dictTypeId = props.typeId || 0
       }
     }
   }

@@ -27,8 +27,8 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
-            <el-option label="正常" value="normal" />
-            <el-option label="禁用" value="disable" />
+            <el-option label="正常" :value="0" />
+            <el-option label="禁用" :value="2" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -52,8 +52,8 @@
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
-              active-value="normal"
-              inactive-value="disable"
+              :active-value="0"
+              :inactive-value="2"
               @change="handleStatusChange(row)"
             />
           </template>
@@ -133,7 +133,7 @@ import {
   type Role,
   type RoleQuery,
 } from '@/api/system/role'
-import { getMenuTree, type MenuTree } from '@/api/system/menu'
+import { getMenuTreeNodes, type MenuTree } from '@/api/system/menu'
 import RoleFormDialog from './components/RoleFormDialog.vue'
 
 const menuTreeRef = ref<InstanceType<typeof ElTree>>()
@@ -171,7 +171,7 @@ const loadRoleList = async () => {
 
 const loadMenuTree = async () => {
   try {
-    menuTree.value = await getMenuTree()
+    menuTree.value = await getMenuTreeNodes()
   } catch (error) {
     console.error('加载菜单树失败', error)
   }
@@ -237,12 +237,12 @@ const handleSelectionChange = (selection: Role[]) => {
 }
 
 const handleStatusChange = async (row: Role) => {
-  const text = row.status === 'normal' ? '启用' : '禁用'
+  const text = row.status === 0 ? '启用' : '禁用'
   try {
     await updateRoleStatus(row.id, row.status)
     ElMessage.success(`${text}成功`)
   } catch (error) {
-    row.status = row.status === 'normal' ? 'disable' : 'normal'
+    row.status = row.status === 0 ? 2 : 0
     console.error('更新角色状态失败', error)
   }
 }

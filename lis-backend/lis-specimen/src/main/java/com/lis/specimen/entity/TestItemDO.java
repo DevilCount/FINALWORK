@@ -15,7 +15,6 @@ import java.math.BigDecimal;
 public class TestItemDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
-    @TableLogic
     private Long id;
 
     private String itemCode;
@@ -66,6 +65,8 @@ public class TestItemDO implements Serializable {
 
     private String updateTime;
 
+    @TableField("del_flag")
+    @TableLogic
     private Integer delFlag;
 
     @TableField(exist = false)

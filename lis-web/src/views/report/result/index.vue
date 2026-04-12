@@ -9,7 +9,7 @@
 
       <el-form :model="searchForm" inline class="search-form">
         <el-form-item label="标本编号">
-          <el-input v-model="searchForm.specimenCode" placeholder="请输入标本编号" clearable @keyup.enter="handleSearch" />
+          <el-input v-model="searchForm.specimenNo" placeholder="请输入标本编号" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
@@ -22,15 +22,15 @@
       <template v-if="specimenInfo">
         <el-descriptions title="标本信息" :column="4" border>
           <el-descriptions-item label="标本编号">
-            <el-tag type="primary">{{ specimenInfo.specimenCode }}</el-tag>
+            <el-tag type="primary">{{ specimenInfo.specimenNo }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="标本类型">{{ specimenInfo.specimenTypeName }}</el-descriptions-item>
           <el-descriptions-item label="患者姓名">{{ specimenInfo.patientName }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ specimenInfo.patientGender === 'male' ? '男' : '女' }}</el-descriptions-item>
-          <el-descriptions-item label="年龄">{{ specimenInfo.patientAge }}岁</el-descriptions-item>
-          <el-descriptions-item label="科室">{{ specimenInfo.departmentName }}</el-descriptions-item>
+          <el-descriptions-item label="性别">{{ specimenInfo.patientGender === '男' ? '男' : '女' }}</el-descriptions-item>
+          <el-descriptions-item label="年龄">{{ specimenInfo.patientAge }}</el-descriptions-item>
+          <el-descriptions-item label="科室">{{ specimenInfo.deptName }}</el-descriptions-item>
           <el-descriptions-item label="床号">{{ specimenInfo.bedNo || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="诊断">{{ specimenInfo.diagnosis || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="诊断">{{ specimenInfo.clinicalDiagnosis || '-' }}</el-descriptions-item>
         </el-descriptions>
 
         <div class="section-title">检验项目结果录入</div>
@@ -48,27 +48,24 @@
           <el-table-column label="结果标识" width="120">
             <template #default="{ row }">
               <el-select v-model="row.resultFlag" placeholder="标识" size="small">
-                <el-option label="正常" value="normal" />
-                <el-option label="偏高" value="high" />
-                <el-option label="偏低" value="low" />
-                <el-option label="危急高" value="critical_high" />
-                <el-option label="危急低" value="critical_low" />
+                <el-option label="正常" value="N" />
+                <el-option label="偏高" value="H" />
+                <el-option label="偏低" value="L" />
+                <el-option label="危急高" value="HH" />
+                <el-option label="危急低" value="LL" />
               </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="异常标记" width="80">
-            <template #default="{ row }">
-              <el-checkbox v-model="row.isAbnormal" />
-            </template>
-          </el-table-column>
-          <el-table-column label="危急值" width="80">
-            <template #default="{ row }">
-              <el-checkbox v-model="row.isCritical" @change="handleCriticalChange(row)" />
             </template>
           </el-table-column>
           <el-table-column label="备注" min-width="150">
             <template #default="{ row }">
               <el-input v-model="row.remark" placeholder="备注" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column label="危急值" width="80">
+            <template #default="{ row }">
+              <el-button v-if="['H', 'L'].includes(row.resultFlag)" type="warning" link size="small" @click="handleCriticalChange(row)">标记危急</el-button>
+              <el-tag v-if="row.resultFlag === 'HH'" type="danger" size="small">危急高</el-tag>
+              <el-tag v-else-if="row.resultFlag === 'LL'" type="danger" size="small">危急低</el-tag>
             </template>
           </el-table-column>
         </el-table>
@@ -100,32 +97,40 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Check, Upload, Refresh } from '@element-plus/icons-vue'
 import type { Specimen, SpecimenTestItem } from '@/types/specimen'
-import type { ResultEntryItem } from '@/types/report'
-import { getSpecimenByCode, getSpecimenDetail } from '@/api/specimen'
-import { saveResultEntry, submitReport, getReportBySpecimenId } from '@/api/report'
+import type { ResultFlag } from '@/types/report'
+import { getSpecimenBySpecimenNo, getSpecimenDetail } from '@/api/specimen'
+import { batchSaveResultEntry, submitReport, getReportBySpecimenId } from '@/api/report'
 
 const route = useRoute()
 const router = useRouter()
 
 const searchForm = reactive({
-  specimenCode: '',
+  specimenNo: '',
 })
 
 const specimenInfo = ref<Specimen | null>(null)
-const resultItems = ref<(SpecimenTestItem & ResultEntryItem)[]>([])
+
+interface ResultRow extends SpecimenTestItem {
+  resultValue: string
+  resultFlag: ResultFlag
+  remark: string
+}
+
+const resultItems = ref<ResultRow[]>([])
 const saving = ref(false)
 const submitting = ref(false)
 
 const handleSearch = async () => {
-  if (!searchForm.specimenCode) {
+  if (!searchForm.specimenNo) {
     ElMessage.warning('请输入标本编号')
     return
   }
 
   try {
-    specimenInfo.value = await getSpecimenByCode(searchForm.specimenCode)
+    // 使用 specimenNo 查询标本
+    specimenInfo.value = await getSpecimenBySpecimenNo(searchForm.specimenNo)
     
-    if (!['received', 'testing'].includes(specimenInfo.value.status)) {
+    if (!['RECEIVED', 'TESTING'].includes(specimenInfo.value.status)) {
       ElMessage.warning('该标本状态不允许录入结果')
       return
     }
@@ -133,22 +138,18 @@ const handleSearch = async () => {
     resultItems.value = specimenInfo.value.testItems.map(item => ({
       ...item,
       resultValue: '',
-      resultFlag: 'normal' as const,
-      isAbnormal: false,
-      isCritical: false,
+      resultFlag: 'N' as const,
       remark: '',
     }))
 
     try {
       const report = await getReportBySpecimenId(specimenInfo.value.id)
       if (report && report.results) {
-        report.results.forEach(r => {
+        report.results.forEach((r: any) => {
           const item = resultItems.value.find(i => i.testItemId === r.testItemId)
           if (item) {
             item.resultValue = r.resultValue
             item.resultFlag = r.resultFlag
-            item.isAbnormal = r.isAbnormal
-            item.isCritical = r.isCritical
             item.remark = r.remark
           }
         })
@@ -163,7 +164,7 @@ const handleSearch = async () => {
   }
 }
 
-const handleResultChange = (row: SpecimenTestItem & ResultEntryItem) => {
+const handleResultChange = (row: ResultRow) => {
   const value = parseFloat(row.resultValue)
   if (isNaN(value)) return
 
@@ -172,19 +173,15 @@ const handleResultChange = (row: SpecimenTestItem & ResultEntryItem) => {
   if (match) {
     const min = parseFloat(match[1])
     const max = parseFloat(match[2])
-    row.isAbnormal = value < min || value > max
-    row.resultFlag = value < min ? 'low' : value > max ? 'high' : 'normal'
+    row.resultFlag = value < min ? 'L' : value > max ? 'H' : 'N'
   }
 }
 
-const handleCriticalChange = (row: SpecimenTestItem & ResultEntryItem) => {
-  if (row.isCritical) {
-    row.isAbnormal = true
-    if (row.resultFlag === 'high') {
-      row.resultFlag = 'critical_high'
-    } else if (row.resultFlag === 'low') {
-      row.resultFlag = 'critical_low'
-    }
+const handleCriticalChange = (row: ResultRow) => {
+  if (row.resultFlag === 'H') {
+    row.resultFlag = 'HH'
+  } else if (row.resultFlag === 'L') {
+    row.resultFlag = 'LL'
   }
 }
 
@@ -202,17 +199,17 @@ const handleSave = async () => {
 
   saving.value = true
   try {
-    await saveResultEntry({
-      specimenId: specimenInfo.value.id,
-      results: resultItems.value.map(item => ({
-        testItemId: item.testItemId,
+    const items = resultItems.value
+      .filter(item => item.resultValue)
+      .map(item => ({
+        reportId: Number(specimenInfo.value!.id),
+        itemCode: item.testItemCode,
+        itemName: item.testItemName,
         resultValue: item.resultValue,
         resultFlag: item.resultFlag,
-        isAbnormal: item.isAbnormal,
-        isCritical: item.isCritical,
         remark: item.remark,
-      })),
-    })
+      }))
+    await batchSaveResultEntry({ reportId: Number(specimenInfo.value!.id), items })
     ElMessage.success('保存成功')
   } catch (error) {
     console.error('保存失败:', error)
@@ -230,17 +227,16 @@ const handleSubmit = async () => {
     
     submitting.value = true
     
-    await saveResultEntry({
-      specimenId: specimenInfo.value.id,
-      results: resultItems.value.map(item => ({
-        testItemId: item.testItemId,
-        resultValue: item.resultValue,
-        resultFlag: item.resultFlag,
-        isAbnormal: item.isAbnormal,
-        isCritical: item.isCritical,
-        remark: item.remark,
-      })),
-    })
+    // 批量保存
+    const items = resultItems.value.map(item => ({
+      reportId: Number(specimenInfo.value!.id),
+      itemCode: item.testItemCode,
+      itemName: item.testItemName,
+      resultValue: item.resultValue,
+      resultFlag: item.resultFlag,
+      remark: item.remark,
+    }))
+    await batchSaveResultEntry({ reportId: Number(specimenInfo.value!.id), items })
 
     const report = await getReportBySpecimenId(specimenInfo.value.id)
     await submitReport(report.id)
@@ -259,9 +255,7 @@ const handleSubmit = async () => {
 const handleReset = () => {
   resultItems.value.forEach(item => {
     item.resultValue = ''
-    item.resultFlag = 'normal'
-    item.isAbnormal = false
-    item.isCritical = false
+    item.resultFlag = 'N'
     item.remark = ''
   })
 }
@@ -270,7 +264,7 @@ onMounted(() => {
   const specimenId = route.query.specimenId as string
   if (specimenId) {
     getSpecimenDetail(specimenId).then(specimen => {
-      searchForm.specimenCode = specimen.specimenCode
+      searchForm.specimenNo = specimen.specimenNo
       handleSearch()
     }).catch(error => {
       console.error('获取标本信息失败:', error)

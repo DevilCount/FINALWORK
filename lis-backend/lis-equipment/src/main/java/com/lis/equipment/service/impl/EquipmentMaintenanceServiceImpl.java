@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lis.common.exception.BusinessException;
 import com.lis.common.result.PageResult;
+import com.lis.common.result.ResultCode;
 import com.lis.equipment.dto.EquipmentMaintenanceDTO;
 import com.lis.equipment.dto.EquipmentMaintenanceQueryDTO;
 import com.lis.equipment.entity.EquipmentDO;
@@ -60,7 +61,7 @@ public class EquipmentMaintenanceServiceImpl implements EquipmentMaintenanceServ
     public EquipmentMaintenanceVO getById(Long id) {
         EquipmentMaintenanceDO maintenanceDO = maintenanceMapper.selectById(id);
         if (maintenanceDO == null) {
-            throw new BusinessException("维护记录不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "维护记录不存在");
         }
         return convertToVO(maintenanceDO);
     }
@@ -71,12 +72,12 @@ public class EquipmentMaintenanceServiceImpl implements EquipmentMaintenanceServ
         LambdaQueryWrapper<EquipmentMaintenanceDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(EquipmentMaintenanceDO::getMaintenanceNo, dto.getMaintenanceNo());
         if (maintenanceMapper.selectCount(wrapper) > 0) {
-            throw new BusinessException("维护编号已存在");
+            throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS, "维护编号已存在");
         }
 
         EquipmentDO equipmentDO = equipmentMapper.selectById(dto.getEquipmentId());
         if (equipmentDO == null) {
-            throw new BusinessException("设备不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "设备不存在");
         }
 
         EquipmentMaintenanceDO maintenanceDO = new EquipmentMaintenanceDO();
@@ -98,12 +99,12 @@ public class EquipmentMaintenanceServiceImpl implements EquipmentMaintenanceServ
     @Transactional(rollbackFor = Exception.class)
     public void update(EquipmentMaintenanceDTO dto) {
         if (dto.getId() == null) {
-            throw new BusinessException("维护ID不能为空");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "维护ID不能为空");
         }
 
         EquipmentMaintenanceDO existMaintenance = maintenanceMapper.selectById(dto.getId());
         if (existMaintenance == null) {
-            throw new BusinessException("维护记录不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "维护记录不存在");
         }
 
         EquipmentMaintenanceDO maintenanceDO = new EquipmentMaintenanceDO();
@@ -119,7 +120,7 @@ public class EquipmentMaintenanceServiceImpl implements EquipmentMaintenanceServ
     public void deleteById(Long id) {
         EquipmentMaintenanceDO maintenanceDO = maintenanceMapper.selectById(id);
         if (maintenanceDO == null) {
-            throw new BusinessException("维护记录不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "维护记录不存在");
         }
 
         maintenanceMapper.deleteById(id);
@@ -130,7 +131,7 @@ public class EquipmentMaintenanceServiceImpl implements EquipmentMaintenanceServ
     @Transactional(rollbackFor = Exception.class)
     public void deleteBatch(Long[] ids) {
         if (ids == null || ids.length == 0) {
-            throw new BusinessException("请选择要删除的维护记录");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "请选择要删除的维护记录");
         }
 
         maintenanceMapper.deleteBatchIds(Arrays.asList(ids));
@@ -142,7 +143,7 @@ public class EquipmentMaintenanceServiceImpl implements EquipmentMaintenanceServ
     public void completeMaintenance(Long id) {
         EquipmentMaintenanceDO maintenanceDO = maintenanceMapper.selectById(id);
         if (maintenanceDO == null) {
-            throw new BusinessException("维护记录不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "维护记录不存在");
         }
 
         maintenanceDO.setStatus(RecordStatusEnum.COMPLETED.getCode());

@@ -24,7 +24,7 @@ export const constantRoutes: AppRouteRecordRaw[] = [
     path: '/',
     name: 'Root',
     component: Layout,
-    redirect: '/dashboard',
+    redirect: '/dashboard/index',
     children: [],
   },
 ]

@@ -3,11 +3,11 @@
 <mapper namespace="com.lis.report.mapper.ReportItemMapper">
 
     <select id="selectByReportId" resultType="com.lis.report.entity.ReportItemDO">
-        SELECT * FROM report_item WHERE report_id = #{reportId} ORDER BY sort ASC
+        SELECT * FROM report_item WHERE report_id = #{reportId} AND del_flag = 0 ORDER BY sort ASC
     </select>
 
-    <delete id="deleteByReportId">
-        DELETE FROM report_item WHERE report_id = #{reportId}
-    </delete>
+    <update id="deleteByReportId">
+        UPDATE report_item SET del_flag = 1 WHERE report_id = #{reportId}
+    </update>
 
 </mapper>

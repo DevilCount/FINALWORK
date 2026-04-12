@@ -82,7 +82,7 @@ const closeTag = (tag: TagView) => {
     } else if (prevTag) {
       router.push(prevTag.path)
     } else {
-      router.push('/dashboard')
+      router.push('/dashboard/index')
     }
   }
 }
@@ -95,7 +95,7 @@ const closeOtherTags = () => {
 
 const closeAllTags = () => {
   visitedViews.value = visitedViews.value.filter((tag) => isAffix(tag))
-  router.push('/dashboard')
+  router.push('/dashboard/index')
 }
 
 const refreshSelectedTag = () => {
@@ -138,11 +138,11 @@ onMounted(() => {
   addViewTags()
   
   visitedViews.value.push({
-    path: '/dashboard',
+    path: '/dashboard/index',
     name: 'Dashboard',
     meta: { title: '首页', affix: true },
     title: '首页',
-    fullPath: '/dashboard',
+    fullPath: '/dashboard/index',
   })
 })
 </script>

@@ -1,5 +1,6 @@
 package com.lis.specimen.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -81,6 +82,7 @@ public class SpecimenRegisterDTO implements Serializable {
     private String remark;
 
     @NotNull(message = "检验项目不能为空")
+    @JsonAlias("testItems")
     @ApiModelProperty(value = "检验项目ID列表", required = true)
     private List<Long> testItemIds;
 }

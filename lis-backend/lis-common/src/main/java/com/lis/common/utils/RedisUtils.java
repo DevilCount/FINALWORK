@@ -5,7 +5,7 @@ import org.redisson.api.RBucket;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -16,35 +16,29 @@ import java.util.concurrent.TimeUnit;
 public class RedisUtils {
 
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private StringRedisTemplate redisTemplate;
 
     @Autowired
     private RedissonClient redissonClient;
 
-    public void set(String key, Object value) {
+    public void set(String key, String value) {
         redisTemplate.opsForValue().set(key, value);
     }
 
-    public void set(String key, Object value, long timeout, TimeUnit unit) {
+    public void set(String key, String value, long timeout, TimeUnit unit) {
         redisTemplate.opsForValue().set(key, value, timeout, unit);
     }
 
-    public void set(String key, Object value, long seconds) {
+    public void set(String key, String value, long seconds) {
         set(key, value, seconds, TimeUnit.SECONDS);
     }
 
-    public void setIfAbsent(String key, Object value, long timeout, TimeUnit unit) {
+    public void setIfAbsent(String key, String value, long timeout, TimeUnit unit) {
         redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T get(String key) {
-        return (T) redisTemplate.opsForValue().get(key);
-    }
-
-    public String getString(String key) {
-        Object value = get(key);
-        return value != null ? value.toString() : null;
+    public String get(String key) {
+        return redisTemplate.opsForValue().get(key);
     }
 
     public Boolean hasKey(String key) {
@@ -87,17 +81,17 @@ public class RedisUtils {
         return redisTemplate.opsForValue().decrement(key, delta);
     }
 
-    public void hSet(String key, String field, Object value) {
+    public void hSet(String key, String field, String value) {
         redisTemplate.opsForHash().put(key, field, value);
     }
 
-    public void hSetAll(String key, Map<String, Object> map) {
+    public void hSetAll(String key, Map<String, String> map) {
         redisTemplate.opsForHash().putAll(key, map);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T hGet(String key, String field) {
-        return (T) redisTemplate.opsForHash().get(key, field);
+    public String hGet(String key, String field) {
+        Object value = redisTemplate.opsForHash().get(key, field);
+        return value != null ? value.toString() : null;
     }
 
     public Map<Object, Object> hGetAll(String key) {
@@ -116,25 +110,23 @@ public class RedisUtils {
         return redisTemplate.opsForHash().size(key);
     }
 
-    public Long lPush(String key, Object value) {
+    public Long lPush(String key, String value) {
         return redisTemplate.opsForList().leftPush(key, value);
     }
 
-    public Long rPush(String key, Object value) {
+    public Long rPush(String key, String value) {
         return redisTemplate.opsForList().rightPush(key, value);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T lPop(String key) {
-        return (T) redisTemplate.opsForList().leftPop(key);
+    public String lPop(String key) {
+        return redisTemplate.opsForList().leftPop(key);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T rPop(String key) {
-        return (T) redisTemplate.opsForList().rightPop(key);
+    public String rPop(String key) {
+        return redisTemplate.opsForList().rightPop(key);
     }
 
-    public List<Object> lRange(String key, long start, long end) {
+    public List<String> lRange(String key, long start, long end) {
         return redisTemplate.opsForList().range(key, start, end);
     }
 
@@ -142,7 +134,7 @@ public class RedisUtils {
         return redisTemplate.opsForList().size(key);
     }
 
-    public Long sAdd(String key, Object... values) {
+    public Long sAdd(String key, String... values) {
         return redisTemplate.opsForSet().add(key, values);
     }
 
@@ -150,7 +142,7 @@ public class RedisUtils {
         return redisTemplate.opsForSet().remove(key, values);
     }
 
-    public Set<Object> sMembers(String key) {
+    public Set<String> sMembers(String key) {
         return redisTemplate.opsForSet().members(key);
     }
 
@@ -162,7 +154,7 @@ public class RedisUtils {
         return redisTemplate.opsForSet().size(key);
     }
 
-    public Boolean zAdd(String key, Object value, double score) {
+    public Boolean zAdd(String key, String value, double score) {
         return redisTemplate.opsForZSet().add(key, value, score);
     }
 
@@ -170,11 +162,11 @@ public class RedisUtils {
         return redisTemplate.opsForZSet().remove(key, values);
     }
 
-    public Set<Object> zRange(String key, long start, long end) {
+    public Set<String> zRange(String key, long start, long end) {
         return redisTemplate.opsForZSet().range(key, start, end);
     }
 
-    public Set<Object> zRangeByScore(String key, double min, double max) {
+    public Set<String> zRangeByScore(String key, double min, double max) {
         return redisTemplate.opsForZSet().rangeByScore(key, min, max);
     }
 

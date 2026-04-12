@@ -2,6 +2,7 @@ package com.lis.user.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.lis.common.exception.BusinessException;
+import com.lis.common.result.ResultCode;
 import com.lis.user.dto.*;
 import com.lis.user.entity.MenuDO;
 import com.lis.user.mapper.MenuMapper;
@@ -40,7 +41,7 @@ public class MenuServiceImpl implements MenuService {
     public MenuVO getMenuById(Long id) {
         MenuDO menuDO = menuMapper.selectById(id);
         if (menuDO == null) {
-            throw new BusinessException("菜单不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "菜单不存在");
         }
         return convertToVO(menuDO);
     }
@@ -65,7 +66,7 @@ public class MenuServiceImpl implements MenuService {
     public void updateMenu(MenuUpdateDTO updateDTO) {
         MenuDO existMenu = menuMapper.selectById(updateDTO.getId());
         if (existMenu == null) {
-            throw new BusinessException("菜单不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "菜单不存在");
         }
 
         MenuDO menuDO = new MenuDO();
@@ -82,12 +83,12 @@ public class MenuServiceImpl implements MenuService {
     public void deleteMenu(Long id) {
         MenuDO menuDO = menuMapper.selectById(id);
         if (menuDO == null) {
-            throw new BusinessException("菜单不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "菜单不存在");
         }
 
         List<MenuDO> children = menuMapper.selectMenuList(null, null, id);
         if (!children.isEmpty()) {
-            throw new BusinessException("存在子菜单，不能删除");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "存在子菜单，不能删除");
         }
 
         menuMapper.deleteById(id);

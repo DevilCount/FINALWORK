@@ -15,7 +15,9 @@ import com.lis.ai.mapper.AiDiagnosisRecordMapper;
 import com.lis.ai.service.*;
 import com.lis.ai.vo.DiagnosisRecordVO;
 import com.lis.ai.vo.DiagnosisResultVO;
+import com.lis.common.exception.BusinessException;
 import com.lis.common.result.PageResult;
+import com.lis.common.result.ResultCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -45,14 +47,14 @@ public class DiagnosisRecordServiceImpl implements DiagnosisRecordService {
     public DiagnosisResultVO performDiagnosis(DiagnosisRequestDTO request) {
         DiagnosisTypeEnum diagnosisType = DiagnosisTypeEnum.getByCode(request.getDiagnosisType());
         if (diagnosisType == null) {
-            throw new IllegalArgumentException("不支持的诊断类型: " + request.getDiagnosisType());
+            throw new BusinessException(ResultCode.BAD_REQUEST, "不支持的诊断类型: " + request.getDiagnosisType());
         }
 
         DiagnosisResultVO result = switch (diagnosisType) {
             case BLOOD_ROUTINE -> bloodRoutineAnalysisService.analyze(request);
             case URINE_ROUTINE -> urineRoutineAnalysisService.analyze(request);
             case LIVER_FUNCTION -> liverFunctionAnalysisService.analyze(request);
-            default -> throw new IllegalArgumentException("暂不支持该诊断类型: " + diagnosisType.getName());
+            default -> throw new BusinessException(ResultCode.BAD_REQUEST, "暂不支持该诊断类型: " + diagnosisType.getName());
         };
 
         if (Boolean.TRUE.equals(request.getSaveRecord())) {
@@ -190,7 +192,7 @@ public class DiagnosisRecordServiceImpl implements DiagnosisRecordService {
     public void reviewDiagnosis(DiagnosisReviewDTO reviewDTO, Long userId, String userName) {
         AiDiagnosisRecordDO record = recordMapper.selectById(reviewDTO.getDiagnosisId());
         if (record == null) {
-            throw new IllegalArgumentException("诊断记录不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "诊断记录不存在");
         }
 
         record.setReviewStatus(reviewDTO.getReviewStatus());
@@ -210,7 +212,7 @@ public class DiagnosisRecordServiceImpl implements DiagnosisRecordService {
     public void deleteDiagnosisRecord(Long id) {
         AiDiagnosisRecordDO record = recordMapper.selectById(id);
         if (record == null) {
-            throw new IllegalArgumentException("诊断记录不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "诊断记录不存在");
         }
 
         detailMapper.delete(new LambdaQueryWrapper<AiDiagnosisDetailDO>()

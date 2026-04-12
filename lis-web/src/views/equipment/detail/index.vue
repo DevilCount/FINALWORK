@@ -14,22 +14,22 @@
         </div>
       </template>
       <el-descriptions :column="3" border>
-        <el-descriptions-item label="设备编号">{{ equipment?.code }}</el-descriptions-item>
-        <el-descriptions-item label="设备名称">{{ equipment?.name }}</el-descriptions-item>
+        <el-descriptions-item label="设备编号">{{ equipment?.equipmentCode }}</el-descriptions-item>
+        <el-descriptions-item label="设备名称">{{ equipment?.equipmentName }}</el-descriptions-item>
         <el-descriptions-item label="型号">{{ equipment?.model }}</el-descriptions-item>
         <el-descriptions-item label="厂商">{{ equipment?.manufacturer }}</el-descriptions-item>
-        <el-descriptions-item label="序列号">{{ equipment?.serialNumber }}</el-descriptions-item>
+        <el-descriptions-item label="序列号">{{ equipment?.serialNo }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="getStatusType(equipment?.status)">
             {{ getStatusLabel(equipment?.status) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="所属科室">{{ equipment?.department }}</el-descriptions-item>
+        <el-descriptions-item label="所属科室">{{ equipment?.labName }}</el-descriptions-item>
         <el-descriptions-item label="位置">{{ equipment?.location }}</el-descriptions-item>
-        <el-descriptions-item label="负责人">{{ equipment?.responsiblePerson }}</el-descriptions-item>
+        <el-descriptions-item label="负责人">{{ equipment?.responsibleUserName }}</el-descriptions-item>
         <el-descriptions-item label="购买日期">{{ equipment?.purchaseDate || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="保修到期">{{ equipment?.warrantyExpiry || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ equipment?.createdAt }}</el-descriptions-item>
+        <el-descriptions-item label="保修到期">{{ equipment?.warrantyExpireDate || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ equipment?.createTime }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
 
@@ -40,14 +40,20 @@
       <el-row :gutter="20">
         <el-col :span="6">
           <div class="monitor-item">
-            <div class="monitor-label">运行时长</div>
-            <div class="monitor-value">{{ formatRunningTime(equipmentStatus?.runningTime) }}</div>
+            <div class="monitor-label">在线状态</div>
+            <div class="monitor-value">{{ equipmentStatus?.isOnline ? '在线' : '离线' }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="monitor-item">
-            <div class="monitor-label">检测样本数</div>
-            <div class="monitor-value">{{ equipmentStatus?.sampleCount || 0 }}</div>
+            <div class="monitor-label">今日检测数</div>
+            <div class="monitor-value">{{ equipmentStatus?.todayTestCount || 0 }}</div>
+          </div>
+        </el-col>
+        <el-col :span="6">
+          <div class="monitor-item">
+            <div class="monitor-label">累计检测数</div>
+            <div class="monitor-value">{{ equipmentStatus?.totalTestCount || 0 }}</div>
           </div>
         </el-col>
         <el-col :span="6">
@@ -56,30 +62,18 @@
             <div class="monitor-value error">{{ equipmentStatus?.errorCount || 0 }}</div>
           </div>
         </el-col>
-        <el-col :span="6">
-          <div class="monitor-item">
-            <div class="monitor-label">最后心跳</div>
-            <div class="monitor-value">{{ equipmentStatus?.lastHeartbeat || '-' }}</div>
-          </div>
-        </el-col>
       </el-row>
       <el-row :gutter="20" style="margin-top: 20px">
-        <el-col :span="8">
-          <div class="progress-item">
-            <div class="progress-label">CPU使用率</div>
-            <el-progress :percentage="equipmentStatus?.cpuUsage || 0" :color="getProgressColor(equipmentStatus?.cpuUsage)" />
+        <el-col :span="12">
+          <div class="monitor-item">
+            <div class="monitor-label">最后通讯时间</div>
+            <div class="monitor-value">{{ equipmentStatus?.lastCommTime || '-' }}</div>
           </div>
         </el-col>
-        <el-col :span="8">
-          <div class="progress-item">
-            <div class="progress-label">内存使用率</div>
-            <el-progress :percentage="equipmentStatus?.memoryUsage || 0" :color="getProgressColor(equipmentStatus?.memoryUsage)" />
-          </div>
-        </el-col>
-        <el-col :span="8">
-          <div class="progress-item">
-            <div class="progress-label">磁盘使用率</div>
-            <el-progress :percentage="equipmentStatus?.diskUsage || 0" :color="getProgressColor(equipmentStatus?.diskUsage)" />
+        <el-col :span="12">
+          <div class="monitor-item">
+            <div class="monitor-label">状态更新时间</div>
+            <div class="monitor-value">{{ equipmentStatus?.updateTime || '-' }}</div>
           </div>
         </el-col>
       </el-row>
@@ -133,8 +127,8 @@
       <el-table v-loading="recordsLoading" :data="maintenanceRecords" border stripe>
         <el-table-column label="维护类型" width="100">
           <template #default="{ row }">
-            <el-tag :type="getMaintenanceType(row.type)">
-              {{ getMaintenanceLabel(row.type) }}
+            <el-tag :type="getMaintenanceType(row.maintenanceType)">
+              {{ getMaintenanceLabel(row.maintenanceType) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -142,8 +136,8 @@
         <el-table-column prop="technician" label="技术人员" width="100" />
         <el-table-column label="维护结果" width="100">
           <template #default="{ row }">
-            <el-tag :type="getResultType(row.result)">
-              {{ getResultLabel(row.result) }}
+            <el-tag :type="getResultType(row.maintenanceResult)">
+              {{ getResultLabel(row.maintenanceResult) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -161,7 +155,7 @@
         </el-table-column>
       </el-table>
       <el-pagination
-        v-model:current-page="recordQuery.page"
+        v-model:current-page="recordQuery.pageNum"
         v-model:page-size="recordQuery.pageSize"
         :total="recordTotal"
         :page-sizes="[10, 20, 50]"
@@ -202,14 +196,14 @@
 
     <el-dialog v-model="recordDialogVisible" title="维护记录详情" width="600px">
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="维护类型">{{ getMaintenanceLabel(currentRecord?.type) }}</el-descriptions-item>
-        <el-descriptions-item label="维护结果">{{ getResultLabel(currentRecord?.result) }}</el-descriptions-item>
+        <el-descriptions-item label="维护类型">{{ getMaintenanceLabel(currentRecord?.maintenanceType) }}</el-descriptions-item>
+        <el-descriptions-item label="维护结果">{{ getResultLabel(currentRecord?.maintenanceResult) }}</el-descriptions-item>
         <el-descriptions-item label="技术人员">{{ currentRecord?.technician }}</el-descriptions-item>
         <el-descriptions-item label="费用">{{ currentRecord?.cost ? `¥${currentRecord.cost}` : '-' }}</el-descriptions-item>
         <el-descriptions-item label="开始时间">{{ currentRecord?.startTime }}</el-descriptions-item>
         <el-descriptions-item label="结束时间">{{ currentRecord?.endTime }}</el-descriptions-item>
-        <el-descriptions-item label="维护内容" :span="2">{{ currentRecord?.content }}</el-descriptions-item>
-        <el-descriptions-item label="备注" :span="2">{{ currentRecord?.notes || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="维护内容" :span="2">{{ currentRecord?.maintenanceContent }}</el-descriptions-item>
+        <el-descriptions-item label="备注" :span="2">{{ currentRecord?.remark || '-' }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
   </div>
@@ -235,15 +229,15 @@ const recordTotal = ref(0)
 const alerts = ref<EquipmentAlert[]>([])
 
 const recordQuery = reactive<MaintenanceQuery>({
-  page: 1,
+  pageNum: 1,
   pageSize: 10,
-  equipmentId: route.params.id as string
+  equipmentId: Number(route.params.id)
 })
 
 const recordDialogVisible = ref(false)
 const currentRecord = ref<MaintenanceRecord | null>(null)
 
-const equipmentId = route.params.id as string
+const equipmentId = Number(route.params.id)
 
 const getStatusType = (status?: string): 'success' | 'info' | 'warning' | 'danger' | 'primary' => {
   const map: Record<string, 'success' | 'info' | 'warning' | 'danger' | 'primary'> = {
@@ -319,23 +313,6 @@ const getAlertLabel = (type?: string) => {
   return map[type || ''] || type
 }
 
-const getProgressColor = (value?: number) => {
-  if (!value) return '#67c23a'
-  if (value < 60) return '#67c23a'
-  if (value < 80) return '#e6a23c'
-  return '#f56c6c'
-}
-
-const formatRunningTime = (minutes?: number) => {
-  if (!minutes) return '0分钟'
-  const days = Math.floor(minutes / (24 * 60))
-  const hours = Math.floor((minutes % (24 * 60)) / 60)
-  const mins = minutes % 60
-  if (days > 0) return `${days}天${hours}小时`
-  if (hours > 0) return `${hours}小时${mins}分钟`
-  return `${mins}分钟`
-}
-
 const isNearExpiry = (date?: string) => {
   if (!date) return false
   const targetDate = new Date(date)
@@ -358,7 +335,7 @@ const fetchEquipmentDetail = async () => {
 const fetchEquipmentStatus = async () => {
   try {
     const res = await getEquipmentStatus(equipmentId)
-    equipmentStatus.value = res[0] || null
+    equipmentStatus.value = res
   } catch {
     console.error('获取设备状态失败')
   }
@@ -368,7 +345,7 @@ const fetchMaintenanceRecords = async () => {
   recordsLoading.value = true
   try {
     const res = await getMaintenanceRecords(recordQuery)
-    maintenanceRecords.value = res.list
+    maintenanceRecords.value = res.records
     recordTotal.value = res.total
   } catch {
     ElMessage.error('获取维护记录失败')
@@ -408,7 +385,7 @@ const handleViewRecord = (row: MaintenanceRecord) => {
 const handleMarkRead = async (row: EquipmentAlert) => {
   try {
     await markAlertAsRead(row.id)
-    row.isRead = true
+    row.isRead = 1
     ElMessage.success('已标记为已读')
   } catch {
     ElMessage.error('操作失败')

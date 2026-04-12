@@ -10,6 +10,10 @@ public interface ReportApplyService {
 
     Long createReportApply(ReportApplyDTO dto);
 
+    void updateReportApply(Long reportId, ReportApplyDTO dto);
+
+    void deleteReportApply(Long reportId);
+
     void cancelReport(Long reportId, String reason);
 
     ReportVO getReportById(Long reportId);

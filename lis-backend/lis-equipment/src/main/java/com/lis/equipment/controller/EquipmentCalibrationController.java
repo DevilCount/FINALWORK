@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Api(tags = "设备校准记录管理")
 @RestController
-@RequestMapping("/equipment/calibration")
+@RequestMapping("/calibration")
 @RequiredArgsConstructor
 public class EquipmentCalibrationController {
 

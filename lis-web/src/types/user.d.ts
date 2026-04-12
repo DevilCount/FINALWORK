@@ -7,6 +7,7 @@ export interface UserInfo {
   email?: string
   deptId?: number
   deptName?: string
+  employeeNo?: string
   status: number
   createTime?: string
   roles?: string[]
@@ -16,15 +17,21 @@ export interface UserInfo {
 export interface LoginForm {
   username: string
   password: string
-  captcha: string
-  uuid: string
+  captcha?: string
+  uuid?: string
   rememberMe?: boolean
 }
 
 export interface LoginResult {
   accessToken: string
   refreshToken: string
+  tokenType: string
   expiresIn: number
+  userId: number
+  username: string
+  realName: string
+  roles: string[]
+  permissions: string[]
 }
 
 export interface CaptchaResult {
@@ -38,10 +45,12 @@ export interface MenuVO {
   parentId: number
   path?: string
   component?: string
+  redirect?: string
   icon?: string
   sort: number
-  menuType: 'directory' | 'menu' | 'button'
+  status: number
   visible: number
-  permission?: string
+  type: number
+  perms?: string
   children?: MenuVO[]
 }

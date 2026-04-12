@@ -3,6 +3,7 @@ package com.lis.user.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.lis.common.exception.BusinessException;
 import com.lis.common.result.PageResult;
+import com.lis.common.result.ResultCode;
 import com.lis.user.dto.*;
 import com.lis.user.entity.RoleDO;
 import com.lis.user.entity.RoleDeptDO;
@@ -52,7 +53,7 @@ public class RoleServiceImpl implements RoleService {
     public RoleVO getRoleById(Long id) {
         RoleDO roleDO = roleMapper.selectById(id);
         if (roleDO == null) {
-            throw new BusinessException("角色不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "角色不存在");
         }
         RoleVO roleVO = convertToVO(roleDO);
         roleVO.setMenuIds(roleMapper.selectMenuIdsByRoleId(id));
@@ -94,7 +95,7 @@ public class RoleServiceImpl implements RoleService {
     public void updateRole(RoleUpdateDTO updateDTO) {
         RoleDO existRole = roleMapper.selectById(updateDTO.getId());
         if (existRole == null) {
-            throw new BusinessException("角色不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "角色不存在");
         }
 
         RoleDO roleDO = new RoleDO();
@@ -125,7 +126,7 @@ public class RoleServiceImpl implements RoleService {
     public void deleteRole(Long id) {
         RoleDO roleDO = roleMapper.selectById(id);
         if (roleDO == null) {
-            throw new BusinessException("角色不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "角色不存在");
         }
 
         roleMapper.deleteById(id);
@@ -156,7 +157,7 @@ public class RoleServiceImpl implements RoleService {
     public void assignMenus(RoleMenuAssignDTO assignDTO) {
         RoleDO roleDO = roleMapper.selectById(assignDTO.getRoleId());
         if (roleDO == null) {
-            throw new BusinessException("角色不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "角色不存在");
         }
 
         roleMenuMapper.deleteByRoleId(assignDTO.getRoleId());
@@ -178,6 +179,19 @@ public class RoleServiceImpl implements RoleService {
         return roleMapper.selectRoleList(null, null, null).stream()
                 .map(this::convertToVO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateRoleStatus(Long id, Integer status) {
+        RoleDO roleDO = roleMapper.selectById(id);
+        if (roleDO == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "角色不存在");
+        }
+        roleDO.setStatus(status);
+        roleDO.setUpdateTime(LocalDateTime.now());
+        roleMapper.updateById(roleDO);
+        log.info("更新角色状态成功: roleId={}, status={}", id, status);
     }
 
     private RoleVO convertToVO(RoleDO roleDO) {

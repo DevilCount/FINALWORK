@@ -22,7 +22,6 @@
     <el-menu-item
       v-else
       :index="resolvePath(item.path)"
-      @click="handleClick"
     >
       <el-icon v-if="item.meta?.icon">
         <component :is="item.meta.icon" />
@@ -36,7 +35,6 @@
 
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import { useRouter } from 'vue-router'
 import type { AppRouteRecordRaw } from '@/types/router'
 
 interface Props {
@@ -48,7 +46,6 @@ const props = withDefaults(defineProps<Props>(), {
   basePath: '',
 })
 
-const router = useRouter()
 const collapsed = inject('collapsed', false)
 
 const hasChildren = computed(() => {
@@ -64,11 +61,6 @@ const resolvePath = (path: string): string => {
     return props.basePath + path
   }
   return props.basePath + '/' + path
-}
-
-const handleClick = () => {
-  const path = resolvePath(props.item.path)
-  router.push(path)
 }
 </script>
 

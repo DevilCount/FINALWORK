@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 public class AiDiagnosisRuleItemDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
-    @TableLogic
     private Long id;
 
     private Long ruleId;
@@ -33,4 +32,8 @@ public class AiDiagnosisRuleItemDO implements Serializable {
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
+
+    @TableField("del_flag")
+    @TableLogic
+    private Integer delFlag;
 }

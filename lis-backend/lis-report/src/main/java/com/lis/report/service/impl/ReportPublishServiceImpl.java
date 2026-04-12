@@ -38,7 +38,7 @@ public class ReportPublishServiceImpl implements ReportPublishService {
             throw new BusinessException("报告不存在");
         }
 
-        if (!"audited".equals(reportDO.getStatus())) {
+        if (!"final_audited".equals(reportDO.getStatus()) && !"audited".equals(reportDO.getStatus())) {
             throw new BusinessException("只有已审核状态的报告才能发布");
         }
 

@@ -12,20 +12,20 @@
       :rules="formRules"
       label-width="80px"
     >
-      <el-form-item label="字典名称" prop="name">
-        <el-input v-model="formData.name" placeholder="请输入字典名称" />
+      <el-form-item label="字典名称" prop="dictName">
+        <el-input v-model="formData.dictName" placeholder="请输入字典名称" />
       </el-form-item>
-      <el-form-item label="字典编码" prop="code">
+      <el-form-item label="字典编码" prop="dictType">
         <el-input
-          v-model="formData.code"
+          v-model="formData.dictType"
           placeholder="请输入字典编码"
           :disabled="isEdit"
         />
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="normal">正常</el-radio>
-          <el-radio value="disable">禁用</el-radio>
+          <el-radio :value="0">正常</el-radio>
+          <el-radio :value="2">禁用</el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -78,17 +78,17 @@ const dialogVisible = computed({
 const isEdit = computed(() => !!props.typeId)
 
 const formData = reactive<DictTypeForm>({
-  name: '',
-  code: '',
-  status: 'normal',
+  dictName: '',
+  dictType: '',
+  status: 0,
   remark: '',
 })
 
 const formRules: FormRules = {
-  name: [
+  dictName: [
     { required: true, message: '请输入字典名称', trigger: 'blur' },
   ],
-  code: [
+  dictType: [
     { required: true, message: '请输入字典编码', trigger: 'blur' },
     { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '字典编码必须以字母开头，只能包含字母、数字和下划线', trigger: 'blur' },
   ],
@@ -98,8 +98,8 @@ const loadTypeInfo = async () => {
   if (!props.typeId) return
   try {
     const type = await getDictTypeById(props.typeId)
-    formData.name = type.name
-    formData.code = type.code
+    formData.dictName = type.dictName
+    formData.dictType = type.dictType
     formData.status = type.status
     formData.remark = type.remark
   } catch (error) {
@@ -108,9 +108,9 @@ const loadTypeInfo = async () => {
 }
 
 const resetForm = () => {
-  formData.name = ''
-  formData.code = ''
-  formData.status = 'normal'
+  formData.dictName = ''
+  formData.dictType = ''
+  formData.status = 0
   formData.remark = ''
   formRef.value?.resetFields()
 }

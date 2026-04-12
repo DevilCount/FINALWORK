@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 public class ReportDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
-    @TableLogic
     private Long id;
 
     private String reportNo;
@@ -62,6 +61,22 @@ public class ReportDO implements Serializable {
 
     private String auditUserName;
 
+    private Long firstAuditUserId;
+
+    private String firstAuditUserName;
+
+    private LocalDateTime firstAuditTime;
+
+    private String firstAuditOpinion;
+
+    private Long finalAuditUserId;
+
+    private String finalAuditUserName;
+
+    private LocalDateTime finalAuditTime;
+
+    private String finalAuditOpinion;
+
     private Long reportUserId;
 
     private String reportUserName;
@@ -95,4 +110,8 @@ public class ReportDO implements Serializable {
     private LocalDateTime updateTime;
 
     private String remark;
+
+    @TableField("del_flag")
+    @TableLogic
+    private Integer delFlag;
 }

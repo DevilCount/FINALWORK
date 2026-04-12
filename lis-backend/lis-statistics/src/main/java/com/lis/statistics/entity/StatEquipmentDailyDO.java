@@ -1,6 +1,7 @@
 package com.lis.statistics.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -16,7 +17,6 @@ import java.time.LocalDateTime;
 public class StatEquipmentDailyDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
-    @TableLogic
     private Long id;
 
     private LocalDate statDate;
@@ -48,4 +48,8 @@ public class StatEquipmentDailyDO implements Serializable {
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;
+
+    @TableField("del_flag")
+    @TableLogic
+    private Integer delFlag;
 }

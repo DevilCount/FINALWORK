@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 public class BaseEntity implements Serializable {
 
     @TableId(type = IdType.AUTO)
-    @TableLogic
     private Long id;
 
     @TableField("del_flag")

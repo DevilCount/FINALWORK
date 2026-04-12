@@ -34,6 +34,9 @@ public class UserInfoVO implements Serializable {
     @ApiModelProperty(value = "邮箱")
     private String email;
 
-    @ApiModelProperty(value = "状态：0-禁用，1-正常")
+    @ApiModelProperty(value = "状态：0-正常，1-锁定，2-禁用")
     private Integer status;
+
+    @ApiModelProperty(value = "头像")
+    private String avatar;
 }

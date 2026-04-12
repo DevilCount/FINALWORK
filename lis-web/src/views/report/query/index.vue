@@ -9,22 +9,22 @@
 
       <el-form :model="queryParams" inline class="search-form">
         <el-form-item label="报告编号">
-          <el-input v-model="queryParams.reportCode" placeholder="请输入报告编号" clearable @keyup.enter="handleSearch" />
+          <el-input v-model="queryParams.reportNo" placeholder="请输入报告编号" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item label="标本编号">
-          <el-input v-model="queryParams.specimenCode" placeholder="请输入标本编号" clearable @keyup.enter="handleSearch" />
+          <el-input v-model="queryParams.specimenNo" placeholder="请输入标本编号" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item label="患者姓名">
           <el-input v-model="queryParams.patientName" placeholder="请输入患者姓名" clearable @keyup.enter="handleSearch" />
         </el-form-item>
         <el-form-item label="报告状态">
-          <el-select v-model="queryParams.reportStatus" placeholder="请选择状态" clearable style="width: 150px">
+          <el-select v-model="queryParams.status" placeholder="请选择状态" clearable style="width: 150px">
             <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="提交时间">
+        <el-form-item label="检验时间">
           <el-date-picker
-            v-model="submitTimeRange"
+            v-model="testTimeRange"
             type="daterange"
             range-separator="至"
             start-placeholder="开始日期"
@@ -50,38 +50,40 @@
       </el-form>
 
       <el-table v-loading="loading" :data="tableData" border stripe>
-        <el-table-column prop="reportCode" label="报告编号" width="150" />
-        <el-table-column prop="specimenCode" label="标本编号" width="150" />
+        <el-table-column prop="reportNo" label="报告编号" width="150" />
+        <el-table-column prop="specimenNo" label="标本编号" width="150" />
         <el-table-column prop="patientName" label="患者姓名" width="100" />
         <el-table-column prop="patientGender" label="性别" width="60">
           <template #default="{ row }">
-            {{ row.patientGender === 'male' ? '男' : '女' }}
+            {{ row.patientGender === '男' ? '男' : '女' }}
           </template>
         </el-table-column>
         <el-table-column prop="patientAge" label="年龄" width="70" />
-        <el-table-column prop="departmentName" label="科室" width="120" />
-        <el-table-column label="检验项目" min-width="200">
+        <el-table-column prop="deptName" label="科室" width="120" />
+        <el-table-column label="异常" width="80">
           <template #default="{ row }">
-            <el-tag v-for="item in row.results?.slice(0, 3)" :key="item.id" size="small" class="mr-1">
-              {{ item.testItemName }}
-            </el-tag>
-            <el-tag v-if="row.results?.length > 3" size="small" type="info">
-              +{{ row.results.length - 3 }}
-            </el-tag>
+            <el-tag v-if="row.isAbnormal" type="danger" size="small">异常</el-tag>
+            <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="submitTime" label="提交时间" width="160" />
-        <el-table-column prop="submitUserName" label="提交人" width="100" />
-        <el-table-column prop="reportStatusName" label="状态" width="100">
+        <el-table-column label="危急" width="80">
           <template #default="{ row }">
-            <el-tag :type="getStatusTagType(row.reportStatus)">{{ row.reportStatusName }}</el-tag>
+            <el-tag v-if="row.isPanic" type="danger" effect="dark" size="small">危急</el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="testTime" label="检验时间" width="160" />
+        <el-table-column prop="testUserName" label="检验人" width="100" />
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getStatusTagType(row.status)">{{ getStatusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="handleDetail(row)">详情</el-button>
             <el-button type="primary" link size="small" @click="handlePrint(row)">打印</el-button>
-            <el-button v-if="row.reportStatus === 'submitted'" type="success" link size="small" @click="handleAudit(row)">审核</el-button>
+            <el-button v-if="row.status === 'FINAL_AUDITED'" type="success" link size="small" @click="handleAudit(row)">审核</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -102,21 +104,21 @@
     <el-dialog v-model="detailDialogVisible" title="报告详情" width="900px">
       <template v-if="currentReport">
         <el-descriptions title="基本信息" :column="3" border>
-          <el-descriptions-item label="报告编号">{{ currentReport.reportCode }}</el-descriptions-item>
-          <el-descriptions-item label="标本编号">{{ currentReport.specimenCode }}</el-descriptions-item>
+          <el-descriptions-item label="报告编号">{{ currentReport.reportNo }}</el-descriptions-item>
+          <el-descriptions-item label="标本编号">{{ currentReport.specimenNo }}</el-descriptions-item>
           <el-descriptions-item label="报告状态">
-            <el-tag :type="getStatusTagType(currentReport.reportStatus)">{{ currentReport.reportStatusName }}</el-tag>
+            <el-tag :type="getStatusTagType(currentReport.status)">{{ getStatusLabel(currentReport.status) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="患者姓名">{{ currentReport.patientName }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ currentReport.patientGender === 'male' ? '男' : '女' }}</el-descriptions-item>
-          <el-descriptions-item label="年龄">{{ currentReport.patientAge }}岁</el-descriptions-item>
-          <el-descriptions-item label="科室">{{ currentReport.departmentName }}</el-descriptions-item>
+          <el-descriptions-item label="性别">{{ currentReport.patientGender === '男' ? '男' : '女' }}</el-descriptions-item>
+          <el-descriptions-item label="年龄">{{ currentReport.patientAge }}</el-descriptions-item>
+          <el-descriptions-item label="科室">{{ currentReport.deptName }}</el-descriptions-item>
           <el-descriptions-item label="床号">{{ currentReport.bedNo || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="诊断">{{ currentReport.diagnosis || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="诊断">{{ currentReport.clinicalDiagnosis || '-' }}</el-descriptions-item>
         </el-descriptions>
 
         <div class="section-title">检验结果</div>
-        <el-table :data="currentReport.results" border stripe>
+        <el-table :data="currentReportDetail?.results || []" border stripe>
           <el-table-column prop="testItemCode" label="项目编码" width="100" />
           <el-table-column prop="testItemName" label="项目名称" min-width="120" />
           <el-table-column prop="resultValue" label="结果" width="100">
@@ -135,7 +137,7 @@
               <el-tag v-else type="success" size="small">正常</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="testMethodName" label="检测方法" width="100" />
+          <el-table-column prop="testMethod" label="检测方法" width="100" />
           <el-table-column prop="testerName" label="检验人" width="80" />
           <el-table-column prop="testTime" label="检验时间" width="160" />
         </el-table>
@@ -155,7 +157,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, Download } from '@element-plus/icons-vue'
-import type { Report, ReportQueryParams, ReportStatus } from '@/types/report'
+import type { Report, ReportDetail, ReportQueryParams, ReportStatus } from '@/types/report'
 import { getReportList, getReportDetail, printReport, exportReportList } from '@/api/report'
 
 const router = useRouter()
@@ -164,53 +166,75 @@ const loading = ref(false)
 const tableData = ref<Report[]>([])
 const total = ref(0)
 
-const submitTimeRange = ref<[string, string] | null>(null)
+const testTimeRange = ref<[string, string] | null>(null)
 
 const queryParams = reactive<ReportQueryParams>({
   pageNum: 1,
   pageSize: 10,
-  reportCode: '',
-  specimenCode: '',
+  reportNo: '',
+  specimenNo: '',
   patientName: '',
-  patientIdCard: '',
-  reportStatus: '',
+  status: '',
   reportType: '',
-  departmentId: '',
-  submitTimeStart: '',
-  submitTimeEnd: '',
+  testTimeStart: '',
+  testTimeEnd: '',
 })
 
 const statusOptions = [
-  { label: '草稿', value: 'draft' },
-  { label: '待审核', value: 'submitted' },
-  { label: '已审核', value: 'audited' },
-  { label: '已驳回', value: 'rejected' },
-  { label: '已打印', value: 'printed' },
+  { label: '待检验', value: 'PENDING' },
+  { label: '检验中', value: 'TESTING' },
+  { label: '已提交', value: 'SUBMITTED' },
+  { label: '初审通过', value: 'FIRST_AUDITED' },
+  { label: '终审通过', value: 'FINAL_AUDITED' },
+  { label: '已审核', value: 'APPROVED' },
+  { label: '已驳回', value: 'REJECTED' },
+  { label: '已发布', value: 'PUBLISHED' },
+  { label: '已作废', value: 'CANCELLED' },
 ]
 
 const detailDialogVisible = ref(false)
 const currentReport = ref<Report | null>(null)
+const currentReportDetail = ref<ReportDetail | null>(null)
 
 const getStatusTagType = (status: ReportStatus): 'success' | 'warning' | 'info' | 'danger' | undefined => {
   const typeMap: Record<ReportStatus, 'success' | 'warning' | 'info' | 'danger' | undefined> = {
-    draft: 'info',
-    submitted: 'warning',
-    audited: 'success',
-    rejected: 'danger',
-    printed: undefined,
+    PENDING: 'info',
+    TESTING: undefined,
+    SUBMITTED: 'warning',
+    FIRST_AUDITED: undefined,
+    FINAL_AUDITED: 'success',
+    APPROVED: 'success',
+    REJECTED: 'danger',
+    PUBLISHED: 'success',
+    CANCELLED: 'info',
   }
   return typeMap[status]
+}
+
+const getStatusLabel = (status: ReportStatus): string => {
+  const labelMap: Record<ReportStatus, string> = {
+    PENDING: '待检验',
+    TESTING: '检验中',
+    SUBMITTED: '已提交',
+    FIRST_AUDITED: '初审通过',
+    FINAL_AUDITED: '终审通过',
+    APPROVED: '已审核',
+    REJECTED: '已驳回',
+    PUBLISHED: '已发布',
+    CANCELLED: '已作废',
+  }
+  return labelMap[status] || status
 }
 
 const fetchData = async () => {
   loading.value = true
   try {
-    if (submitTimeRange.value) {
-      queryParams.submitTimeStart = submitTimeRange.value[0]
-      queryParams.submitTimeEnd = submitTimeRange.value[1]
+    if (testTimeRange.value) {
+      queryParams.testTimeStart = testTimeRange.value[0]
+      queryParams.testTimeEnd = testTimeRange.value[1]
     } else {
-      queryParams.submitTimeStart = ''
-      queryParams.submitTimeEnd = ''
+      queryParams.testTimeStart = ''
+      queryParams.testTimeEnd = ''
     }
     const res = await getReportList(queryParams)
     tableData.value = res.records
@@ -228,14 +252,13 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  queryParams.reportCode = ''
-  queryParams.specimenCode = ''
+  queryParams.reportNo = ''
+  queryParams.specimenNo = ''
   queryParams.patientName = ''
-  queryParams.patientIdCard = ''
-  queryParams.reportStatus = ''
-  submitTimeRange.value = null
-  queryParams.submitTimeStart = ''
-  queryParams.submitTimeEnd = ''
+  queryParams.status = ''
+  testTimeRange.value = null
+  queryParams.testTimeStart = ''
+  queryParams.testTimeEnd = ''
   handleSearch()
 }
 
@@ -251,7 +274,8 @@ const handleCurrentChange = (page: number) => {
 
 const handleDetail = async (row: Report) => {
   try {
-    currentReport.value = await getReportDetail(row.id)
+    currentReport.value = row
+    currentReportDetail.value = await getReportDetail(row.id)
     detailDialogVisible.value = true
   } catch (error) {
     console.error('获取报告详情失败:', error)
@@ -264,7 +288,7 @@ const handlePrint = async (row: Report) => {
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `报告_${row.reportCode}.pdf`
+    link.download = `报告_${row.reportNo}.pdf`
     link.click()
     window.URL.revokeObjectURL(url)
     ElMessage.success('报告打印成功')

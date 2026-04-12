@@ -11,8 +11,10 @@ import java.io.Serializable;
 @ApiModel(description = "标本入库请求参数")
 public class SpecimenStorageDTO implements Serializable {
 
-    @NotBlank(message = "标本条码不能为空")
-    @ApiModelProperty(value = "标本条码", required = true)
+    @ApiModelProperty(value = "标本ID")
+    private Long specimenId;
+
+    @ApiModelProperty(value = "标本条码")
     private String barcode;
 
     @NotBlank(message = "存储位置不能为空")

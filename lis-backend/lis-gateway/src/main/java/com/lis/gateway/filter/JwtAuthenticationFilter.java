@@ -10,6 +10,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,12 +34,14 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private final JwtProperties jwtProperties;
     private final GatewayProperties gatewayProperties;
     private final JwtUtil jwtUtil;
+    private final StringRedisTemplate stringRedisTemplate;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    public JwtAuthenticationFilter(JwtProperties jwtProperties, GatewayProperties gatewayProperties, JwtUtil jwtUtil) {
+    public JwtAuthenticationFilter(JwtProperties jwtProperties, GatewayProperties gatewayProperties, JwtUtil jwtUtil, StringRedisTemplate stringRedisTemplate) {
         this.jwtProperties = jwtProperties;
         this.gatewayProperties = gatewayProperties;
         this.jwtUtil = jwtUtil;
+        this.stringRedisTemplate = stringRedisTemplate;
     }
 
     @Override
@@ -62,9 +65,26 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 return unauthorized(exchange, "令牌已过期");
             }
 
+            Long userId = jwtUtil.getUserId(claims);
+            String username = jwtUtil.getUsername(claims);
+
+            if (userId == null || username == null) {
+                return unauthorized(exchange, "令牌中缺少用户信息");
+            }
+
+            String blacklistKey = "blacklist:token:" + token;
+            Boolean isBlacklisted = stringRedisTemplate.hasKey(blacklistKey);
+            if (isBlacklisted != null && isBlacklisted) {
+                return unauthorized(exchange, "令牌已失效");
+            }
+
             ServerHttpRequest mutatedRequest = request.mutate()
-                    .header("X-User-Id", String.valueOf(jwtUtil.getUserId(claims)))
-                    .header("X-User-Name", jwtUtil.getUsername(claims))
+                    .headers(headers -> {
+                        headers.remove("X-User-Id");
+                        headers.remove("X-User-Name");
+                    })
+                    .header("X-User-Id", String.valueOf(userId))
+                    .header("X-User-Name", username)
                     .build();
 
             return chain.filter(exchange.mutate().request(mutatedRequest).build());

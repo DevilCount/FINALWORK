@@ -2,11 +2,17 @@ package com.lis.hl7.his;
 
 import ca.uhn.hl7v2.HL7Exception;
 import com.alibaba.fastjson2.JSON;
+import com.lis.common.exception.BusinessException;
 import com.lis.hl7.builder.Hl7MessageBuilder;
+import com.lis.hl7.converter.Hl7ToReportConverter;
+import com.lis.hl7.converter.Hl7ToSpecimenConverter;
+import com.lis.hl7.dto.HisLabOrderDTO;
 import com.lis.hl7.entity.Hl7MessageDO;
 import com.lis.hl7.entity.InterfaceConfigDO;
 import com.lis.hl7.enums.MessageDirectionEnum;
 import com.lis.hl7.enums.ProcessStatusEnum;
+import com.lis.hl7.feign.ReportFeignClient;
+import com.lis.hl7.feign.SpecimenFeignClient;
 import com.lis.hl7.parser.Hl7MessageParser;
 import com.lis.hl7.service.Hl7MessageService;
 import com.lis.hl7.service.InterfaceConfigService;
@@ -29,6 +35,10 @@ public class HisIntegrationService {
     private final Hl7MessageBuilder messageBuilder;
     private final Hl7MessageService hl7MessageService;
     private final InterfaceConfigService interfaceConfigService;
+    private final SpecimenFeignClient specimenFeignClient;
+    private final ReportFeignClient reportFeignClient;
+    private final Hl7ToSpecimenConverter hl7ToSpecimenConverter;
+    private final Hl7ToReportConverter hl7ToReportConverter;
 
     public Hl7MessageDO sendPatientAdmit(String interfaceCode, Hl7PatientVO patient, Hl7VisitVO visit) {
         return executeOutbound(interfaceCode, "ADT", "A01", () -> {
@@ -40,6 +50,12 @@ public class HisIntegrationService {
                                        Hl7VisitVO visit, List<Hl7ObservationVO> observations) {
         return executeOutbound(interfaceCode, "ORU", "R01", () -> {
             return messageBuilder.buildOruR01(patient, visit, observations);
+        });
+    }
+
+    public Hl7MessageDO sendLabOrder(String interfaceCode, HisLabOrderDTO labOrder) {
+        return executeOutbound(interfaceCode, "ORM", "O01", () -> {
+            return messageBuilder.buildOrmO01(labOrder);
         });
     }
 
@@ -63,7 +79,7 @@ public class HisIntegrationService {
         try {
             InterfaceConfigDO config = interfaceConfigService.getByCode(interfaceCode);
             if (config == null) {
-                throw new IllegalArgumentException("Interface config not found: " + interfaceCode);
+                throw new BusinessException("接口配置不存在: " + interfaceCode);
             }
 
             messageDO.setInterfaceId(config.getId());
@@ -108,6 +124,8 @@ public class HisIntegrationService {
 
             interfaceConfigService.incrementSentCount(config.getId());
 
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error sending outbound message", e);
             messageDO.setProcessStatus(ProcessStatusEnum.FAILED.getCode());
@@ -259,7 +277,41 @@ public class HisIntegrationService {
     private void processOrmMessage(Hl7MessageDO messageDO, Hl7ParsedMessageVO parsedMessage) {
         log.info("Processing ORM message (lab order)");
 
+        Hl7PatientVO patient = parsedMessage.getPatient();
+        Hl7VisitVO visit = parsedMessage.getVisit();
         List<Hl7OrderVO> orders = parsedMessage.getOrders();
+
+        try {
+            Map<String, Object> specimenDTO = hl7ToSpecimenConverter.convert(patient, visit, orders);
+            com.lis.common.result.Result<?> specimenResult = specimenFeignClient.register(specimenDTO);
+            if (specimenResult != null && specimenResult.isSuccess()) {
+                log.info("ORM消息处理: 标本登记成功");
+
+                Map<String, Object> reportDTO = hl7ToReportConverter.convert(patient, visit, orders);
+                if (specimenResult.getData() != null) {
+                    try {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> dataMap = (Map<String, Object>) specimenResult.getData();
+                        if (dataMap != null && dataMap.get("id") != null) {
+                            reportDTO.put("specimenId", Long.parseLong(dataMap.get("id").toString()));
+                        }
+                    } catch (Exception e) {
+                        log.warn("解析标本ID失败", e);
+                    }
+                }
+                com.lis.common.result.Result<?> reportResult = reportFeignClient.createReportApply(reportDTO);
+                if (reportResult != null && reportResult.isSuccess()) {
+                    log.info("ORM消息处理: 检验申请创建成功");
+                } else {
+                    log.warn("ORM消息处理: 检验申请创建失败");
+                }
+            } else {
+                log.warn("ORM消息处理: 标本登记失败");
+            }
+        } catch (Exception e) {
+            log.error("ORM消息处理业务逻辑异常", e);
+        }
+
         if (orders != null && !orders.isEmpty()) {
             for (Hl7OrderVO order : orders) {
                 log.info("Order: code={}, name={}, specimen={}", 

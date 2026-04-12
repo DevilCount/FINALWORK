@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/statistics/dashboard")
+@RequestMapping("/dashboard")
 @RequiredArgsConstructor
 @Api(tags = "仪表盘统计")
 public class DashboardController {
