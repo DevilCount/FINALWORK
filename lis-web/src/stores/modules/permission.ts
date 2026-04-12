@@ -10,14 +10,14 @@ interface PermissionState {
 
 function hasPermission(route: AppRouteRecordRaw, roles: string[], permissions: string[]): boolean {
   if (route.meta?.hidden) return true
-  if (roles.includes('admin')) return true
+  if (roles && roles.includes('admin')) return true
   const permission = route.meta?.permission
   if (!permission) return true
   if (typeof permission === 'string') {
-    return permissions.includes(permission)
+    return permissions && permissions.includes(permission)
   }
   if (Array.isArray(permission)) {
-    return permission.some(p => permissions.includes(p))
+    return permissions && permission.some(p => permissions.includes(p))
   }
   return true
 }
@@ -51,10 +51,10 @@ export const usePermissionStore = defineStore('permission', {
     async generateRoutesAction(roles: string[]): Promise<AppRouteRecordRaw[]> {
       let accessedRoutes: AppRouteRecordRaw[] = []
       
-      if (roles.includes('admin')) {
+      if (roles && roles.includes('admin')) {
         accessedRoutes = await this.getAsyncRoutesAction()
       } else {
-        accessedRoutes = await this.filterAsyncRoutesAction(roles)
+        accessedRoutes = await this.filterAsyncRoutesAction(roles || [])
       }
       
       this.routes = [...constantRoutes, ...accessedRoutes]
