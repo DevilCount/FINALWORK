@@ -308,7 +308,7 @@ service.interceptors.response.use(
     const { code, message, data: result } = data
 
     if (code === 200) {
-      return result as unknown as AxiosResponse
+      return result
     }
 
     // 处理业务错误
