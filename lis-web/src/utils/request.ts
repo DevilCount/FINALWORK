@@ -169,6 +169,11 @@ async function refreshToken(): Promise<string> {
 
 // 模拟请求处理函数
 function handleMockRequest(config: InternalAxiosRequestConfig): Promise<any> {
+  // 确保config对象存在
+  if (!config) {
+    return Promise.reject(new Error('Request config is undefined'));
+  }
+  
   const url = config.url || ''
   const method = config.method?.toLowerCase() || 'get'
   const data = config.data || config.params || {}
@@ -278,12 +283,19 @@ function handleMockRequest(config: InternalAxiosRequestConfig): Promise<any> {
 // 修改axios实例，直接返回模拟数据
 const originalRequest = service.request;
 service.request = function(config: any) {
+  // 确保config对象存在
+  if (!config) {
+    return Promise.reject(new Error('Request config is undefined'));
+  }
+  
   return handleMockRequest(config).then((mockData) => {
     return Promise.resolve({
       code: 200,
       message: 'success',
       data: mockData
     });
+  }).catch((error) => {
+    return Promise.reject(error);
   });
 };
 
