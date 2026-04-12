@@ -9,10 +9,10 @@ function checkPermission(el: HTMLElement, binding: DirectiveBinding<string | str
   const roles = userStore.roles
   const permissions = userStore.permissions
 
-  if (roles.includes('admin')) return
+  if (roles && roles.includes('admin')) return
 
   const requiredPermissions = Array.isArray(value) ? value : [value]
-  const hasPermission = requiredPermissions.some(p => permissions.includes(p))
+  const hasPermission = requiredPermissions.some(p => permissions && permissions.includes(p))
 
   if (!hasPermission) {
     el.parentNode?.removeChild(el)

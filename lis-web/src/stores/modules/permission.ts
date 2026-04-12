@@ -418,9 +418,9 @@ export const usePermissionStore = defineStore('permission', {
     async filterAsyncRoutesAction(roles: string[]): Promise<AppRouteRecordRaw[]> {
       const { useUserStore } = await import('@/stores/modules/user')
       const userStore = useUserStore()
-      const permissions = userStore.permissions
+      const permissions = userStore.permissions || []
       const routes = await this.getAsyncRoutesAction()
-      return doFilterRoutes(routes, roles, permissions)
+      return doFilterRoutes(routes, roles || [], permissions)
     },
 
     resetRoutesAction() {

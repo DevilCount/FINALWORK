@@ -31,11 +31,11 @@ export const useUserStore = defineStore(
     }
 
     function hasPermission(permission: string): boolean {
-      return permissions.value.includes(permission) || permissions.value.includes('*:*:*')
+      return permissions.value && (permissions.value.includes(permission) || permissions.value.includes('*:*:*'))
     }
 
     function hasRole(role: string): boolean {
-      return roles.value.includes(role) || roles.value.includes('admin')
+      return roles.value && (roles.value.includes(role) || roles.value.includes('admin'))
     }
 
     return {

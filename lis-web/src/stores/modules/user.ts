@@ -82,21 +82,21 @@ export const useUserStore = defineStore('user', {
     },
 
     hasPermission(permission: string): boolean {
-      if (this.roles.includes('admin')) return true
-      return this.permissions.includes(permission)
+      if (this.roles && this.roles.includes('admin')) return true
+      return this.permissions && this.permissions.includes(permission)
     },
 
     hasPermissions(permissions: string[]): boolean {
-      if (this.roles.includes('admin')) return true
-      return permissions.some((p) => this.permissions.includes(p))
+      if (this.roles && this.roles.includes('admin')) return true
+      return permissions && permissions.some((p) => this.permissions && this.permissions.includes(p))
     },
 
     hasRole(role: string): boolean {
-      return this.roles.includes(role)
+      return this.roles && this.roles.includes(role)
     },
 
     hasRoles(roles: string[]): boolean {
-      return roles.some((r) => this.roles.includes(r))
+      return roles && roles.some((r) => this.roles && this.roles.includes(r))
     },
   },
 
