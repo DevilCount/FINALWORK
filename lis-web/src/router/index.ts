@@ -18,28 +18,12 @@ const whiteList = ['/login', '/404', '/403']
 
 /**
  * 添加路由到路由表
- * Vue Router 4 的 addRoute(parentName, route) 需要父路由的 name
- * 所以我们先添加所有顶级路由，然后用 name 添加子路由
+ * 简化逻辑，直接添加完整的路由配置
  */
 function addDynamicRoutes(routes: any[]) {
   routes.forEach((route) => {
-    // 提取子路由
-    const children = route.children || []
-    
-    // 创建父路由配置（不包含 children）
-    const parentRoute = { ...route }
-    delete parentRoute.children
-    
-    // 添加父路由
-    router.addRoute(parentRoute as RouteRecordRaw)
-    
-    // 如果有子路由，使用父路由的 name 添加
-    if (children.length > 0 && route.name) {
-      children.forEach((child: any) => {
-        // 使用父路由的 name 添加子路由
-        router.addRoute(route.name as string, child as RouteRecordRaw)
-      })
-    }
+    // 直接添加完整的路由配置
+    router.addRoute(route as RouteRecordRaw)
   })
   // 动态路由添加完毕后，添加 CatchAll 路由（确保在最后）
   router.addRoute({
