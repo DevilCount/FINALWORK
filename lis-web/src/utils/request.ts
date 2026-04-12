@@ -275,23 +275,22 @@ function handleMockRequest(config: InternalAxiosRequestConfig): Promise<any> {
   return Promise.resolve({})
 }
 
+// 修改axios实例，直接返回模拟数据
+const originalRequest = service.request;
+service.request = function(config: any) {
+  return handleMockRequest(config).then((mockData) => {
+    return Promise.resolve({
+      code: 200,
+      message: 'success',
+      data: mockData
+    });
+  });
+};
+
+// 保持请求拦截器的结构，但不做实际操作
 service.interceptors.request.use(
-  async (config: InternalAxiosRequestConfig) => {
-    // 直接返回模拟数据，不发送真实请求
-    return handleMockRequest(config).then((mockData) => {
-      // 创建一个假的响应
-      return Promise.resolve({
-        data: {
-          code: 200,
-          message: 'success',
-          data: mockData
-        },
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config: config
-      } as AxiosResponse)
-    })
+  (config: InternalAxiosRequestConfig) => {
+    return config;
   },
   (error) => {
     logError(error)
@@ -299,128 +298,40 @@ service.interceptors.request.use(
   }
 )
 
+// 简化响应拦截器，因为我们直接返回的是处理后的数据
 service.interceptors.response.use(
-  (response: AxiosResponse<Result>) => {
-    // 移除请求取消控制器
-    removeCancelController(response.config)
-    
-    const { data } = response
-    const { code, message, data: result } = data
-
-    if (code === 200) {
-      return result
-    }
-
-    // 处理业务错误
-    let errorType: ErrorType = ErrorType.UNKNOWN_ERROR
-    switch (code) {
-      case 401:
-        errorType = ErrorType.AUTH_ERROR
-        break
-      case 403:
-        errorType = ErrorType.FORBIDDEN_ERROR
-        break
-      case 404:
-        errorType = ErrorType.NOT_FOUND_ERROR
-        break
-      case 500:
-        errorType = ErrorType.SERVER_ERROR
-        break
-      default:
-        if (code >= 400 && code < 500) {
-          errorType = ErrorType.CLIENT_ERROR
-        } else if (code >= 500) {
-          errorType = ErrorType.SERVER_ERROR
-        }
-    }
-
-    const errorMessage = message || errorMessages[errorType]
-    ElMessage.error(errorMessage)
-    
-    // 处理认证错误
-    if (code === 401) {
-      const userStore = useUserStore()
-      userStore.resetStateAction()
-      router.push({ name: 'Login' })
-    }
-
-    return Promise.reject(new Error(errorMessage))
-  },
-  async (error: AxiosError) => {
-    // 移除请求取消控制器
-    if (error.config) {
-      removeCancelController(error.config)
-    }
-    
-    const { response, config, code: errorCode } = error
-    
-    // 处理请求取消错误
-    if (errorCode === 'ERR_CANCELED') {
-      return Promise.reject(new Error('请求已取消'))
-    }
-    
-    // 记录错误日志
-    logError(error, config)
-
-    // 处理网络错误和超时错误
-    if (!response) {
-      let errorType: ErrorType = ErrorType.NETWORK_ERROR
-      if (errorCode === 'ECONNABORTED') {
-        errorType = ErrorType.TIMEOUT_ERROR
+  (response: any) => {
+    // 如果已经是直接返回的数据，直接返回
+    if (response.code !== undefined) {
+      if (response.code === 200) {
+        return response.data;
+      } else {
+        const errorMessage = response.message || '请求失败';
+        ElMessage.error(errorMessage);
+        return Promise.reject(new Error(errorMessage));
       }
-      ElMessage.error(errorMessages[errorType])
-      return Promise.reject(error)
     }
+    
+    // 处理传统的Axios响应（以防万一）
+    try {
+      const { data } = response;
+      const { code, message, data: result } = data;
 
-    const { status, data: respData } = response
+      if (code === 200) {
+        return result;
+      }
 
-    switch (status) {
-      case 401:
-        if (!isRefreshing) {
-          isRefreshing = true
-          try {
-            const newToken = await refreshToken()
-            config!.headers.Authorization = `Bearer ${newToken}`
-            return service(config!)
-          } catch (refreshError) {
-            logError(refreshError)
-            ElMessage.error(errorMessages[ErrorType.AUTH_ERROR])
-          } finally {
-            isRefreshing = false
-          }
-        } else {
-          return new Promise((resolve) => {
-            subscribeTokenRefresh((token) => {
-              config!.headers.Authorization = `Bearer ${token}`
-              resolve(service(config!))
-            })
-          })
-        }
-        break
-
-      case 403:
-        ElMessage.error(errorMessages[ErrorType.FORBIDDEN_ERROR])
-        break
-
-      case 404:
-        ElMessage.error(errorMessages[ErrorType.NOT_FOUND_ERROR])
-        break
-
-      case 500:
-        ElMessage.error((respData as any)?.message || errorMessages[ErrorType.SERVER_ERROR])
-        break
-
-      default:
-        if (status >= 400 && status < 500) {
-          ElMessage.error((respData as any)?.message || errorMessages[ErrorType.CLIENT_ERROR])
-        } else if (status >= 500) {
-          ElMessage.error((respData as any)?.message || errorMessages[ErrorType.SERVER_ERROR])
-        } else {
-          ElMessage.error((respData as any)?.message || errorMessages[ErrorType.UNKNOWN_ERROR])
-        }
+      const errorMessage = message || '请求失败';
+      ElMessage.error(errorMessage);
+      return Promise.reject(new Error(errorMessage));
+    } catch (error) {
+      return response;
     }
-
-    return Promise.reject(error)
+  },
+  (error) => {
+    logError(error);
+    ElMessage.error('请求失败');
+    return Promise.reject(error);
   }
 )
 
@@ -444,7 +355,7 @@ export interface RequestOptions extends AxiosRequestConfig {
 }
 
 export function request<T = unknown>(config: RequestOptions): Promise<T> {
-  const { retry = 0, retryDelay = 1000, retryableStatusCodes = [429, 500, 502, 503, 504], retryableErrorTypes = ['ECONNABORTED', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNRESET', 'EAI_AGAIN'], cache = false, cacheExpire = 5 * 60 * 1000, cacheKey } = config
+  const { cache = false, cacheExpire = 5 * 60 * 1000, cacheKey } = config
   
   // 清除过期缓存
   clearExpiredCache()
@@ -464,46 +375,17 @@ export function request<T = unknown>(config: RequestOptions): Promise<T> {
     }
   }
   
-  let retryCount = 0
-  
-  function attemptRequest(): Promise<T> {
-    return service.request<any, T>(config)
-      .then((response) => {
-        // 缓存响应数据
-        if (cache) {
-          requestCache.set(key, {
-            data: response,
-            timestamp: Date.now()
-          })
-        }
-        return response
-      })
-      .catch((error: AxiosError) => {
-        // 检查是否应该重试
-        const shouldRetry = retryCount < retry && (
-          // 检查状态码
-          (error.response && retryableStatusCodes.includes(error.response.status)) ||
-          // 检查错误类型
-          (error.code && retryableErrorTypes.includes(error.code))
-        )
-        
-        if (shouldRetry) {
-          retryCount++
-          console.log(`Request failed, retrying (${retryCount}/${retry})...`, error.message)
-          // 延迟重试
-          return new Promise((resolve) => {
-            setTimeout(() => {
-              resolve(attemptRequest())
-            }, retryDelay * retryCount) // 指数退避
-          })
-        }
-        
-        // 不重试，直接抛出错误
-        return Promise.reject(error)
-      })
-  }
-  
-  return attemptRequest()
+  return service.request(config)
+    .then((response) => {
+      // 缓存响应数据
+      if (cache) {
+        requestCache.set(key, {
+          data: response,
+          timestamp: Date.now()
+        })
+      }
+      return response
+    })
 }
 
 export function get<T = unknown>(url: string, params?: object, config?: RequestOptions): Promise<T> {
