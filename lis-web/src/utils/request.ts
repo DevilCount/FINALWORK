@@ -3,6 +3,7 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/modules/user'
 import router from '@/router'
 import type { Result } from '@/types'
+import { authService, specimenService, reportService, systemService } from './mockService'
 
 // 存储请求取消控制器
 const cancelControllers = new Map<string, AbortController>()
@@ -166,33 +167,131 @@ async function refreshToken(): Promise<string> {
   return refreshTokenPromise
 }
 
+// 模拟请求处理函数
+function handleMockRequest(config: InternalAxiosRequestConfig): Promise<any> {
+  const url = config.url || ''
+  const method = config.method?.toLowerCase() || 'get'
+  const data = config.data || config.params || {}
+
+  // 认证相关
+  if (url.includes('/auth/login')) {
+    return authService.login(data.username, data.password)
+  }
+  if (url.includes('/auth/logout')) {
+    return authService.logout()
+  }
+  if (url.includes('/auth/refresh')) {
+    return authService.refreshToken(data.refreshToken)
+  }
+  if (url.includes('/auth/captcha')) {
+    return authService.getCaptcha()
+  }
+  if (url.includes('/auth/info')) {
+    return authService.getUserInfo()
+  }
+  if (url.includes('/auth/password')) {
+    return authService.updatePassword(data.oldPassword, data.newPassword)
+  }
+
+  // 标本相关
+  if (url.includes('/specimen/list')) {
+    return specimenService.getSpecimenList(data)
+  }
+  if (url.includes('/specimen/getById/')) {
+    const id = url.split('/').pop() || ''
+    return specimenService.getSpecimenDetail(id)
+  }
+  if (url.includes('/specimen/register')) {
+    return specimenService.registerSpecimen(data)
+  }
+  if (url.includes('/specimen/getByBarcode')) {
+    return specimenService.getSpecimenByBarcode(data.barcode)
+  }
+  if (url.includes('/specimen/getBySpecimenNo')) {
+    return specimenService.getSpecimenBySpecimenNo(data.specimenNo)
+  }
+  if (url.includes('/specimen/receive')) {
+    return specimenService.receiveSpecimen(data.barcode)
+  }
+  if (url.includes('/specimen/reject')) {
+    return specimenService.rejectSpecimen(data.barcode, data.rejectReason)
+  }
+  if (url.includes('/specimen/updateStatus')) {
+    return specimenService.updateSpecimenStatus(data)
+  }
+  if (url.includes('/specimen/storage')) {
+    return specimenService.storageSpecimen(data)
+  }
+  if (url.includes('/specimen/trace/')) {
+    const id = url.split('/').pop() || ''
+    return specimenService.getSpecimenTraceBySpecimenId(id)
+  }
+  if (url.includes('/specimen/traceByNo')) {
+    return specimenService.getSpecimenTraceBySpecimenId(data.specimenNo)
+  }
+  if (url.includes('/specimen/types')) {
+    return specimenService.getSpecimenTypes()
+  }
+  if (url.includes('/specimen/testItems')) {
+    return specimenService.getTestItems()
+  }
+  if (url.includes('/specimen/testItemCategories')) {
+    return specimenService.getTestItemCategories()
+  }
+
+  // 报告相关
+  if (url.includes('/report/apply/query')) {
+    return reportService.getReportList(data)
+  }
+  if (url.includes('/report/apply/') && url.includes('/detail')) {
+    const id = url.split('/').filter(Boolean).pop() || ''
+    return reportService.getReportDetail(id)
+  }
+  if (url.includes('/report/result')) {
+    if (method === 'post') {
+      return reportService.saveResultEntry(data)
+    }
+  }
+  if (url.includes('/report/result/batch')) {
+    return reportService.batchSaveResultEntry(data)
+  }
+  if (url.includes('/report/audit/submit/')) {
+    const id = url.split('/').pop() || ''
+    return reportService.submitReport(id)
+  }
+  if (url.includes('/report/audit/approve') || url.includes('/report/audit/reject')) {
+    return reportService.auditReport(data)
+  }
+  if (url.includes('/report/publish')) {
+    return reportService.publishReport(data)
+  }
+
+  // 系统相关
+  if (url.includes('/user/dept/tree')) {
+    return systemService.getDepartments()
+  }
+
+  // 默认返回空数据
+  return Promise.resolve({})
+}
+
 service.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const userStore = useUserStore()
-    const token = userStore.token
-
-    // 取消重复请求
-    cancelDuplicateRequest(config)
-    // 添加请求取消控制器
-    addCancelController(config)
-
-    if (token) {
-      // 检查token是否即将过期
-      if (isTokenExpiring(token)) {
-        try {
-          // 主动刷新token
-          const newToken = await refreshToken()
-          config.headers.Authorization = `Bearer ${newToken}`
-        } catch (error) {
-          // 刷新token失败，不影响当前请求
-          logError(error, config)
-        }
-      } else {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-    }
-
-    return config
+    // 直接返回模拟数据，不发送真实请求
+    return handleMockRequest(config).then((mockData) => {
+      // 创建一个假的响应
+      return Promise.resolve({
+        data: {
+          code: 200,
+          message: 'success',
+          data: mockData
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: config
+      } as AxiosResponse)
+    })
   },
   (error) => {
     logError(error)
