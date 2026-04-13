@@ -861,6 +861,103 @@ class ReportService {
   }
 }
 
+// 统计服务
+class StatisticsService {
+  // 获取仪表盘概览
+  getDashboardOverview(): Promise<any> {
+    return new Promise((resolve) => {
+      const specimens = storageService.get('specimens') || []
+      const reports = storageService.get('reports') || []
+      
+      const totalReports = reports.length
+      const completedReports = reports.filter((r: any) => r.status === 'PUBLISHED' || r.status === 'APPROVED').length
+      const pendingReports = reports.filter((r: any) => r.status === 'PENDING' || r.status === 'SUBMITTED').length
+      const panicValues = reports.reduce((count: number, r: any) => {
+        return count + (r.items?.filter((i: any) => i.status === 'CRITICAL').length || 0)
+      }, 0)
+      
+      resolve({
+        totalReports,
+        completedReports,
+        pendingReports,
+        panicValues,
+        todaySpecimens: specimens.filter((s: any) => {
+          const today = new Date().toISOString().split('T')[0]
+          return s.createTime?.startsWith(today)
+        }).length,
+        todayReports: reports.filter((r: any) => {
+          const today = new Date().toISOString().split('T')[0]
+          return r.createTime?.startsWith(today)
+        }).length,
+        onlineEquipment: 5,
+        totalEquipment: 8,
+        todos: [
+          { content: '审核3份报告', time: '10:30' },
+          { content: '签收5个标本', time: '09:15' },
+          { content: '维护生化仪', time: '14:00' }
+        ]
+      })
+    })
+  }
+
+  // 获取工作量趋势图表
+  getWorkloadTrendChart(params: any): Promise<any> {
+    return new Promise((resolve) => {
+      const days = 7
+      const categories: string[] = []
+      const specimenData: number[] = []
+      const reportData: number[] = []
+      
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date()
+        date.setDate(date.getDate() - i)
+        categories.push(date.toISOString().split('T')[0])
+        specimenData.push(Math.floor(Math.random() * 50) + 10)
+        reportData.push(Math.floor(Math.random() * 40) + 5)
+      }
+      
+      resolve({
+        legend: { data: ['标本数', '报告数'] },
+        xAxis: { data: categories },
+        series: [
+          { name: '标本数', type: 'line', smooth: true, data: specimenData },
+          { name: '报告数', type: 'line', smooth: true, data: reportData }
+        ]
+      })
+    })
+  }
+
+  // 获取标本类型饼图
+  getSpecimenTypePieChart(params: any): Promise<any> {
+    return new Promise((resolve) => {
+      resolve({
+        series: [{
+          data: [
+            { value: 35, name: '血液' },
+            { value: 25, name: '尿液' },
+            { value: 20, name: '粪便' },
+            { value: 12, name: '脑脊液' },
+            { value: 8, name: '胸水' }
+          ]
+        }]
+      })
+    })
+  }
+
+  // 获取科室工作量排名
+  getDeptWorkloadChart(params: any): Promise<any> {
+    return new Promise((resolve) => {
+      resolve({
+        xAxis: { data: ['检验科', '内科', '外科', '儿科', '妇科'] },
+        series: [{
+          type: 'bar',
+          data: [120, 85, 72, 58, 45]
+        }]
+      })
+    })
+  }
+}
+
 // 系统服务
 class SystemService {
   // 获取科室树
@@ -877,11 +974,13 @@ const authService = new AuthService()
 const specimenService = new SpecimenService()
 const reportService = new ReportService()
 const systemService = new SystemService()
+const statisticsService = new StatisticsService()
 
-export { authService, specimenService, reportService, systemService }
+export { authService, specimenService, reportService, systemService, statisticsService }
 export default {
   auth: authService,
   specimen: specimenService,
   report: reportService,
-  system: systemService
+  system: systemService,
+  statistics: statisticsService
 }

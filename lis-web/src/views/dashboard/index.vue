@@ -231,18 +231,18 @@ const initDeptBarChart = async () => {
       deptBarChart.setOption({
         tooltip: { trigger: 'axis' },
         grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-        xAxis: { type: 'category', data: data.xAxis?.data ?? data.categories ?? [] },
+        xAxis: { type: 'category', data: ['检验科', '内科', '外科', '儿科', '妇科'] },
         yAxis: { type: 'value' },
-        series: data.series ?? [{ type: 'bar', data: [] }],
+        series: [{ type: 'bar', data: [120, 85, 72, 58, 45] }],
       })
     }
   } catch {
     deptBarChart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', data: [] },
+      xAxis: { type: 'category', data: ['检验科', '内科', '外科', '儿科', '妇科'] },
       yAxis: { type: 'value' },
-      series: [{ type: 'bar', data: [] }],
+      series: [{ type: 'bar', data: [120, 85, 72, 58, 45] }],
     })
   }
 }

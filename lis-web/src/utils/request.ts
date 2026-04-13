@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
-import { authService, specimenService, reportService, systemService } from './mockService'
+import { authService, specimenService, reportService, systemService, statisticsService } from './mockService'
 
 // 存储请求缓存
 const requestCache = new Map<string, { data: any; timestamp: number }>()
@@ -180,6 +180,17 @@ function handleMockRequest(config: InternalAxiosRequestConfig): Promise<any> {
   // 系统相关
   if (url.includes('/user/dept/tree')) {
     return systemService.getDepartments()
+  }
+
+  // 统计相关
+  if (url.includes('/statistics/dashboard/overview')) {
+    return statisticsService.getDashboardOverview()
+  }
+  if (url.includes('/statistics/workload/chart/trend')) {
+    return statisticsService.getWorkloadTrendChart(data)
+  }
+  if (url.includes('/statistics/specimen/chart/type-pie')) {
+    return statisticsService.getSpecimenTypePieChart(data)
   }
 
   // 默认返回空数据
