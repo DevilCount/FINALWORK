@@ -17,33 +17,13 @@ const router = createRouter({
 const whiteList = ['/login', '/404', '/403']
 
 /**
- * 递归添加路由
- */
-function addRouteRecursive(route: RouteRecordRaw) {
-  const tmpRoute = { ...route } as RouteRecordRaw
-  if (tmpRoute.children && tmpRoute.children.length > 0) {
-    const children = [...tmpRoute.children]
-    tmpRoute.children = []
-    router.addRoute(tmpRoute)
-    children.forEach(child => {
-      const childRoute = { ...child } as RouteRecordRaw
-      if (childRoute.children && childRoute.children.length > 0) {
-        addRouteRecursive(childRoute)
-      } else {
-        router.addRoute(tmpRoute.name as string, childRoute)
-      }
-    })
-  } else {
-    router.addRoute(tmpRoute)
-  }
-}
-
-/**
  * 添加路由到路由表
+ * 简化逻辑，直接添加完整的路由配置
  */
 function addDynamicRoutes(routes: any[]) {
   routes.forEach((route) => {
-    addRouteRecursive(route as RouteRecordRaw)
+    // 直接添加完整的路由配置
+    router.addRoute(route as RouteRecordRaw)
   })
   // 动态路由添加完毕后，添加 CatchAll 路由（确保在最后）
   router.addRoute({
