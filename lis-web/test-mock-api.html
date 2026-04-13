@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模拟API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>实验室信息管理系统 - 模拟API测试</h1>
+    
+    <div class="test-section">
+        <h2>说明</h2>
+        <p>此页面用于测试 lis-web 项目的模拟数据服务。点击下方按钮依次测试各项功能。</p>
+    </div>
+
+    <div class="test-section">
+        <h2>1. 认证服务测试</h2>
+        <button onclick="testLogin()">测试登录 (admin/123456)</button>
+        <button onclick="testGetUserInfo()">测试获取用户信息</button>
+        <button onclick="testGetCaptcha()">测试获取验证码</button>
+        <button onclick="testLogout()">测试登出</button>
+        <div id="auth-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. 标本服务测试</h2>
+        <button onclick="testGetSpecimenTypes()">测试获取标本类型</button>
+        <button onclick="testGetTestItems()">测试获取检验项目</button>
+        <button onclick="testGetTestItemCategories()">测试获取检验项目分类</button>
+        <button onclick="testGetSpecimenList()">测试获取标本列表</button>
+        <button onclick="testGetSpecimenDetail()">测试获取标本详情</button>
+        <button onclick="testGetSpecimenStatistics()">测试获取标本统计</button>
+        <div id="specimen-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. 报告服务测试</h2>
+        <button onclick="testGetReportList()">测试获取报告列表</button>
+        <button onclick="testGetReportDetail()">测试获取报告详情</button>
+        <div id="report-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. 系统服务测试</h2>
+        <button onclick="testGetDepartments()">测试获取科室列表</button>
+        <div id="system-results"></div>
+    </div>
+
+    <script type="module">
+        // 导入我们需要的模块
+        import { login, logout, getCaptcha, getUserInfo } from '/src/api/auth.ts'
+        import { getSpecimenList, getSpecimenDetail, getSpecimenTypes, getTestItems, getTestItemCategories, getSpecimenStatistics } from '/src/api/specimen.ts'
+        import { getReportList, getReportDetail } from '/src/api/report.ts'
+        
+        window.testLogin = async function() {
+            const resultsDiv = document.getElementById('auth-results')
+            try {
+                const result = await login({ username: 'admin', password: '123456' })
+                addResult(resultsDiv, '登录成功', 'success')
+                addResult(resultsDiv, `用户: ${result.realName}, 角色: ${result.roles.join(', ')}, 权限: ${result.permissions.join(', ')}`, 'info')
+                console.log('登录结果:', result)
+            } catch (error) {
+                addResult(resultsDiv, `登录失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testLogout = async function() {
+            const resultsDiv = document.getElementById('auth-results')
+            try {
+                await logout()
+                addResult(resultsDiv, '登出成功', 'success')
+            } catch (error) {
+                addResult(resultsDiv, `登出失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testGetCaptcha = async function() {
+            const resultsDiv = document.getElementById('auth-results')
+            try {
+                const result = await getCaptcha()
+                addResult(resultsDiv, '获取验证码成功', 'success')
+                console.log('验证码:', result)
+            } catch (error) {
+                addResult(resultsDiv, `获取验证码失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testGetUserInfo = async function() {
+            const resultsDiv = document.getElementById('auth-results')
+            try {
+                const result = await getUserInfo()
+                addResult(resultsDiv, '获取用户信息成功', 'success')
+                addResult(resultsDiv, `用户: ${result.user.realName}, 角色: ${result.roles.join(', ')}, 权限: ${result.permissions.join(', ')}`, 'info')
+                console.log('用户信息:', result)
+            } catch (error) {
+                addResult(resultsDiv, `获取用户信息失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testGetSpecimenTypes = async function() {
+            const resultsDiv = document.getElementById('specimen-results')
+            try {
+                const result = await getSpecimenTypes()
+                addResult(resultsDiv, `获取标本类型成功，共 ${result.length} 种`, 'success')
+                console.log('标本类型:', result)
+            } catch (error) {
+                addResult(resultsDiv, `获取标本类型失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testGetTestItems = async function() {
+            const resultsDiv = document.getElementById('specimen-results')
+            try {
+                const result = await getTestItems()
+                addResult(resultsDiv, `获取检验项目成功，共 ${result.length} 项`, 'success')
+                console.log('检验项目:', result)
+            } catch (error) {
+                addResult(resultsDiv, `获取检验项目失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testGetTestItemCategories = async function() {
+            const resultsDiv = document.getElementById('specimen-results')
+            try {
+                const result = await getTestItemCategories()
+                addResult(resultsDiv, `获取检验项目分类成功，共 ${result.length} 类`, 'success')
+                console.log('检验项目分类:', result)
+            } catch (error) {
+                addResult(resultsDiv, `获取检验项目分类失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testGetSpecimenList = async function() {
+            const resultsDiv = document.getElementById('specimen-results')
+            try {
+                const result = await getSpecimenList({ pageNum: 1, pageSize: 10 })
+                addResult(resultsDiv, `获取标本列表成功，共 ${result.total} 条记录`, 'success')
+                console.log('标本列表:', result)
+            } catch (error) {
+                addResult(resultsDiv, `获取标本列表失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testGetSpecimenDetail = async function() {
+            const resultsDiv = document.getElementById('specimen-results')
+            try {
+                const result = await getSpecimenDetail('1')
+                addResult(resultsDiv, `获取标本详情成功: ${result.specimenNo}`, 'success')
+                console.log('标本详情:', result)
+            } catch (error) {
+                addResult(resultsDiv, `获取标本详情失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testGetSpecimenStatistics = async function() {
+            const resultsDiv = document.getElementById('specimen-results')
+            try {
+                const result = await getSpecimenStatistics({})
+                addResult(resultsDiv, '获取标本统计成功', 'success')
+                addResult(resultsDiv, `总计: ${result.total}, 待处理: ${result.pending}, 已接收: ${result.received}, 检验中: ${result.testing}, 已完成: ${result.completed}, 已拒绝: ${result.rejected}`, 'info')
+                console.log('标本统计:', result)
+            } catch (error) {
+                addResult(resultsDiv, `获取标本统计失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testGetReportList = async function() {
+            const resultsDiv = document.getElementById('report-results')
+            try {
+                const result = await getReportList({ pageNum: 1, pageSize: 10 })
+                addResult(resultsDiv, `获取报告列表成功，共 ${result.total} 条记录`, 'success')
+                console.log('报告列表:', result)
+            } catch (error) {
+                addResult(resultsDiv, `获取报告列表失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testGetReportDetail = async function() {
+            const resultsDiv = document.getElementById('report-results')
+            try {
+                const result = await getReportDetail('1')
+                addResult(resultsDiv, `获取报告详情成功: ${result.reportNo}`, 'success')
+                console.log('报告详情:', result)
+            } catch (error) {
+                addResult(resultsDiv, `获取报告详情失败: ${error.message}`, 'error')
+            }
+        }
+
+        window.testGetDepartments = async function() {
+            const resultsDiv = document.getElementById('system-results')
+            try {
+                const result = await (await import('/src/api/specimen.ts')).getDepartments()
+                addResult(resultsDiv, `获取科室列表成功，共 ${result.length} 个科室`, 'success')
+                console.log('科室列表:', result)
+            } catch (error) {
+                addResult(resultsDiv, `获取科室列表失败: ${error.message}`, 'error')
+            }
+        }
+
+        function addResult(container, message, type) {
+            const div = document.createElement('div')
+            div.className = `test-result ${type}`
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`
+            container.appendChild(div)
+        }
+
+        console.log('测试页面已加载')
+    </script>
+</body>
+</html>

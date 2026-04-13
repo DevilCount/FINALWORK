@@ -2,6 +2,68 @@
 import storageService from './mockStorage'
 import type { LoginResult, UserInfo, CaptchaResult } from '@/types/user'
 
+const REPORT_STATUS_TO_MOCK: Record<string, string> = {
+  'draft': 'PENDING',
+  'testing': 'TESTING',
+  'pending_review': 'SUBMITTED',
+  'first_audited': 'FIRST_AUDITED',
+  'final_audited': 'FINAL_AUDITED',
+  'audited': 'APPROVED',
+  'reported': 'PUBLISHED',
+  'cancelled': 'CANCELLED'
+}
+
+const REPORT_STATUS_FROM_MOCK: Record<string, string> = {
+  'PENDING': 'draft',
+  'TESTING': 'testing',
+  'SUBMITTED': 'pending_review',
+  'FIRST_AUDITED': 'first_audited',
+  'FINAL_AUDITED': 'final_audited',
+  'APPROVED': 'audited',
+  'PUBLISHED': 'reported',
+  'CANCELLED': 'cancelled'
+}
+
+const SPECIMEN_STATUS_TO_MOCK: Record<string, string> = {
+  'pending': 'REGISTERED',
+  'received': 'RECEIVED',
+  'stored': 'STORAGE',
+  'testing': 'TESTING',
+  'completed': 'COMPLETED',
+  'rejected': 'REJECTED',
+  'cancelled': 'CANCELLED'
+}
+
+const SPECIMEN_STATUS_FROM_MOCK: Record<string, string> = {
+  'REGISTERED': 'pending',
+  'RECEIVED': 'received',
+  'STORAGE': 'stored',
+  'TESTING': 'testing',
+  'COMPLETED': 'completed',
+  'REJECTED': 'rejected',
+  'CANCELLED': 'cancelled'
+}
+
+function mapSpecimenStatusToMock(status: string | undefined): string | undefined {
+  if (!status) return undefined
+  return SPECIMEN_STATUS_TO_MOCK[status] || status.toUpperCase()
+}
+
+function mapSpecimenStatusFromMock(status: string | undefined): string | undefined {
+  if (!status) return undefined
+  return SPECIMEN_STATUS_FROM_MOCK[status] || status.toLowerCase()
+}
+
+function mapReportStatusToMock(status: string | undefined): string | undefined {
+  if (!status) return undefined
+  return REPORT_STATUS_TO_MOCK[status] || status.toUpperCase()
+}
+
+function mapReportStatusFromMock(status: string | undefined): string | undefined {
+  if (!status) return undefined
+  return REPORT_STATUS_FROM_MOCK[status] || status.toLowerCase()
+}
+
 // 生成随机ID
 function generateId(): number {
   return Math.floor(Math.random() * 1000000)
@@ -72,7 +134,7 @@ class AuthService {
   }
 
   // 刷新token
-  refreshToken(refreshToken: string): Promise<LoginResult> {
+  refreshToken(_refreshToken: string): Promise<LoginResult> {
     return new Promise((resolve) => {
       const currentUser = storageService.get('current_user')
       
@@ -175,8 +237,15 @@ class SpecimenService {
         specimens = specimens.filter((s: any) => s.patientIdNo.includes(params.patientIdNo))
       }
       if (params.status) {
-        specimens = specimens.filter((s: any) => s.status === params.status)
+        const mockStatus = mapSpecimenStatusToMock(params.status)
+        specimens = specimens.filter((s: any) => s.status === mockStatus)
       }
+      
+      // 转换状态
+      specimens = specimens.map((s: any) => ({
+        ...s,
+        status: mapSpecimenStatusFromMock(s.status)
+      }))
       
       // 分页
       const pageNum = params.pageNum || 1
@@ -201,7 +270,10 @@ class SpecimenService {
       const specimen = specimens.find((s: any) => s.id === parseInt(id))
       
       if (specimen) {
-        resolve(specimen)
+        resolve({
+          ...specimen,
+          status: mapSpecimenStatusFromMock(specimen.status)
+        })
       } else {
         reject(new Error('标本不存在'))
       }
@@ -255,7 +327,10 @@ class SpecimenService {
       // 创建对应的报告
       this.createReportForSpecimen(newSpecimen)
       
-      resolve(newSpecimen)
+      resolve({
+        ...newSpecimen,
+        status: mapSpecimenStatusFromMock(newSpecimen.status)
+      })
     })
   }
 
@@ -281,7 +356,7 @@ class SpecimenService {
       reportType: '常规',
       testTime: new Date().toISOString(),
       reportTime: null,
-      items: specimen.testItemIds.map((testItemId: number, index: number) => {
+      items: specimen.testItemIds.map((testItemId: number) => {
         const testItem = specimen.testItems.find((t: any) => t.id === testItemId)
         return {
           id: generateId(),
@@ -314,13 +389,17 @@ class SpecimenService {
   private getReferenceRange(testItemId: number): string {
     const ranges: Record<number, string> = {
       1: '4.0-10.0',
-      2: '0-10',
+      2: '4.5-8.0',
       3: '0-40',
-      4: '0-100',
+      4: '44-133',
       5: '0-5.2',
       6: '3.9-6.1',
       7: '135-145',
-      8: '0-25'
+      8: '0-25',
+      9: '10-14',
+      10: 'A/B/O/AB',
+      11: '阴性',
+      12: '阴性'
     }
     return ranges[testItemId] || '0-100'
   }
@@ -329,13 +408,17 @@ class SpecimenService {
   private getUnit(testItemId: number): string {
     const units: Record<number, string> = {
       1: '10^9/L',
-      2: '个/HP',
+      2: 'pH',
       3: 'U/L',
       4: 'μmol/L',
       5: 'mmol/L',
       6: 'mmol/L',
       7: 'mmol/L',
-      8: 'U/L'
+      8: 'U/L',
+      9: 's',
+      10: '',
+      11: '',
+      12: ''
     }
     return units[testItemId] || 'mg/L'
   }
@@ -347,7 +430,10 @@ class SpecimenService {
       const specimen = specimens.find((s: any) => s.barcode === barcode)
       
       if (specimen) {
-        resolve(specimen)
+        resolve({
+          ...specimen,
+          status: mapSpecimenStatusFromMock(specimen.status)
+        })
       } else {
         reject(new Error('标本不存在'))
       }
@@ -361,7 +447,10 @@ class SpecimenService {
       const specimen = specimens.find((s: any) => s.specimenNo === specimenNo)
       
       if (specimen) {
-        resolve(specimen)
+        resolve({
+          ...specimen,
+          status: mapSpecimenStatusFromMock(specimen.status)
+        })
       } else {
         reject(new Error('标本不存在'))
       }
@@ -410,7 +499,7 @@ class SpecimenService {
       const specimenIndex = specimens.findIndex((s: any) => s.id === data.specimenId)
       
       if (specimenIndex !== -1) {
-        specimens[specimenIndex].status = data.status
+        specimens[specimenIndex].status = mapSpecimenStatusToMock(data.status) || data.status
         if (data.remark) {
           specimens[specimenIndex].remark = data.remark
         }
@@ -514,8 +603,30 @@ class SpecimenService {
   getTestItemCategories(): Promise<string[]> {
     return new Promise((resolve) => {
       const testItems = storageService.get('test_items') || []
-      const categories = [...new Set(testItems.map((t: any) => t.category))]
+      const categories = [...new Set(testItems.map((t: any) => t.category as string))] as string[]
       resolve(categories)
+    })
+  }
+
+  // 获取标本统计
+  getSpecimenStatistics(_data: { startDate?: string; endDate?: string; deptId?: number }): Promise<any> {
+    return new Promise((resolve) => {
+      const specimens = storageService.get('specimens') || []
+      const total = specimens.length
+      const pending = specimens.filter((s: any) => s.status === 'REGISTERED').length
+      const received = specimens.filter((s: any) => s.status === 'RECEIVED').length
+      const testing = specimens.filter((s: any) => s.status === 'TESTING').length
+      const completed = specimens.filter((s: any) => s.status === 'COMPLETED').length
+      const rejected = specimens.filter((s: any) => s.status === 'REJECTED').length
+      
+      resolve({
+        total,
+        pending,
+        received,
+        testing,
+        completed,
+        rejected
+      })
     })
   }
 }
@@ -541,8 +652,15 @@ class ReportService {
         reports = reports.filter((r: any) => r.patientIdNo.includes(params.patientIdNo))
       }
       if (params.status) {
-        reports = reports.filter((r: any) => r.status === params.status)
+        const mockStatus = mapReportStatusToMock(params.status)
+        reports = reports.filter((r: any) => r.status === mockStatus)
       }
+      
+      // 转换状态
+      reports = reports.map((r: any) => ({
+        ...r,
+        status: mapReportStatusFromMock(r.status)
+      }))
       
       // 分页
       const pageNum = params.pageNum || 1
@@ -567,7 +685,10 @@ class ReportService {
       const report = reports.find((r: any) => r.id === parseInt(id))
       
       if (report) {
-        resolve(report)
+        resolve({
+          ...report,
+          status: mapReportStatusFromMock(report.status)
+        })
       } else {
         reject(new Error('报告不存在'))
       }
@@ -668,12 +789,12 @@ class ReportService {
       const reportIndex = reports.findIndex((r: any) => r.id === data.reportId)
       
       if (reportIndex !== -1) {
-        if (data.auditResult === 'pass' || data.auditResult === 'approved') {
+        if (data.auditResult === 'pass' || data.auditResult === 'approved' || data.approved) {
           reports[reportIndex].status = 'APPROVED'
         } else {
-          reports[reportIndex].status = 'REJECTED'
+          reports[reportIndex].status = 'PENDING'
         }
-        reports[reportIndex].auditRemark = data.auditRemark
+        reports[reportIndex].auditRemark = data.auditRemark || data.auditOpinion
         reports[reportIndex].updateTime = new Date().toISOString()
         storageService.set('reports', reports)
         resolve()
@@ -692,6 +813,44 @@ class ReportService {
       if (reportIndex !== -1) {
         reports[reportIndex].status = 'PUBLISHED'
         reports[reportIndex].reportTime = new Date().toISOString()
+        reports[reportIndex].updateTime = new Date().toISOString()
+        storageService.set('reports', reports)
+        resolve()
+      } else {
+        reject(new Error('报告不存在'))
+      }
+    })
+  }
+
+  // 首次审核
+  firstApproveReport(data: any): Promise<void> {
+    return this.auditReport({ ...data, auditResult: 'pass' })
+  }
+
+  // 首次拒绝
+  firstRejectReport(data: any): Promise<void> {
+    return this.auditReport({ ...data, auditResult: 'reject' })
+  }
+
+  // 最终审核
+  finalApproveReport(data: any): Promise<void> {
+    return this.auditReport({ ...data, auditResult: 'pass' })
+  }
+
+  // 最终拒绝
+  finalRejectReport(data: any): Promise<void> {
+    return this.auditReport({ ...data, auditResult: 'reject' })
+  }
+
+  // 取消报告
+  cancelReport(reportId: string, reason?: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const reports = storageService.get('reports') || []
+      const reportIndex = reports.findIndex((r: any) => r.id === parseInt(reportId))
+      
+      if (reportIndex !== -1) {
+        reports[reportIndex].status = 'CANCELLED'
+        reports[reportIndex].cancelReason = reason
         reports[reportIndex].updateTime = new Date().toISOString()
         storageService.set('reports', reports)
         resolve()

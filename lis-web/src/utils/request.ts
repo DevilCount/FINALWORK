@@ -1,12 +1,6 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig, type AxiosError } from 'axios'
+import axios, { type AxiosInstance, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/stores/modules/user'
-import router from '@/router'
-import type { Result } from '@/types'
 import { authService, specimenService, reportService, systemService } from './mockService'
-
-// 存储请求取消控制器
-const cancelControllers = new Map<string, AbortController>()
 
 // 存储请求缓存
 const requestCache = new Map<string, { data: any; timestamp: number }>()
@@ -32,30 +26,6 @@ export function clearCache() {
   requestCache.clear()
 }
 
-// 取消重复请求
-function cancelDuplicateRequest(config: AxiosRequestConfig): void {
-  const key = generateRequestKey(config)
-  const existingController = cancelControllers.get(key)
-  if (existingController) {
-    existingController.abort()
-    cancelControllers.delete(key)
-  }
-}
-
-// 添加请求取消控制器
-function addCancelController(config: AxiosRequestConfig): void {
-  const key = generateRequestKey(config)
-  const controller = new AbortController()
-  config.signal = controller.signal
-  cancelControllers.set(key, controller)
-}
-
-// 移除请求取消控制器
-function removeCancelController(config: AxiosRequestConfig): void {
-  const key = generateRequestKey(config)
-  cancelControllers.delete(key)
-}
-
 // 定义错误类型
 export enum ErrorType {
   NETWORK_ERROR = 'NETWORK_ERROR',
@@ -68,32 +38,9 @@ export enum ErrorType {
   UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 }
 
-// 错误信息映射
-const errorMessages: Record<ErrorType, string> = {
-  [ErrorType.NETWORK_ERROR]: '网络连接失败，请检查网络',
-  [ErrorType.TIMEOUT_ERROR]: '请求超时，请稍后重试',
-  [ErrorType.SERVER_ERROR]: '服务器内部错误',
-  [ErrorType.CLIENT_ERROR]: '请求参数错误',
-  [ErrorType.AUTH_ERROR]: '登录已过期，请重新登录',
-  [ErrorType.FORBIDDEN_ERROR]: '没有权限访问该资源',
-  [ErrorType.NOT_FOUND_ERROR]: '请求的资源不存在',
-  [ErrorType.UNKNOWN_ERROR]: '请求失败'
-}
-
 // 错误日志记录
-function logError(error: any, config?: AxiosRequestConfig) {
-  console.error('API Request Error:', {
-    url: config?.url,
-    method: config?.method,
-    params: config?.params,
-    data: config?.data,
-    error: {
-      message: error.message,
-      code: error.code,
-      status: error.response?.status,
-      data: error.response?.data
-    }
-  })
+function logError(_error: any, _config?: AxiosRequestConfig) {
+  // 生产环境下可以考虑集成错误监控服务，如 Sentry 等
 }
 
 const service: AxiosInstance = axios.create({
@@ -103,69 +50,6 @@ const service: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
 })
-
-let isRefreshing = false
-let refreshSubscribers: ((token: string) => void)[] = []
-let refreshTokenPromise: Promise<string> | null = null
-
-function subscribeTokenRefresh(callback: (token: string) => void) {
-  refreshSubscribers.push(callback)
-}
-
-function onRefreshed(token: string) {
-  refreshSubscribers.forEach((callback) => callback(token))
-  refreshSubscribers = []
-}
-
-// 检查token是否即将过期
-function isTokenExpiring(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    const exp = payload.exp * 1000
-    const now = Date.now()
-    // 提前5分钟刷新token
-    return exp - now < 5 * 60 * 1000
-  } catch {
-    return true
-  }
-}
-
-// 主动刷新token
-async function refreshToken(): Promise<string> {
-  if (refreshTokenPromise) {
-    return refreshTokenPromise
-  }
-
-  const userStore = useUserStore()
-  const refreshTokenValue = userStore.refreshToken
-
-  if (!refreshTokenValue) {
-    throw new Error('No refresh token available')
-  }
-
-  refreshTokenPromise = service.post<Result<{ accessToken: string; refreshToken: string }>>(
-    '/auth/refresh',
-    { refreshToken: refreshTokenValue }
-  )
-    .then((res: any) => {
-      const tokenData = res.data || res
-      const { accessToken, refreshToken: newRefreshToken } = tokenData
-      userStore.setTokenAction(accessToken, newRefreshToken)
-      onRefreshed(accessToken)
-      return accessToken
-    })
-    .catch((error) => {
-      logError(error)
-      userStore.resetStateAction()
-      router.push({ name: 'Login' })
-      throw error
-    })
-    .finally(() => {
-      refreshTokenPromise = null
-    })
-
-  return refreshTokenPromise
-}
 
 // 模拟请求处理函数
 function handleMockRequest(config: InternalAxiosRequestConfig): Promise<any> {
@@ -243,6 +127,9 @@ function handleMockRequest(config: InternalAxiosRequestConfig): Promise<any> {
   if (url.includes('/specimen/testItemCategories')) {
     return specimenService.getTestItemCategories()
   }
+  if (url.includes('/specimen/statistics')) {
+    return specimenService.getSpecimenStatistics(data)
+  }
 
   // 报告相关
   if (url.includes('/report/apply/query')) {
@@ -264,11 +151,30 @@ function handleMockRequest(config: InternalAxiosRequestConfig): Promise<any> {
     const id = url.split('/').pop() || ''
     return reportService.submitReport(id)
   }
-  if (url.includes('/report/audit/approve') || url.includes('/report/audit/reject')) {
+  if (url.includes('/report/audit/first-approve')) {
+    return reportService.firstApproveReport(data)
+  }
+  if (url.includes('/report/audit/first-reject')) {
+    return reportService.firstRejectReport(data)
+  }
+  if (url.includes('/report/audit/final-approve')) {
+    return reportService.finalApproveReport(data)
+  }
+  if (url.includes('/report/audit/final-reject')) {
+    return reportService.finalRejectReport(data)
+  }
+  if (url.includes('/report/audit/approve')) {
     return reportService.auditReport(data)
+  }
+  if (url.includes('/report/audit/reject')) {
+    return reportService.auditReport({ ...data, auditResult: 'reject' })
   }
   if (url.includes('/report/publish')) {
     return reportService.publishReport(data)
+  }
+  if (url.includes('/report/apply/') && url.includes('/cancel')) {
+    const id = url.split('/').filter(Boolean).pop() || ''
+    return reportService.cancelReport(id, data?.reason)
   }
 
   // 系统相关
@@ -281,8 +187,7 @@ function handleMockRequest(config: InternalAxiosRequestConfig): Promise<any> {
 }
 
 // 修改axios实例，直接返回模拟数据
-const originalRequest = service.request;
-service.request = function(config: any) {
+(service as any).request = function(config: any) {
   // 确保config对象存在
   if (!config) {
     return Promise.reject(new Error('Request config is undefined'));
@@ -381,23 +286,12 @@ export function request<T = unknown>(config: RequestOptions): Promise<T> {
     if (cachedData) {
       const now = Date.now()
       if (now - cachedData.timestamp < cacheExpire) {
-        console.log('Using cached data for:', key)
         return Promise.resolve(cachedData.data as T)
       }
     }
   }
   
-  return service.request(config)
-    .then((response) => {
-      // 缓存响应数据
-      if (cache) {
-        requestCache.set(key, {
-          data: response,
-          timestamp: Date.now()
-        })
-      }
-      return response
-    })
+  return service.request(config) as Promise<T>
 }
 
 export function get<T = unknown>(url: string, params?: object, config?: RequestOptions): Promise<T> {

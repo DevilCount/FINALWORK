@@ -17,13 +17,33 @@ const router = createRouter({
 const whiteList = ['/login', '/404', '/403']
 
 /**
+ * 递归添加路由
+ */
+function addRouteRecursive(route: RouteRecordRaw) {
+  const tmpRoute = { ...route } as RouteRecordRaw
+  if (tmpRoute.children && tmpRoute.children.length > 0) {
+    const children = [...tmpRoute.children]
+    tmpRoute.children = []
+    router.addRoute(tmpRoute)
+    children.forEach(child => {
+      const childRoute = { ...child } as RouteRecordRaw
+      if (childRoute.children && childRoute.children.length > 0) {
+        addRouteRecursive(childRoute)
+      } else {
+        router.addRoute(tmpRoute.name as string, childRoute)
+      }
+    })
+  } else {
+    router.addRoute(tmpRoute)
+  }
+}
+
+/**
  * 添加路由到路由表
- * 简化逻辑，直接添加完整的路由配置
  */
 function addDynamicRoutes(routes: any[]) {
   routes.forEach((route) => {
-    // 直接添加完整的路由配置
-    router.addRoute(route as RouteRecordRaw)
+    addRouteRecursive(route as RouteRecordRaw)
   })
   // 动态路由添加完毕后，添加 CatchAll 路由（确保在最后）
   router.addRoute({
@@ -51,14 +71,13 @@ router.beforeEach(async (to, _from, next) => {
         try {
           // 1. 获取用户信息
           await userStore.getUserInfoAction()
-          // 2. 根据角色生成有权限的路由
-          const accessRoutes = await permissionStore.generateRoutesAction(userStore.roles)
+          // 2. 根据角色和权限生成有权限的路由
+          const accessRoutes = await permissionStore.generateRoutesAction(userStore.roles, userStore.permissions)
           // 3. 添加动态路由
           addDynamicRoutes(accessRoutes)
           // 4. 使用 replace 模式切换路由，避免历史堆积
           next({ ...to, replace: true })
         } catch (error) {
-          console.error('路由加载失败:', error)
           userStore.resetStateAction()
           next(`/login?redirect=${to.path}`)
         }

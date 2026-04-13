@@ -22,7 +22,7 @@ class StorageService {
       const jsonData = JSON.stringify(data)
       localStorage.setItem(`${this.prefix}${key}`, jsonData)
     } catch (error) {
-      console.error('Error saving data to localStorage:', error)
+      // 静默处理 localStorage 存储错误
     }
   }
 
@@ -32,7 +32,6 @@ class StorageService {
       const jsonData = localStorage.getItem(`${this.prefix}${key}`)
       return jsonData ? JSON.parse(jsonData) : null
     } catch (error) {
-      console.error('Error getting data from localStorage:', error)
       return null
     }
   }
@@ -42,7 +41,7 @@ class StorageService {
     try {
       localStorage.removeItem(`${this.prefix}${key}`)
     } catch (error) {
-      console.error('Error removing data from localStorage:', error)
+      // 静默处理 localStorage 删除错误
     }
   }
 
@@ -53,7 +52,7 @@ class StorageService {
         localStorage.removeItem(key)
       })
     } catch (error) {
-      console.error('Error clearing localStorage:', error)
+      // 静默处理 localStorage 清空错误
     }
   }
 }
@@ -94,6 +93,36 @@ function initDefaultData() {
         status: 1,
         roles: ['user'],
         permissions: ['specimen:read', 'report:read']
+      },
+      {
+        id: 3,
+        username: 'technician',
+        password: '123456',
+        realName: '检验技师',
+        avatar: '',
+        phone: '13700137000',
+        email: 'technician@example.com',
+        deptId: 1,
+        deptName: '检验科',
+        employeeNo: 'EMP003',
+        status: 1,
+        roles: ['technician'],
+        permissions: ['specimen:read', 'specimen:write', 'report:read', 'report:write']
+      },
+      {
+        id: 4,
+        username: 'doctor',
+        password: '123456',
+        realName: '审核医生',
+        avatar: '',
+        phone: '13600136000',
+        email: 'doctor@example.com',
+        deptId: 2,
+        deptName: '内科',
+        employeeNo: 'EMP004',
+        status: 1,
+        roles: ['doctor'],
+        permissions: ['specimen:read', 'report:read', 'report:audit']
       }
     ]
     storageService.set('users', defaultUsers)
@@ -106,7 +135,9 @@ function initDefaultData() {
       { id: 2, deptName: '内科', parentId: 0, sort: 2 },
       { id: 3, deptName: '外科', parentId: 0, sort: 3 },
       { id: 4, deptName: '儿科', parentId: 0, sort: 4 },
-      { id: 5, deptName: '妇科', parentId: 0, sort: 5 }
+      { id: 5, deptName: '妇科', parentId: 0, sort: 5 },
+      { id: 6, deptName: '血液科', parentId: 0, sort: 6 },
+      { id: 7, deptName: '急诊科', parentId: 0, sort: 7 }
     ]
     storageService.set('departments', defaultDepartments)
   }
@@ -118,7 +149,10 @@ function initDefaultData() {
       { id: 2, specimenTypeName: '尿液', sort: 2 },
       { id: 3, specimenTypeName: '粪便', sort: 3 },
       { id: 4, specimenTypeName: '脑脊液', sort: 4 },
-      { id: 5, specimenTypeName: '胸水', sort: 5 }
+      { id: 5, specimenTypeName: '胸水', sort: 5 },
+      { id: 6, specimenTypeName: '腹水', sort: 6 },
+      { id: 7, specimenTypeName: '痰液', sort: 7 },
+      { id: 8, specimenTypeName: '分泌物', sort: 8 }
     ]
     storageService.set('specimen_types', defaultSpecimenTypes)
   }
@@ -133,7 +167,11 @@ function initDefaultData() {
       { id: 5, testItemName: '血脂', category: '生化检查', sort: 5 },
       { id: 6, testItemName: '血糖', category: '生化检查', sort: 6 },
       { id: 7, testItemName: '电解质', category: '生化检查', sort: 7 },
-      { id: 8, testItemName: '心肌酶', category: '生化检查', sort: 8 }
+      { id: 8, testItemName: '心肌酶', category: '生化检查', sort: 8 },
+      { id: 9, testItemName: '凝血功能', category: '血液检查', sort: 9 },
+      { id: 10, testItemName: '血型鉴定', category: '血液检查', sort: 10 },
+      { id: 11, testItemName: '乙肝五项', category: '免疫检查', sort: 11 },
+      { id: 12, testItemName: '甲肝抗体', category: '免疫检查', sort: 12 }
     ]
     storageService.set('test_items', defaultTestItems)
   }
@@ -173,6 +211,75 @@ function initDefaultData() {
           { id: 5, testItemName: '血脂' }
         ],
         status: 'REGISTERED',
+        createTime: new Date().toISOString(),
+        updateTime: new Date().toISOString()
+      },
+      {
+        id: 2,
+        specimenNo: 'SP20260412002',
+        barcode: 'BC20260412002',
+        patientId: 'P12346',
+        patientName: '李四',
+        patientGender: '女',
+        patientAge: 25,
+        patientIdNo: '110101200101011234',
+        patientPhone: '13900139000',
+        deptId: 2,
+        deptName: '内科',
+        wardId: 2,
+        wardName: '外科病房',
+        bedNo: '201',
+        doctorId: 2,
+        doctorName: '李医生',
+        specimenTypeId: 2,
+        specimenTypeName: '尿液',
+        collectTime: new Date().toISOString(),
+        collectUserId: 2,
+        collectUserName: '普通用户',
+        isStat: true,
+        clinicalDiagnosis: '尿路感染',
+        remark: '加急',
+        testItemIds: [2, 4],
+        testItems: [
+          { id: 2, testItemName: '尿常规' },
+          { id: 4, testItemName: '肾功能' }
+        ],
+        status: 'RECEIVED',
+        createTime: new Date().toISOString(),
+        updateTime: new Date().toISOString()
+      },
+      {
+        id: 3,
+        specimenNo: 'SP20260412003',
+        barcode: 'BC20260412003',
+        patientId: 'P12347',
+        patientName: '王五',
+        patientGender: '男',
+        patientAge: 45,
+        patientIdNo: '110101198101011234',
+        patientPhone: '13700137000',
+        deptId: 3,
+        deptName: '外科',
+        wardId: 3,
+        wardName: '儿科病房',
+        bedNo: '301',
+        doctorId: 3,
+        doctorName: '张医生',
+        specimenTypeId: 1,
+        specimenTypeName: '血液',
+        collectTime: new Date().toISOString(),
+        collectUserId: 3,
+        collectUserName: '检验技师',
+        isStat: false,
+        clinicalDiagnosis: '术前检查',
+        remark: '',
+        testItemIds: [1, 7, 8],
+        testItems: [
+          { id: 1, testItemName: '血常规' },
+          { id: 7, testItemName: '电解质' },
+          { id: 8, testItemName: '心肌酶' }
+        ],
+        status: 'TESTING',
         createTime: new Date().toISOString(),
         updateTime: new Date().toISOString()
       }
@@ -240,6 +347,55 @@ function initDefaultData() {
             operatorId: null,
             operatorName: null,
             operateTime: null
+          }
+        ],
+        createTime: new Date().toISOString(),
+        updateTime: new Date().toISOString()
+      },
+      {
+        id: 2,
+        reportNo: 'RP20260412002',
+        specimenId: 2,
+        specimenNo: 'SP20260412002',
+        patientId: 'P12346',
+        patientName: '李四',
+        patientGender: '女',
+        patientAge: 25,
+        patientIdNo: '110101200101011234',
+        deptId: 2,
+        deptName: '内科',
+        doctorId: 2,
+        doctorName: '李医生',
+        status: 'TESTING',
+        reportType: '常规',
+        testTime: new Date().toISOString(),
+        reportTime: null,
+        items: [
+          {
+            id: 4,
+            reportId: 2,
+            testItemId: 2,
+            testItemName: '尿常规',
+            result: '5.5',
+            referenceRange: '4.5-8.0',
+            unit: 'pH',
+            status: 'COMPLETED',
+            operatorId: 3,
+            operatorName: '检验技师',
+            operateTime: new Date().toISOString()
+          },
+          {
+            id: 5,
+            reportId: 2,
+            testItemId: 4,
+            testItemName: '肾功能',
+            result: '75',
+            referenceRange: '44-133',
+            unit: 'μmol/L',
+            status: 'COMPLETED',
+            operatorId: 3,
+            operatorName: '检验技师',
+            operateTime: new Date().toISOString()
           }
         ],
         createTime: new Date().toISOString(),

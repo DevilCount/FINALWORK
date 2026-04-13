@@ -48,13 +48,13 @@ export const usePermissionStore = defineStore('permission', {
   },
 
   actions: {
-    async generateRoutesAction(roles: string[]): Promise<AppRouteRecordRaw[]> {
+    async generateRoutesAction(roles: string[], permissions: string[] = []): Promise<AppRouteRecordRaw[]> {
       let accessedRoutes: AppRouteRecordRaw[] = []
       
       if (roles && roles.includes('admin')) {
         accessedRoutes = await this.getAsyncRoutesAction()
       } else {
-        accessedRoutes = await this.filterAsyncRoutesAction(roles || [])
+        accessedRoutes = await this.filterAsyncRoutesAction(roles || [], permissions || [])
       }
       
       this.routes = [...constantRoutes, ...accessedRoutes]
@@ -240,6 +240,12 @@ export const usePermissionStore = defineStore('permission', {
               meta: { title: '标本统计', icon: 'PieChart', permission: 'statistics:workload:list' },
             },
             {
+              path: 'report',
+              name: 'ReportStats',
+              component: () => import('@/views/statistics/report/index.vue'),
+              meta: { title: '报告统计', icon: 'Document', permission: 'statistics:workload:list' },
+            },
+            {
               path: 'equipment',
               name: 'EquipmentStats',
               component: () => import('@/views/statistics/equipment/index.vue'),
@@ -356,71 +362,12 @@ export const usePermissionStore = defineStore('permission', {
             }
           ]
         },
-        {
-          path: '/equipment/edit/:id',
-          name: 'EquipmentEdit',
-          component: Layout,
-          meta: { title: '编辑设备', hidden: true },
-          children: [
-            {
-              path: '',
-              name: 'EquipmentEditIndex',
-              component: () => import('@/views/equipment/list/index.vue'),
-              meta: { title: '编辑设备' }
-            }
-          ]
-        },
-        {
-          path: '/equipment/maintenance/add',
-          name: 'EquipmentMaintenanceAdd',
-          component: Layout,
-          meta: { title: '添加维护记录', hidden: true },
-          children: [
-            {
-              path: '',
-              name: 'EquipmentMaintenanceAddIndex',
-              component: () => import('@/views/equipment/list/index.vue'),
-              meta: { title: '添加维护记录' }
-            }
-          ]
-        },
-        {
-          path: '/profile',
-          name: 'Profile',
-          component: Layout,
-          meta: { title: '个人中心', hidden: true },
-          children: [
-            {
-              path: '',
-              name: 'ProfileIndex',
-              component: () => import('@/views/system/user/index.vue'),
-              meta: { title: '个人中心' }
-            }
-          ]
-        },
-        {
-          path: '/password',
-          name: 'Password',
-          component: Layout,
-          meta: { title: '修改密码', hidden: true },
-          children: [
-            {
-              path: '',
-              name: 'PasswordIndex',
-              component: () => import('@/views/system/user/index.vue'),
-              meta: { title: '修改密码' }
-            }
-          ]
-        },
       ]
     },
 
-    async filterAsyncRoutesAction(roles: string[]): Promise<AppRouteRecordRaw[]> {
-      const { useUserStore } = await import('@/stores/modules/user')
-      const userStore = useUserStore()
-      const permissions = userStore.permissions || []
+    async filterAsyncRoutesAction(roles: string[], permissions: string[] = []): Promise<AppRouteRecordRaw[]> {
       const routes = await this.getAsyncRoutesAction()
-      return doFilterRoutes(routes, roles || [], permissions)
+      return doFilterRoutes(routes, roles || [], permissions || [])
     },
 
     resetRoutesAction() {
