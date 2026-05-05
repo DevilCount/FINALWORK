@@ -179,20 +179,9 @@
 
     <repositories>
         <repository>
-            <id>aliyun-public</id>
-            <name>Aliyun Public Repo</name>
-            <url>https://maven.aliyun.com/repository/public</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-        <repository>
-            <id>aliyun-spring</id>
-            <name>Aliyun Spring Repo</name>
-            <url>https://maven.aliyun.com/repository/spring</url>
+            <id>tencent-public</id>
+            <name>Tencent Public Repo</name>
+            <url>https://mirrors.cloud.tencent.com/nexus/repository/maven-public/</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -203,9 +192,9 @@
     </repositories>
     <pluginRepositories>
         <pluginRepository>
-            <id>aliyun-plugins</id>
-            <name>Aliyun Plugins Repo</name>
-            <url>https://maven.aliyun.com/repository/public</url>
+            <id>tencent-plugins</id>
+            <name>Tencent Plugins Repo</name>
+            <url>https://mirrors.cloud.tencent.com/nexus/repository/maven-public/</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
