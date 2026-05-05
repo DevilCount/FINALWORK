@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @Api(tags = "设备维护记录管理")
 @RestController
 @RequestMapping("/equipment/maintenance")
@@ -21,7 +24,7 @@ public class EquipmentMaintenanceController {
     private final EquipmentMaintenanceService maintenanceService;
 
     @ApiOperation("分页查询维护记录")
-    @GetMapping("/page")
+    @GetMapping("/list")
     public Result<PageResult<EquipmentMaintenanceVO>> pageList(EquipmentMaintenanceQueryDTO queryDTO) {
         PageResult<EquipmentMaintenanceVO> result = maintenanceService.pageList(queryDTO);
         return Result.success(result);
@@ -29,43 +32,44 @@ public class EquipmentMaintenanceController {
 
     @ApiOperation("根据ID查询维护记录")
     @GetMapping("/{id}")
-    public Result<EquipmentMaintenanceVO> getById(@PathVariable Long id) {
-        EquipmentMaintenanceVO maintenance = maintenanceService.getById(id);
+    public Result<EquipmentMaintenanceVO> getById(@PathVariable String id) {
+        EquipmentMaintenanceVO maintenance = maintenanceService.getById(Long.parseLong(id));
         return Result.success(maintenance);
     }
 
     @ApiOperation("新增维护记录")
     @PostMapping
-    public Result<Long> save(@Validated @RequestBody EquipmentMaintenanceDTO dto) {
+    public Result<EquipmentMaintenanceVO> save(@Validated @RequestBody EquipmentMaintenanceDTO dto) {
         Long id = maintenanceService.save(dto);
-        return Result.success("新增成功", id);
+        return Result.success(maintenanceService.getById(id));
     }
 
     @ApiOperation("更新维护记录")
-    @PutMapping
-    public Result<Void> update(@Validated @RequestBody EquipmentMaintenanceDTO dto) {
+    @PutMapping("/{id}")
+    public Result<EquipmentMaintenanceVO> update(@PathVariable String id, @Validated @RequestBody EquipmentMaintenanceDTO dto) {
         maintenanceService.update(dto);
-        return Result.success("更新成功", null);
+        return Result.success(maintenanceService.getById(Long.parseLong(id)));
     }
 
     @ApiOperation("删除维护记录")
     @DeleteMapping("/{id}")
-    public Result<Void> deleteById(@PathVariable Long id) {
-        maintenanceService.deleteById(id);
+    public Result<Void> deleteById(@PathVariable String id) {
+        maintenanceService.deleteById(Long.parseLong(id));
         return Result.success("删除成功", null);
     }
 
     @ApiOperation("批量删除维护记录")
     @DeleteMapping("/batch")
-    public Result<Void> deleteBatch(@RequestBody Long[] ids) {
+    public Result<Void> deleteBatch(@RequestBody Map<String, List<String>> request) {
+        Long[] ids = request.get("ids").stream().map(Long::parseLong).toArray(Long[]::new);
         maintenanceService.deleteBatch(ids);
         return Result.success("批量删除成功", null);
     }
 
     @ApiOperation("完成维护")
     @PutMapping("/{id}/complete")
-    public Result<Void> completeMaintenance(@PathVariable Long id) {
-        maintenanceService.completeMaintenance(id);
+    public Result<Void> completeMaintenance(@PathVariable String id) {
+        maintenanceService.completeMaintenance(Long.parseLong(id));
         return Result.success("维护完成", null);
     }
 }

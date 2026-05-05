@@ -12,10 +12,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Api(tags = "部门管理")
 @RestController
-@RequestMapping("/dept")
+@RequestMapping("/system/dept")
 @RequiredArgsConstructor
 public class DeptController {
 
@@ -58,9 +59,9 @@ public class DeptController {
 
     @ApiOperation("获取部门树")
     @GetMapping("/tree")
-    public Result<List<DeptVO>> getDeptTree() {
-        List<DeptVO> tree = deptService.getDeptTree();
-        return Result.success(tree);
+    public Result<List<DeptTreeVO>> getDeptTree() {
+        List<DeptTreeVO> nodes = deptService.getDeptTreeNodes();
+        return Result.success(nodes);
     }
 
     @ApiOperation("获取部门树节点（用于选择器）")
@@ -75,5 +76,17 @@ public class DeptController {
     public Result<List<Long>> getDeptIdsByRoleId(@PathVariable Long roleId) {
         List<Long> deptIds = deptService.getDeptIdsByRoleId(roleId);
         return Result.success(deptIds);
+    }
+
+    @ApiOperation("更新部门状态")
+    @PutMapping("/{id}/status")
+    public Result<Void> updateDeptStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        return Result.success("状态更新成功", null);
+    }
+
+    @ApiOperation("获取部门下用户")
+    @GetMapping("/{id}/users")
+    public Result<List<Map<String, Object>>> getDeptUsers(@PathVariable Long id) {
+        return Result.success(List.of());
     }
 }

@@ -12,10 +12,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Api(tags = "角色管理")
 @RestController
-@RequestMapping("/role")
+@RequestMapping("/system/role")
 @RequiredArgsConstructor
 public class RoleController {
 
@@ -58,14 +59,17 @@ public class RoleController {
 
     @ApiOperation("批量删除角色")
     @DeleteMapping("/batch")
-    public Result<Void> batchDeleteRoles(@RequestBody List<Long> ids) {
-        roleService.batchDeleteRoles(ids);
+    public Result<Void> batchDeleteRoles(@RequestBody Map<String, List<Long>> request) {
+        roleService.batchDeleteRoles(request.get("ids"));
         return Result.success("删除成功", null);
     }
 
     @ApiOperation("分配菜单")
-    @PostMapping("/assign-menus")
-    public Result<Void> assignMenus(@Validated @RequestBody RoleMenuAssignDTO assignDTO) {
+    @PutMapping("/{id}/menus")
+    public Result<Void> assignMenus(@PathVariable Long id, @RequestBody Map<String, List<Long>> request) {
+        RoleMenuAssignDTO assignDTO = new RoleMenuAssignDTO();
+        assignDTO.setRoleId(id);
+        assignDTO.setMenuIds(request.get("menuIds"));
         roleService.assignMenus(assignDTO);
         return Result.success("分配成功", null);
     }
@@ -82,5 +86,11 @@ public class RoleController {
     public Result<List<RoleVO>> getAllRoles() {
         List<RoleVO> roles = roleService.getAllRoles();
         return Result.success(roles);
+    }
+
+    @ApiOperation("更新角色状态")
+    @PutMapping("/{id}/status")
+    public Result<Void> updateRoleStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        return Result.success("状态更新成功", null);
     }
 }

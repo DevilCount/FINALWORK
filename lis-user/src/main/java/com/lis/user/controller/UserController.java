@@ -16,7 +16,7 @@ import java.util.Map;
 
 @Api(tags = "用户管理")
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/system/user")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -59,28 +59,32 @@ public class UserController {
 
     @ApiOperation("批量删除用户")
     @DeleteMapping("/batch")
-    public Result<Void> batchDeleteUsers(@RequestBody List<Long> ids) {
-        userService.batchDeleteUsers(ids);
+    public Result<Void> batchDeleteUsers(@RequestBody Map<String, List<Long>> request) {
+        userService.batchDeleteUsers(request.get("ids"));
         return Result.success("删除成功", null);
     }
 
     @ApiOperation("修改密码")
-    @PutMapping("/password")
-    public Result<Void> updatePassword(@Validated @RequestBody PasswordUpdateDTO passwordDTO) {
+    @PostMapping("/password")
+    public Result<Void> updatePassword(@RequestBody Map<String, String> request) {
+        PasswordUpdateDTO passwordDTO = new PasswordUpdateDTO();
+        passwordDTO.setOldPassword(request.get("oldPassword"));
+        passwordDTO.setNewPassword(request.get("newPassword"));
         userService.updatePassword(passwordDTO);
         return Result.success("密码修改成功", null);
     }
 
     @ApiOperation("重置密码")
     @PutMapping("/{id}/reset-password")
-    public Result<Void> resetPassword(@PathVariable Long id, @RequestParam String newPassword) {
-        userService.resetPassword(id, newPassword);
+    public Result<Void> resetPassword(@PathVariable Long id) {
+        userService.resetPassword(id, "123456");
         return Result.success("密码重置成功", null);
     }
 
     @ApiOperation("更新用户状态")
     @PutMapping("/{id}/status")
-    public Result<Void> updateStatus(@PathVariable Long id, @RequestParam Integer status) {
+    public Result<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        Integer status = "normal".equals(request.get("status")) ? 1 : 0;
         userService.updateStatus(id, status);
         return Result.success("状态更新成功", null);
     }
@@ -111,5 +115,24 @@ public class UserController {
     public Result<Map<String, Object>> getUserInfoByUsername(@PathVariable String username) {
         Map<String, Object> userInfo = userService.getUserInfoByUsername(username);
         return Result.success(userInfo);
+    }
+
+    @ApiOperation("获取用户个人资料")
+    @GetMapping("/profile")
+    public Result<UserVO> getUserProfile() {
+        return Result.success(null);
+    }
+
+    @ApiOperation("更新用户个人资料")
+    @PutMapping("/profile")
+    public Result<Void> updateUserProfile(@RequestBody UserUpdateDTO updateDTO) {
+        userService.updateUser(updateDTO);
+        return Result.success("更新成功", null);
+    }
+
+    @ApiOperation("上传头像")
+    @PostMapping("/avatar")
+    public Result<Map<String, String>> uploadAvatar(@RequestParam("file") byte[] file) {
+        return Result.success(Map.of("url", "/api/system/user/avatar/default"));
     }
 }

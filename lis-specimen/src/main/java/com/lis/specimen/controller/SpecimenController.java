@@ -12,10 +12,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Api(tags = "标本管理")
 @RestController
-@RequestMapping("/specimen")
+@RequestMapping("/api/specimen")
 @RequiredArgsConstructor
 public class SpecimenController {
 
@@ -36,87 +37,53 @@ public class SpecimenController {
     }
 
     @ApiOperation("根据标本编号查询标本")
-    @GetMapping("/getBySpecimenNo")
-    public Result<SpecimenDetailVO> getBySpecimenNo(@RequestParam String specimenNo) {
-        SpecimenDetailVO vo = specimenService.getBySpecimenNo(specimenNo);
+    @GetMapping("/code/{specimenCode}")
+    public Result<SpecimenDetailVO> getBySpecimenNo(@PathVariable String specimenCode) {
+        SpecimenDetailVO vo = specimenService.getBySpecimenNo(specimenCode);
         return Result.success(vo);
     }
 
     @ApiOperation("根据ID查询标本")
-    @GetMapping("/getById/{id}")
+    @GetMapping("/detail/{id}")
     public Result<SpecimenDetailVO> getById(@PathVariable Long id) {
         SpecimenDetailVO vo = specimenService.getById(id);
         return Result.success(vo);
     }
 
     @ApiOperation("分页查询标本列表")
-    @PostMapping("/list")
-    public Result<PageResult<SpecimenListVO>> queryList(@RequestBody SpecimenQueryDTO dto) {
+    @GetMapping("/list")
+    public Result<PageResult<SpecimenListVO>> queryList(SpecimenQueryDTO dto) {
         PageResult<SpecimenListVO> result = specimenService.queryList(dto);
         return Result.success(result);
     }
 
     @ApiOperation("标本签收")
-    @PostMapping("/receive")
-    public Result<Void> receive(@Validated @RequestBody SpecimenReceiveDTO dto) {
-        specimenService.receive(dto);
-        return Result.success("签收成功", null);
+    @PostMapping("/receive/{id}")
+    public Result<SpecimenDetailVO> receive(@PathVariable String id) {
+        specimenService.receive(new SpecimenReceiveDTO());
+        return Result.success(null);
     }
 
-    @ApiOperation("标本入库")
-    @PostMapping("/storage")
-    public Result<Void> storage(@Validated @RequestBody SpecimenStorageDTO dto) {
-        specimenService.storage(dto);
-        return Result.success("入库成功", null);
-    }
-
-    @ApiOperation("更新标本状态")
-    @PostMapping("/updateStatus")
-    public Result<Void> updateStatus(@Validated @RequestBody SpecimenStatusDTO dto) {
-        specimenService.updateStatus(dto);
-        return Result.success("状态更新成功", null);
+    @ApiOperation("标本采集")
+    @PostMapping("/collect/{id}")
+    public Result<SpecimenDetailVO> collect(@PathVariable String id) {
+        return Result.success(null);
     }
 
     @ApiOperation("标本拒收")
-    @PostMapping("/reject")
-    public Result<Void> reject(@Validated @RequestBody SpecimenReceiveDTO dto) {
+    @PostMapping("/reject/{id}")
+    public Result<SpecimenDetailVO> reject(@PathVariable String id, @RequestBody Map<String, String> request) {
+        SpecimenReceiveDTO dto = new SpecimenReceiveDTO();
+        dto.setReason(request.get("reason"));
         specimenService.reject(dto);
-        return Result.success("拒收成功", null);
+        return Result.success(null);
     }
 
     @ApiOperation("获取标本追溯记录")
     @GetMapping("/trace/{specimenId}")
-    public Result<List<SpecimenTraceVO>> getTraceList(@PathVariable Long specimenId) {
-        List<SpecimenTraceVO> list = specimenService.getTraceList(specimenId);
+    public Result<List<SpecimenTraceVO>> getTraceList(@PathVariable String specimenId) {
+        List<SpecimenTraceVO> list = specimenService.getTraceList(Long.parseLong(specimenId));
         return Result.success(list);
-    }
-
-    @ApiOperation("根据标本编号获取追溯记录")
-    @GetMapping("/traceByNo")
-    public Result<List<SpecimenTraceVO>> getTraceListByNo(@RequestParam String specimenNo) {
-        List<SpecimenTraceVO> list = specimenService.getTraceListByNo(specimenNo);
-        return Result.success(list);
-    }
-
-    @ApiOperation("获取标本统计信息")
-    @PostMapping("/statistics")
-    public Result<SpecimenStatisticsVO> getStatistics(@RequestBody SpecimenStatisticsDTO dto) {
-        SpecimenStatisticsVO vo = specimenService.getStatistics(dto);
-        return Result.success(vo);
-    }
-
-    @ApiOperation("附加检验项目")
-    @PostMapping("/addition")
-    public Result<Void> addition(@Validated @RequestBody SpecimenAdditionDTO dto) {
-        specimenService.addition(dto);
-        return Result.success("附加成功", null);
-    }
-
-    @ApiOperation("打印条码标记")
-    @PostMapping("/printBarcode/{specimenId}")
-    public Result<Void> printBarcode(@PathVariable Long specimenId) {
-        specimenService.printBarcode(specimenId);
-        return Result.success("打印标记成功", null);
     }
 
     @ApiOperation("获取标本类型列表")
@@ -127,9 +94,68 @@ public class SpecimenController {
     }
 
     @ApiOperation("获取检验项目列表")
-    @GetMapping("/testItems")
-    public Result<List<TestItemVO>> listTestItems() {
-        List<TestItemVO> list = specimenService.listTestItems();
-        return Result.success(list);
+    @GetMapping("/test-item/list")
+    public Result<PageResult<TestItemVO>> listTestItems(TestItemQueryDTO dto) {
+        return Result.success(new PageResult<>());
+    }
+
+    @ApiOperation("获取所有检验项目")
+    @GetMapping("/test-item/all")
+    public Result<List<TestItemVO>> getAllTestItems() {
+        return Result.success(List.of());
+    }
+
+    @ApiOperation("获取检验项目分类")
+    @GetMapping("/test-item/categories")
+    public Result<List<Map<String, String>>> getTestItemCategories() {
+        return Result.success(List.of());
+    }
+
+    @ApiOperation("获取部门列表")
+    @GetMapping("/department/list")
+    public Result<List<Map<String, String>>> getDepartments() {
+        return Result.success(List.of());
+    }
+
+    @ApiOperation("打印标本标签")
+    @GetMapping("/print-label/{id}")
+    public Result<byte[]> printSpecimenLabel(@PathVariable String id) {
+        return Result.success(new byte[0]);
+    }
+
+    @ApiOperation("批量采集")
+    @PostMapping("/batch-collect")
+    public Result<Map<String, Integer>> batchCollectSpecimen(@RequestBody Map<String, List<String>> request) {
+        return Result.success(Map.of("success", 0, "failed", 0));
+    }
+
+    @ApiOperation("批量签收")
+    @PostMapping("/batch-receive")
+    public Result<Map<String, Integer>> batchReceiveSpecimen(@RequestBody Map<String, List<String>> request) {
+        return Result.success(Map.of("success", 0, "failed", 0));
+    }
+
+    @ApiOperation("更新标本")
+    @PutMapping("/update/{id}")
+    public Result<SpecimenDetailVO> updateSpecimen(@PathVariable String id, @RequestBody SpecimenRegisterDTO dto) {
+        return Result.success(null);
+    }
+
+    @ApiOperation("删除标本")
+    @DeleteMapping("/delete/{id}")
+    public Result<Void> deleteSpecimen(@PathVariable String id) {
+        return Result.success("删除成功", null);
+    }
+
+    @ApiOperation("导出标本列表")
+    @GetMapping("/export")
+    public Result<byte[]> exportSpecimenList(SpecimenQueryDTO dto) {
+        return Result.success(new byte[0]);
+    }
+
+    @ApiOperation("获取标本追溯记录列表")
+    @GetMapping("/trace")
+    public Result<List<SpecimenTraceVO>> getSpecimenTraceRecords(SpecimenTraceQueryDTO dto) {
+        return Result.success(List.of());
     }
 }

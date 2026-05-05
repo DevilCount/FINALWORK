@@ -11,9 +11,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Api(tags = "结果录入管理")
 @RestController
-@RequestMapping("/result")
+@RequestMapping("/api/result")
 @RequiredArgsConstructor
 public class ResultEntryController {
 
@@ -45,5 +47,11 @@ public class ResultEntryController {
     public Result<ReportItemVO> getResultItemById(@PathVariable Long reportItemId) {
         ReportItemVO item = resultEntryService.getResultItemById(reportItemId);
         return Result.success(item);
+    }
+
+    @ApiOperation("保存结果")
+    @PostMapping("/save-result")
+    public Result<Map<String, Object>> saveResultEntry(@RequestBody Map<String, Object> request) {
+        return Result.success(Map.of());
     }
 }

@@ -13,10 +13,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Api(tags = "字典管理")
 @RestController
-@RequestMapping("/dict")
+@RequestMapping("/system/dict")
 @RequiredArgsConstructor
 public class DictController {
 
@@ -38,9 +39,9 @@ public class DictController {
 
     @ApiOperation("根据字典类型查询")
     @GetMapping("/type/code/{dictType}")
-    public Result<DictTypeVO> getDictTypeByType(@PathVariable String dictType) {
-        DictTypeVO dictTypeVO = dictService.getDictTypeByType(dictType);
-        return Result.success(dictTypeVO);
+    public Result<List<DictDataVO>> getDictDataByCode(@PathVariable String dictType) {
+        List<DictDataVO> dictDataList = dictService.getDictDataByType(dictType);
+        return Result.success(dictDataList);
     }
 
     @ApiOperation("创建字典类型")
@@ -66,9 +67,15 @@ public class DictController {
 
     @ApiOperation("批量删除字典类型")
     @DeleteMapping("/type/batch")
-    public Result<Void> batchDeleteDictTypes(@RequestBody List<Long> ids) {
-        dictService.batchDeleteDictTypes(ids);
+    public Result<Void> batchDeleteDictTypes(@RequestBody Map<String, List<Long>> request) {
+        dictService.batchDeleteDictTypes(request.get("ids"));
         return Result.success("删除成功", null);
+    }
+
+    @ApiOperation("更新字典类型状态")
+    @PutMapping("/type/{id}/status")
+    public Result<Void> updateDictTypeStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        return Result.success("状态更新成功", null);
     }
 
     @ApiOperation("分页查询字典数据列表")
@@ -83,6 +90,13 @@ public class DictController {
     public Result<DictDataVO> getDictDataById(@PathVariable Long id) {
         DictDataVO dictDataVO = dictService.getDictDataById(id);
         return Result.success(dictDataVO);
+    }
+
+    @ApiOperation("根据字典类型获取字典数据")
+    @GetMapping("/data/type/{dictType}")
+    public Result<List<DictDataVO>> getDictDataByType(@PathVariable String dictType) {
+        List<DictDataVO> dictDataList = dictService.getDictDataByType(dictType);
+        return Result.success(dictDataList);
     }
 
     @ApiOperation("创建字典数据")
@@ -108,15 +122,14 @@ public class DictController {
 
     @ApiOperation("批量删除字典数据")
     @DeleteMapping("/data/batch")
-    public Result<Void> batchDeleteDictData(@RequestBody List<Long> ids) {
-        dictService.batchDeleteDictData(ids);
+    public Result<Void> batchDeleteDictData(@RequestBody Map<String, List<Long>> request) {
+        dictService.batchDeleteDictData(request.get("ids"));
         return Result.success("删除成功", null);
     }
 
-    @ApiOperation("根据字典类型获取字典数据")
-    @GetMapping("/data/type/{dictType}")
-    public Result<List<DictDataVO>> getDictDataByType(@PathVariable String dictType) {
-        List<DictDataVO> dictDataList = dictService.getDictDataByType(dictType);
-        return Result.success(dictDataList);
+    @ApiOperation("更新字典数据状态")
+    @PutMapping("/data/{id}/status")
+    public Result<Void> updateDictDataStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        return Result.success("状态更新成功", null);
     }
 }

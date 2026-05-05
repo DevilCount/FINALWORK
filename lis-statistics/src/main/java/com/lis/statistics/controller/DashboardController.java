@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/statistics/dashboard")
 @RequiredArgsConstructor
@@ -29,5 +31,21 @@ public class DashboardController {
     @ApiOperation("获取指定日期范围的概览数据")
     public Result<DashboardOverviewVO> getOverviewByDateRange(WorkloadQueryDTO queryDTO) {
         return Result.success(dashboardService.getOverviewByDateRange(queryDTO));
+    }
+
+    @GetMapping("/summary")
+    @ApiOperation("获取仪表盘摘要数据")
+    public Result<Map<String, Object>> getDashboardSummary() {
+        return Result.success(Map.of(
+            "totalEquipment", 0,
+            "onlineEquipment", 0,
+            "offlineEquipment", 0,
+            "maintenanceEquipment", 0,
+            "todaySamples", 0,
+            "todayReports", 0,
+            "pendingReports", 0,
+            "criticalReports", 0,
+            "avgTurnaroundTime", 0
+        ));
     }
 }

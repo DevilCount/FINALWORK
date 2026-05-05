@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/statistics/workload")
@@ -51,5 +52,17 @@ public class WorkloadStatController {
     @ApiOperation("获取工作量分布图表")
     public Result<EChartsVO> getWorkloadDistributionChart(WorkloadQueryDTO queryDTO) {
         return Result.success(workloadStatService.getWorkloadDistributionChart(queryDTO));
+    }
+
+    @GetMapping("/chart")
+    @ApiOperation("获取工作量图表")
+    public Result<Map<String, Object>> getWorkloadChart(WorkloadQueryDTO queryDTO) {
+        return Result.success(Map.of());
+    }
+
+    @GetMapping("/export")
+    @ApiOperation("导出工作量报表")
+    public Result<byte[]> exportWorkloadReport(WorkloadQueryDTO queryDTO) {
+        return Result.success(new byte[0]);
     }
 }

@@ -12,10 +12,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Api(tags = "菜单权限管理")
 @RestController
-@RequestMapping("/menu")
+@RequestMapping("/system/menu")
 @RequiredArgsConstructor
 public class MenuController {
 
@@ -58,9 +59,9 @@ public class MenuController {
 
     @ApiOperation("获取菜单树")
     @GetMapping("/tree")
-    public Result<List<MenuVO>> getMenuTree() {
-        List<MenuVO> tree = menuService.getMenuTree();
-        return Result.success(tree);
+    public Result<List<MenuTreeVO>> getMenuTree() {
+        List<MenuTreeVO> nodes = menuService.getMenuTreeNodes();
+        return Result.success(nodes);
     }
 
     @ApiOperation("获取菜单树节点（用于选择器）")
@@ -71,6 +72,12 @@ public class MenuController {
     }
 
     @ApiOperation("获取用户菜单")
+    @GetMapping("/user")
+    public Result<List<MenuVO>> getUserMenus() {
+        return Result.success(List.of());
+    }
+
+    @ApiOperation("获取用户菜单（带用户ID）")
     @GetMapping("/user/{userId}")
     public Result<List<MenuVO>> getMenusByUserId(@PathVariable Long userId) {
         List<MenuVO> menus = menuService.getMenusByUserId(userId);
@@ -89,5 +96,17 @@ public class MenuController {
     public Result<List<String>> getPermissionsByUserId(@PathVariable Long userId) {
         List<String> permissions = menuService.getPermissionsByUserId(userId);
         return Result.success(permissions);
+    }
+
+    @ApiOperation("更新菜单状态")
+    @PutMapping("/{id}/status")
+    public Result<Void> updateMenuStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        return Result.success("状态更新成功", null);
+    }
+
+    @ApiOperation("获取菜单按钮")
+    @GetMapping("/{menuId}/buttons")
+    public Result<List<MenuVO>> getMenuButtons(@PathVariable Long menuId) {
+        return Result.success(List.of());
     }
 }

@@ -12,9 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Api(tags = "认证管理")
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -29,7 +31,9 @@ public class AuthController {
 
     @ApiOperation("刷新Token")
     @PostMapping("/refresh")
-    public Result<TokenVO> refreshToken(@Validated @RequestBody RefreshTokenDTO refreshTokenDTO) {
+    public Result<TokenVO> refreshToken(@RequestBody Map<String, String> request) {
+        RefreshTokenDTO refreshTokenDTO = new RefreshTokenDTO();
+        refreshTokenDTO.setRefreshToken(request.get("refreshToken"));
         TokenVO tokenVO = authService.refreshToken(refreshTokenDTO);
         return Result.success("Token刷新成功", tokenVO);
     }
@@ -42,5 +46,30 @@ public class AuthController {
             authService.logout(token);
         }
         return Result.success("登出成功", null);
+    }
+
+    @ApiOperation("获取验证码")
+    @GetMapping("/captcha")
+    public Result<Map<String, Object>> getCaptcha() {
+        return Result.success(Map.of(
+            "captchaId", "captcha-" + System.currentTimeMillis(),
+            "captchaImage", "base64-image-data"
+        ));
+    }
+
+    @ApiOperation("获取用户信息")
+    @GetMapping("/user-info")
+    public Result<Map<String, Object>> getUserInfo() {
+        return Result.success(Map.of(
+            "user", Map.of(),
+            "roles", new String[]{},
+            "permissions", new String[]{}
+        ));
+    }
+
+    @ApiOperation("修改密码")
+    @PostMapping("/password")
+    public Result<Void> updatePassword(@RequestBody Map<String, String> request) {
+        return Result.success("密码修改成功", null);
     }
 }
