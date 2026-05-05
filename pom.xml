@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.lis</groupId>
-    <artifactId>lis-parent</artifactId>
+    <artifactId>lis-backend</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>lis-backend</name>
