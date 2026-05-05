@@ -29,7 +29,7 @@ export function getReportResults(reportId: string): Promise<ReportResult[]> {
 }
 
 export function saveResultEntry(data: ResultEntryForm): Promise<Report> {
-  return post('/api/report/save-result', data)
+  return post('/api/result', data)
 }
 
 export function submitReport(reportId: string): Promise<Report> {
