@@ -59,9 +59,12 @@ public class SpecimenController {
 
     @ApiOperation("标本签收")
     @PostMapping("/receive/{id}")
-    public Result<SpecimenDetailVO> receive(@PathVariable String id) {
-        specimenService.receive(new SpecimenReceiveDTO());
-        return Result.success(null);
+    public Result<SpecimenDetailVO> receive(@PathVariable Long id) {
+        SpecimenDetailVO specimen = specimenService.getById(id);
+        SpecimenReceiveDTO dto = new SpecimenReceiveDTO();
+        dto.setBarcode(specimen.getBarcode());
+        specimenService.receive(dto);
+        return Result.success(specimenService.getById(id));
     }
 
     @ApiOperation("标本采集")
@@ -72,11 +75,13 @@ public class SpecimenController {
 
     @ApiOperation("标本拒收")
     @PostMapping("/reject/{id}")
-    public Result<SpecimenDetailVO> reject(@PathVariable String id, @RequestBody Map<String, String> request) {
+    public Result<SpecimenDetailVO> reject(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        SpecimenDetailVO specimen = specimenService.getById(id);
         SpecimenReceiveDTO dto = new SpecimenReceiveDTO();
+        dto.setBarcode(specimen.getBarcode());
         dto.setRejectReason(request.get("reason"));
         specimenService.reject(dto);
-        return Result.success(null);
+        return Result.success(specimenService.getById(id));
     }
 
     @ApiOperation("获取标本追溯记录")

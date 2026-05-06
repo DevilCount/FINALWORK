@@ -102,6 +102,27 @@ spring:
           filters:
             - StripPrefix=0
 
+        - id: lis-report-audit
+          uri: http://localhost:8084
+          predicates:
+            - Path=/report/audit/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-report-publish
+          uri: http://localhost:8084
+          predicates:
+            - Path=/report/publish/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-panic
+          uri: http://localhost:8084
+          predicates:
+            - Path=/panic/**
+          filters:
+            - StripPrefix=0
+
         - id: lis-result
           uri: http://localhost:8084
           predicates:
@@ -130,6 +151,27 @@ spring:
           filters:
             - StripPrefix=0
 
+        - id: lis-interface-config
+          uri: http://localhost:8086
+          predicates:
+            - Path=/interface-config/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-hl7-message
+          uri: http://localhost:8086
+          predicates:
+            - Path=/hl7-message/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-his-integration
+          uri: http://localhost:8086
+          predicates:
+            - Path=/his-integration/**
+          filters:
+            - StripPrefix=0
+
         - id: lis-statistics
           uri: http://localhost:8087
           predicates:
@@ -141,6 +183,20 @@ spring:
           uri: http://localhost:8089
           predicates:
             - Path=/ai/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-ai-rule
+          uri: http://localhost:8089
+          predicates:
+            - Path=/rule/**
+          filters:
+            - StripPrefix=0
+
+        - id: lis-ai-diagnosis
+          uri: http://localhost:8089
+          predicates:
+            - Path=/diagnosis/**
           filters:
             - StripPrefix=0
 

@@ -58,7 +58,7 @@ public interface StatWorkloadDailyMapper extends BaseMapper<StatWorkloadDailyDO>
             "FROM stat_workload_daily " +
             "WHERE stat_date BETWEEN #{startDate} AND #{endDate} " +
             "GROUP BY dept_id, dept_name " +
-            "ORDER BY specimen_receive_count + test_count + audit_count + report_count DESC" +
+            "ORDER BY SUM(specimen_receive_count + test_count + audit_count + report_count) DESC" +
             "</script>")
     List<Map<String, Object>> selectDeptWorkload(@Param("startDate") LocalDate startDate,
                                                   @Param("endDate") LocalDate endDate);

@@ -3,6 +3,7 @@ package com.lis.statistics.dto;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -11,9 +12,11 @@ import java.time.LocalDate;
 @ApiModel(description = "统计查询基础DTO")
 public class StatQueryDTO implements Serializable {
 
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     @ApiModelProperty(value = "开始日期", required = true)
     private LocalDate startDate;
 
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     @ApiModelProperty(value = "结束日期", required = true)
     private LocalDate endDate;
 

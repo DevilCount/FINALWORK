@@ -15,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -25,12 +28,33 @@ import java.util.Map;
 public class AnalysisController {
 
     private final DiagnosisRecordService diagnosisRecordService;
+    private final ObjectMapper objectMapper;
 
     @ApiOperation("执行诊断分析")
     @PostMapping
-    public Result<DiagnosisRecordVO> analyze(@Validated @RequestBody Map<String, String> request) {
+    public Result<DiagnosisRecordVO> analyze(@RequestBody Map<String, Object> request) {
         DiagnosisRequestDTO dto = new DiagnosisRequestDTO();
-        dto.setReportId(Long.parseLong(request.get("reportId")));
+        if (request.get("reportId") != null) {
+            dto.setReportId(Long.parseLong(request.get("reportId").toString()));
+        }
+        if (request.get("diagnosisType") != null) {
+            dto.setDiagnosisType(request.get("diagnosisType").toString());
+        } else {
+            dto.setDiagnosisType("blood_routine");
+        }
+        if (request.get("testData") != null) {
+            try {
+                List<DiagnosisRequestDTO.TestItemData> testData = objectMapper.convertValue(
+                        request.get("testData"),
+                        objectMapper.getTypeFactory().constructCollectionType(ArrayList.class, DiagnosisRequestDTO.TestItemData.class)
+                );
+                dto.setTestData(testData);
+            } catch (Exception e) {
+                dto.setTestData(new ArrayList<>());
+            }
+        } else {
+            dto.setTestData(new ArrayList<>());
+        }
         DiagnosisResultVO result = diagnosisRecordService.performDiagnosis(dto);
         return Result.success("分析完成", null);
     }
