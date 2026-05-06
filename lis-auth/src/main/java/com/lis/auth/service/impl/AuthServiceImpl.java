@@ -49,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
         String realName = (String) userMap.get("realName");
         Integer status = (Integer) userMap.get("status");
 
-        if (status != null && status == 0) {
+        if (status != null && status == 1) {
             throw new AuthException(ResultCode.ACCOUNT_DISABLED);
         }
 
@@ -118,7 +118,7 @@ public class AuthServiceImpl implements AuthService {
             Map<String, Object> userMap = userResult.getData();
             Integer status = (Integer) userMap.get("status");
 
-            if (status != null && status == 0) {
+            if (status != null && status == 1) {
                 throw new AuthException(ResultCode.ACCOUNT_DISABLED);
             }
 

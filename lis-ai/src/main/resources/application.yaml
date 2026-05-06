@@ -1,5 +1,5 @@
 server:
-  port: 8090
+  port: 8089
   servlet:
     encoding:
       charset: UTF-8
@@ -11,27 +11,20 @@ spring:
     exclude:
       - org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration
       - org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
   application:
     name: lis-ai
-  http:
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
   cloud:
     nacos:
       discovery:
         enabled: false
-        enabled: false
-        
       config:
         enabled: false
-        enabled: false
-        
-        
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/${MYSQL_DATABASE:lis_ai}?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/lis_ai?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: lis
     password: lis123456
     type: com.alibaba.druid.pool.DruidDataSource
@@ -43,7 +36,6 @@ spring:
   redis:
     host: localhost
     port: 6379
-    password: 
     database: 0
     timeout: 10000ms
     lettuce:

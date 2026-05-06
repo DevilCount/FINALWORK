@@ -25,13 +25,15 @@ public class SecurityConfig {
                 .and()
                 .authorizeRequests()
                 .antMatchers(
-                        "/auth/login",
-                        "/auth/refresh",
+                        "/api/auth/login",
+                        "/api/auth/refresh",
+                        "/api/auth/captcha",
                         "/doc.html",
                         "/webjars/**",
                         "/swagger-resources/**",
                         "/v2/api-docs/**",
-                        "/v3/api-docs/**"
+                        "/v3/api-docs/**",
+                        "/actuator/**"
                 ).permitAll()
                 .anyRequest().authenticated()
                 .and()

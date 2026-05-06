@@ -7,6 +7,7 @@ import com.lis.hl7.parser.Hl7MessageParser;
 import com.lis.hl7.service.InterfaceConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -15,12 +16,17 @@ import java.nio.charset.Charset;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class HisMessageClient {
 
     private final Hl7MessageParser messageParser;
     private final Hl7MessageBuilder messageBuilder;
     private final InterfaceConfigService interfaceConfigService;
+
+    public HisMessageClient(Hl7MessageParser messageParser, Hl7MessageBuilder messageBuilder, @Lazy InterfaceConfigService interfaceConfigService) {
+        this.messageParser = messageParser;
+        this.messageBuilder = messageBuilder;
+        this.interfaceConfigService = interfaceConfigService;
+    }
 
     private static final byte START_BLOCK = 0x0B;
     private static final byte END_BLOCK = 0x1C;

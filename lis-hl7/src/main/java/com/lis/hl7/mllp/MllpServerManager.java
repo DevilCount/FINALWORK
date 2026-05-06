@@ -2,10 +2,10 @@ package com.lis.hl7.mllp;
 
 import com.lis.hl7.entity.InterfaceConfigDO;
 import com.lis.hl7.service.InterfaceConfigService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
@@ -14,13 +14,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "mllp", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class MllpServerManager implements CommandLineRunner {
 
     private final MllpProperties mllpProperties;
     private final DefaultMllpMessageHandler messageHandler;
     private final InterfaceConfigService interfaceConfigService;
+
+    public MllpServerManager(MllpProperties mllpProperties, DefaultMllpMessageHandler messageHandler, @Lazy InterfaceConfigService interfaceConfigService) {
+        this.mllpProperties = mllpProperties;
+        this.messageHandler = messageHandler;
+        this.interfaceConfigService = interfaceConfigService;
+    }
 
     private final Map<String, MllpServer> servers = new ConcurrentHashMap<>();
 

@@ -11,6 +11,9 @@ spring:
     exclude:
       - org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration
       - org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
   application:
     name: lis-auth
   http:
@@ -26,7 +29,7 @@ spring:
         enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/lis_system?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/lis_user?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: lis
     password: lis123456
     type: com.alibaba.druid.pool.DruidDataSource
@@ -38,7 +41,6 @@ spring:
   redis:
     host: localhost
     port: 6379
-    password: 
     database: 0
     timeout: 10000ms
     lettuce:
@@ -61,7 +63,7 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 jwt:
-  secret: lis-backend-jwt-secret-key-must-be-at-least-256-bits-long
+  secret: lis-backend-jwt-secret-key-must-be-at-least-512-bits-long-for-hs512-algorithm-security-requirement-2024
   access-token-expiration: 7200000
   refresh-token-expiration: 604800000
 
