@@ -30,7 +30,7 @@ public class AnalysisController {
     @PostMapping
     public Result<DiagnosisRecordVO> analyze(@Validated @RequestBody Map<String, String> request) {
         DiagnosisRequestDTO dto = new DiagnosisRequestDTO();
-        dto.setReportId(request.get("reportId"));
+        dto.setReportId(Long.parseLong(request.get("reportId")));
         DiagnosisResultVO result = diagnosisRecordService.performDiagnosis(dto);
         return Result.success("分析完成", null);
     }

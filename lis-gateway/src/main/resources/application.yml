@@ -9,6 +9,10 @@ server:
 spring:
   application:
     name: lis-gateway
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration
   http:
     encoding:
       charset: UTF-8
@@ -19,136 +23,131 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
-        namespace: ${NACOS_NAMESPACE:}
-        group: ${NACOS_GROUP:DEFAULT_GROUP}
+        enabled: false
       config:
-        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
-        namespace: ${NACOS_NAMESPACE:}
-        group: ${NACOS_GROUP:DEFAULT_GROUP}
-        file-extension: yaml
+        enabled: false
     gateway:
       discovery:
         locator:
-          enabled: true
+          enabled: false
           lower-case-service-id: true
       routes:
         - id: lis-auth
-          uri: lb://lis-auth
+          uri: http://localhost:8081
           predicates:
             - Path=/api/auth/**
           filters:
             - StripPrefix=0
 
         - id: lis-user
-          uri: lb://lis-user
+          uri: http://localhost:8082
           predicates:
             - Path=/system/user/**
           filters:
             - StripPrefix=0
 
         - id: lis-dept
-          uri: lb://lis-user
+          uri: http://localhost:8082
           predicates:
             - Path=/system/dept/**
           filters:
             - StripPrefix=0
 
         - id: lis-role
-          uri: lb://lis-user
+          uri: http://localhost:8082
           predicates:
             - Path=/system/role/**
           filters:
             - StripPrefix=0
 
         - id: lis-menu
-          uri: lb://lis-user
+          uri: http://localhost:8082
           predicates:
             - Path=/system/menu/**
           filters:
             - StripPrefix=0
 
         - id: lis-dict
-          uri: lb://lis-user
+          uri: http://localhost:8082
           predicates:
             - Path=/system/dict/**
           filters:
             - StripPrefix=0
 
         - id: lis-specimen
-          uri: lb://lis-specimen
+          uri: http://localhost:8083
           predicates:
             - Path=/api/specimen/**
           filters:
             - StripPrefix=0
 
         - id: lis-test-item
-          uri: lb://lis-specimen
+          uri: http://localhost:8083
           predicates:
             - Path=/api/test-item/**
           filters:
             - StripPrefix=0
 
         - id: lis-department
-          uri: lb://lis-specimen
+          uri: http://localhost:8083
           predicates:
             - Path=/api/department/**
           filters:
             - StripPrefix=0
 
         - id: lis-report
-          uri: lb://lis-report
+          uri: http://localhost:8084
           predicates:
             - Path=/api/report/**
           filters:
             - StripPrefix=0
 
         - id: lis-result
-          uri: lb://lis-report
+          uri: http://localhost:8084
           predicates:
             - Path=/api/result/**
           filters:
             - StripPrefix=0
 
         - id: lis-critical-value
-          uri: lb://lis-report
+          uri: http://localhost:8084
           predicates:
             - Path=/api/critical-value/**
           filters:
             - StripPrefix=0
 
         - id: lis-equipment
-          uri: lb://lis-equipment
+          uri: http://localhost:8085
           predicates:
             - Path=/equipment/**
           filters:
             - StripPrefix=0
 
         - id: lis-hl7
-          uri: lb://lis-hl7
+          uri: http://localhost:8086
           predicates:
             - Path=/hl7/**
           filters:
             - StripPrefix=0
 
         - id: lis-statistics
-          uri: lb://lis-statistics
+          uri: http://localhost:8087
           predicates:
             - Path=/statistics/**
           filters:
             - StripPrefix=0
 
         - id: lis-ai
-          uri: lb://lis-ai
+          uri: http://localhost:8088
           predicates:
             - Path=/ai/**
           filters:
             - StripPrefix=0
 
   redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:}
+    host: localhost
+    port: 6379
+    password: 
     database: 0
     timeout: 10000ms
     lettuce:
@@ -157,6 +156,12 @@ spring:
         max-wait: -1ms
         max-idle: 8
         min-idle: 0
+    redisson:
+      config: |
+        singleServerConfig:
+          address: "redis://localhost:6379"
+          password: null
+          database: 0
 
 jwt:
   secret: ${JWT_SECRET:lis-backend-jwt-secret-key-2024-very-long-secret-key-for-security}
@@ -181,3 +186,12 @@ logging:
   level:
     com.lis.gateway: debug
     org.springframework.cloud.gateway: debug
+
+management:
+  metrics:
+    enable:
+      process: false
+      system: false
+  endpoint:
+    health:
+      enabled: true

@@ -74,7 +74,7 @@ public class SpecimenController {
     @PostMapping("/reject/{id}")
     public Result<SpecimenDetailVO> reject(@PathVariable String id, @RequestBody Map<String, String> request) {
         SpecimenReceiveDTO dto = new SpecimenReceiveDTO();
-        dto.setReason(request.get("reason"));
+        dto.setRejectReason(request.get("reason"));
         specimenService.reject(dto);
         return Result.success(null);
     }

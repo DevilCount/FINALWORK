@@ -1,7 +1,7 @@
 package com.lis.gateway.filter;
 
 import com.alibaba.fastjson2.JSON;
-import com.lis.gateway.config.GatewayProperties;
+import com.lis.gateway.config.CustomGatewayProperties;
 import com.lis.gateway.config.JwtProperties;
 import com.lis.gateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -31,13 +31,13 @@ import java.util.Map;
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private final JwtProperties jwtProperties;
-    private final GatewayProperties gatewayProperties;
+    private final CustomGatewayProperties customGatewayProperties;
     private final JwtUtil jwtUtil;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    public JwtAuthenticationFilter(JwtProperties jwtProperties, GatewayProperties gatewayProperties, JwtUtil jwtUtil) {
+    public JwtAuthenticationFilter(JwtProperties jwtProperties, CustomGatewayProperties customGatewayProperties, JwtUtil jwtUtil) {
         this.jwtProperties = jwtProperties;
-        this.gatewayProperties = gatewayProperties;
+        this.customGatewayProperties = customGatewayProperties;
         this.jwtUtil = jwtUtil;
     }
 
@@ -80,7 +80,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isWhitePath(String path) {
-        List<String> whiteList = gatewayProperties.getWhiteList();
+        List<String> whiteList = customGatewayProperties.getWhiteList();
         if (whiteList == null || whiteList.isEmpty()) {
             return false;
         }

@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 @Component
 @ConfigurationProperties(prefix = "gateway")
-public class GatewayProperties {
+public class CustomGatewayProperties {
 
     private List<String> whiteList;
 }
